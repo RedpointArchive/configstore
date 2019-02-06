@@ -1,0 +1,48 @@
+{
+  "name": "configstoreExample",
+  "kinds": {
+    "User": {
+      "fields": [
+        {
+          "id": 1,
+          "name": "emailAddress",
+          "type": "string",
+          "comment": "The user's email address"
+        },
+        {
+          "id": 2,
+          "name": "passwordHash",
+          "type": "string",
+          "comment": "The password hash of the user"
+        },
+        {
+          "id": 3,
+          "name": "dateLastLoginUtc",
+          "type": "timestamp",
+          "comment": "The time that the user last logged in"
+        }
+      ]
+    },
+    "Project": {
+      "fields": [
+        {
+          "id": 1,
+          "name": "name",
+          "type": "string",
+          "comment": "The name of the project"
+        }
+      ]
+    },
+    "ProjectAccess": {
+      "ancestors": ["Project"],
+      "fields": [
+        {
+          "id": 1,
+          "name": "user",
+          "type": "key",
+          "comment": "The user that has access to the project"
+        }
+      ]
+    }
+  }
+}
