@@ -19,12 +19,17 @@ func main() {
 
 	ctx := context.Background()
 
-	client := configstoreExample.NewProjectServiceClient(conn)
-	resp, err := client.List(ctx, &configstoreExample.ListProjectRequest{})
+	client := configstoreExample.NewUserServiceClient(conn)
+	resp, err := client.Get(ctx, &configstoreExample.GetUserRequest{
+		Id: "lBpJE5piqLi7mk75cKwF",
+	})
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
 
 	fmt.Printf("%s", resp)
+	if resp != nil && resp.Entity != nil {
+		fmt.Printf("%s", resp.Entity.EmailAddress)
+	}
 }

@@ -4,19 +4,19 @@
     "User": {
       "fields": [
         {
-          "id": 1,
+          "id": 2,
           "name": "emailAddress",
           "type": "string",
           "comment": "The user's email address"
         },
         {
-          "id": 2,
+          "id": 3,
           "name": "passwordHash",
           "type": "string",
           "comment": "The password hash of the user"
         },
         {
-          "id": 3,
+          "id": 4,
           "name": "dateLastLoginUtc",
           "type": "timestamp",
           "comment": "The time that the user last logged in"
@@ -26,7 +26,7 @@
     "Project": {
       "fields": [
         {
-          "id": 1,
+          "id": 2,
           "name": "name",
           "type": "string",
           "comment": "The name of the project"
@@ -37,7 +37,7 @@
       "ancestors": ["Project"],
       "fields": [
         {
-          "id": 1,
+          "id": 2,
           "name": "user",
           "type": "key",
           "comment": "The user that has access to the project"
