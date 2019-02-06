@@ -16,6 +16,6 @@ You can test that it works for the example schema by running `.\client.ps1`. You
 
 ## Screenshots
 
-![server](./screenshots/server.png)
+![server](https://github.com/hach-que/configstore/raw/master/screenshots/server.PNG)
 
-![client](./screenshots/client.png)
+![client](https://github.com/hach-que/configstore/raw/master/screenshots/client.PNG)
