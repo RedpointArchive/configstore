@@ -1,6 +1,6 @@
 # configstore
 
-*configstore is a Go server that lets you define your schema in JSON, and automatically generates gRPC calls to List/Get/Create/Update/Delete those entities in Google Cloud Firestore.*
+*configstore is a Go server that lets you define your schema in JSON, and automatically generates a gRPC API with List/Get/Create/Update/Delete methods to access and modify those entities in Google Cloud Firestore.*
 
 Basically, configstore is a server that provides a gRPC CRUD interface for the kinds of entities that you describe. You just specify the schema for kinds as JSON, and configstore produces a `.proto` file you can use to generate clients in various languages.
 
