@@ -14,7 +14,7 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schemaName string) (string, e
 
 	packageName := schemaName
 	protoFileName := fmt.Sprintf("%s.proto", schemaName)
-	parameter := fmt.Sprintf("plugins=grpc:%s", schemaName)
+	parameter := "plugins=grpc"
 
 	str := packageName
 	strName := protoFileName
