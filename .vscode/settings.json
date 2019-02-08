@@ -1,3 +1,4 @@
 {
-    "go.testFlags": ["-v"]
+    "go.testFlags": ["-v", "-mod", "vendor"],
+    "go.buildFlags": ["-mod", "vendor"]
 }

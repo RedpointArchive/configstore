@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
+	"net/http"
 
 	"cloud.google.com/go/firestore"
 
 	"github.com/jhump/protoreflect/desc/protoprint"
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 
 	firebase "firebase.google.com/go"
@@ -19,7 +20,20 @@ import (
 type emptyServerInterface interface {
 }
 
+type runtimeConfig struct {
+	GoogleCloudProjectID          string `envconfig:"GOOGLE_CLOUD_PROJECT_ID" required:"true"`
+	GoogleCloudServiceAccountPath string `envconfig:"GOOGLE_CLOUD_SERVICE_ACCOUNT_PATH"`
+	GrpcPort                      uint16 `envconfig:"GRPC_PORT" required:"true"`
+	HTTPPort                      uint16 `envconfig:"HTTP_PORT" required:"true"`
+}
+
 func main() {
+	config := &runtimeConfig{}
+	err := envconfig.Process("CONFIGSTORE", config)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	ctx := context.Background()
 
 	// Generate the schema and gRPC types based on schema.json
@@ -30,19 +44,17 @@ func main() {
 
 	// Emit the testclient protobuf specification
 	printer := new(protoprint.Printer)
-	protoFile, err := os.Create("testclient/testclient.proto")
+	clientProtoFile, err := printer.PrintProtoToString(fileDesc)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer protoFile.Close()
-	fmt.Println("writing testclient/testclient.proto...")
-	err = printer.PrintProtoFile(fileDesc, protoFile)
+	clientProtoGoCode, err := generateGoCode(fileDesc, schema.Name)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Sprintf("can't generate Go code: %s", err))
 	}
 
 	// Connect to Firestore using Application Default Credentials
-	conf := &firebase.Config{ProjectID: os.Getenv("GOOGLE_CLOUD_PROJECT_ID")}
+	conf := &firebase.Config{ProjectID: config.GoogleCloudProjectID}
 	app, err := firebase.NewApp(ctx, conf)
 	if err != nil {
 		log.Fatalln(err)
@@ -54,7 +66,7 @@ func main() {
 	defer client.Close()
 
 	// Serve the configstore gRPC server
-	lis, err := net.Listen("tcp", ":13389")
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.GrpcPort))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -368,6 +380,20 @@ func main() {
 			emptyServer,
 		)
 	}
-	fmt.Println("running server on port 13389...")
-	grpcServer.Serve(lis)
+
+	// Start gRPC server.
+	go func() {
+		fmt.Println(fmt.Sprintf("Running gRPC server on port %d...", config.GrpcPort))
+		grpcServer.Serve(lis)
+	}()
+
+	// Start HTTP server.
+	http.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "%s", clientProtoFile)
+	})
+	http.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "%s", clientProtoGoCode)
+	})
+	fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
+	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), nil)
 }
