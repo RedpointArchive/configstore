@@ -5,6 +5,7 @@ import (
 
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
+	_ "github.com/golang/protobuf/protoc-gen-go/grpc"
 	"github.com/jhump/protoreflect/desc"
 )
 
@@ -13,6 +14,7 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schemaName string) (string, e
 
 	packageName := schemaName
 	protoFileName := fmt.Sprintf("%s.proto", schemaName)
+	parameter := fmt.Sprintf("plugins=grpc:%s", schemaName)
 
 	str := packageName
 	strName := protoFileName
@@ -22,6 +24,7 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schemaName string) (string, e
 	}
 	fileDescProto.Name = &strName
 
+	g.Request.Parameter = &parameter
 	g.Request.FileToGenerate = append(
 		g.Request.FileToGenerate,
 		protoFileName,
