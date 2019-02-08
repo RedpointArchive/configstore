@@ -33,7 +33,7 @@ type watchTypeEnumValues struct {
 	Deleted *desc.EnumValueDescriptor
 }
 
-func generate() (
+func generate(path string) (
 	[]*builder.MessageBuilder,
 	[]*builder.ServiceBuilder,
 	*builder.FileBuilder,
@@ -45,7 +45,7 @@ func generate() (
 	*watchTypeEnumValues,
 	error,
 ) {
-	schemaFile, err := os.Open("schema.json")
+	schemaFile, err := os.Open(path)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}

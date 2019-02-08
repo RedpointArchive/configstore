@@ -26,6 +26,7 @@ type runtimeConfig struct {
 	GoogleCloudServiceAccountPath string `envconfig:"GOOGLE_CLOUD_SERVICE_ACCOUNT_PATH"`
 	GrpcPort                      uint16 `envconfig:"GRPC_PORT" required:"true"`
 	HTTPPort                      uint16 `envconfig:"HTTP_PORT" required:"true"`
+	SchemaPath                    string `envconfig:"SCHEMA_PATH" required:"true"`
 }
 
 type runMode string
@@ -52,7 +53,7 @@ func main() {
 	ctx := context.Background()
 
 	// Generate the schema and gRPC types based on schema.json
-	_, services, fileBuilder, fileDesc, schema, _, kindNameMap, messageMap, watchTypeEnumValues, err := generate()
+	_, services, fileBuilder, fileDesc, schema, _, kindNameMap, messageMap, watchTypeEnumValues, err := generate(config.SchemaPath)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -15,6 +15,7 @@
                 "CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID": "configstore-test-001",
                 "CONFIGSTORE_GRPC_PORT": "13389",
                 "CONFIGSTORE_HTTP_PORT": "13390",
+                "CONFIGSTORE_SCHEMA_PATH": "schema.json",
             },
             "args": []
         }
