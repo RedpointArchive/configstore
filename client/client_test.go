@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"./configstoreExample"
-
 	"google.golang.org/grpc"
 
 	"github.com/rs/xid"
@@ -20,7 +18,7 @@ import (
 )
 
 var ctx context.Context
-var client configstoreExample.UserServiceClient
+var client UserServiceClient
 
 func TestMain(m *testing.M) {
 	conn, err := grpc.Dial("127.0.0.1:13389", grpc.WithInsecure())
@@ -32,13 +30,13 @@ func TestMain(m *testing.M) {
 	defer conn.Close()
 
 	ctx = context.Background()
-	client = configstoreExample.NewUserServiceClient(conn)
+	client = NewUserServiceClient(conn)
 	os.Exit(m.Run())
 }
 
 func TestCreate(t *testing.T) {
-	resp, err := client.Create(ctx, &configstoreExample.CreateUserRequest{
-		Entity: &configstoreExample.User{
+	resp, err := client.Create(ctx, &CreateUserRequest{
+		Entity: &User{
 			Id:           "",
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
@@ -51,15 +49,15 @@ func TestCreate(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	_, err := client.List(ctx, &configstoreExample.ListUserRequest{
+	_, err := client.List(ctx, &ListUserRequest{
 		Limit: 10,
 	})
 	assert.NilError(t, err)
 }
 
 func TestCreateThenGet(t *testing.T) {
-	resp, err := client.Create(ctx, &configstoreExample.CreateUserRequest{
-		Entity: &configstoreExample.User{
+	resp, err := client.Create(ctx, &CreateUserRequest{
+		Entity: &User{
 			Id:           "",
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
@@ -70,7 +68,7 @@ func TestCreateThenGet(t *testing.T) {
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 
-	resp2, err := client.Get(ctx, &configstoreExample.GetUserRequest{
+	resp2, err := client.Get(ctx, &GetUserRequest{
 		Id: resp.Entity.Id,
 	})
 	assert.NilError(t, err)
@@ -80,7 +78,7 @@ func TestCreateThenGet(t *testing.T) {
 }
 
 func TestWatchThenCreate(t *testing.T) {
-	watcher, err := client.Watch(ctx, &configstoreExample.WatchUserRequest{})
+	watcher, err := client.Watch(ctx, &WatchUserRequest{})
 	assert.NilError(t, err)
 
 	mutex := make(chan bool, 1)
@@ -98,15 +96,15 @@ func TestWatchThenCreate(t *testing.T) {
 			if err != nil {
 				watchError = err
 			}
-			if change.Type == configstoreExample.WatchEventType_Created &&
+			if change.Type == WatchEventType_Created &&
 				change.Entity.PasswordHash == testID.String() {
 				mutex <- true
 			}
 		}
 	}()
 
-	resp, err := client.Create(ctx, &configstoreExample.CreateUserRequest{
-		Entity: &configstoreExample.User{
+	resp, err := client.Create(ctx, &CreateUserRequest{
+		Entity: &User{
 			Id:           "",
 			EmailAddress: "hello@example.com",
 			PasswordHash: testID.String(),
@@ -131,8 +129,8 @@ func TestWatchThenCreate(t *testing.T) {
 }
 
 func TestCreateThenUpdateThenGet(t *testing.T) {
-	resp, err := client.Create(ctx, &configstoreExample.CreateUserRequest{
-		Entity: &configstoreExample.User{
+	resp, err := client.Create(ctx, &CreateUserRequest{
+		Entity: &User{
 			Id:           "",
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
@@ -145,7 +143,7 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 
 	resp.Entity.EmailAddress = "update@example.com"
 
-	resp2, err := client.Update(ctx, &configstoreExample.UpdateUserRequest{
+	resp2, err := client.Update(ctx, &UpdateUserRequest{
 		Entity: resp.Entity,
 	})
 	assert.NilError(t, err)
@@ -153,7 +151,7 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 	assert.Equal(t, resp2.Entity.EmailAddress, "update@example.com")
 	assert.Equal(t, resp2.Entity.PasswordHash, "what")
 
-	resp3, err := client.Get(ctx, &configstoreExample.GetUserRequest{
+	resp3, err := client.Get(ctx, &GetUserRequest{
 		Id: resp.Entity.Id,
 	})
 	assert.NilError(t, err)
@@ -163,8 +161,8 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 }
 
 func TestCreateThenDeleteThenGet(t *testing.T) {
-	resp, err := client.Create(ctx, &configstoreExample.CreateUserRequest{
-		Entity: &configstoreExample.User{
+	resp, err := client.Create(ctx, &CreateUserRequest{
+		Entity: &User{
 			Id:           "",
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
@@ -175,7 +173,7 @@ func TestCreateThenDeleteThenGet(t *testing.T) {
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 
-	resp2, err := client.Delete(ctx, &configstoreExample.DeleteUserRequest{
+	resp2, err := client.Delete(ctx, &DeleteUserRequest{
 		Id: resp.Entity.Id,
 	})
 	assert.NilError(t, err)
@@ -183,7 +181,7 @@ func TestCreateThenDeleteThenGet(t *testing.T) {
 	assert.Equal(t, resp2.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp2.Entity.PasswordHash, "what")
 
-	_, err = client.Get(ctx, &configstoreExample.GetUserRequest{
+	_, err = client.Get(ctx, &GetUserRequest{
 		Id: resp.Entity.Id,
 	})
 	assert.Assert(t, err != nil)

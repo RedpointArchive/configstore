@@ -1,7 +1,5 @@
-/testclient/testclient.proto
-/testclient/configstoreExample/
-/testserver.exe
-/testclient/testserver.exe
-/debug
-/testclient/debug.test
-/vendor/
+/client/client.go
+/server/server.exe
+/server/debug
+/client/debug.test
+/server/vendor/

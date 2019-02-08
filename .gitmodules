@@ -1,3 +1,6 @@
-[submodule "vendor/github.com/golang/protobuf"]
-	path = vendor/github.com/golang/protobuf
+[submodule "server/vendor/github.com/golang/protobuf"]
+	path = server/vendor/github.com/golang/protobuf
+	url = https://github.com/hach-que/protobuf
+[submodule "server/vendor/github.com/hach-que/protobuf"]
+	path = server/vendor/github.com/hach-que/protobuf
 	url = https://github.com/hach-que/protobuf

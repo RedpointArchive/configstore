@@ -1,24 +1,22 @@
 param()
 
-Push-Location $PSScriptRoot
+Push-Location $PSScriptRoot\client
 try {
+    Write-Output "Fetch deps..."
+    Push-Location $env:SYSTEMDRIVE
+    go get -u github.com/golang/protobuf/proto
+    Pop-Location
+
     Write-Output "Generating client..."
-    .\protoc-3.6.1-win32\bin\protoc.exe --go_out=plugins=grpc:testclient .\testclient\testclient.proto
+    ..\server\server.exe -generate | Out-File -Encoding UTF8 -Force -FilePath .\client.go
     if ($LastExitCode -ne 0) {
         exit $LastExitCode
     }
-    Move-Item -Force testclient\testclient\testclient.pb.go testclient\configstoreExample\testclient.pb.go 
-    Remove-Item -Recurse -Force testclient\testclient
 
     Write-Output "Running & testing client..."
-    Push-Location testclient
-    try {
-        go test -v
-        if ($LastExitCode -ne 0) {
-            exit $LastExitCode
-        }
-    } finally {
-        Pop-Location
+    go test -v
+    if ($LastExitCode -ne 0) {
+        exit $LastExitCode
     }
 } finally {
     Pop-Location

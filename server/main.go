@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -27,7 +28,21 @@ type runtimeConfig struct {
 	HTTPPort                      uint16 `envconfig:"HTTP_PORT" required:"true"`
 }
 
+type runMode string
+
+const (
+	runModeServe    runMode = "serve"
+	runModeGenerate runMode = "generate"
+)
+
 func main() {
+	mode := runModeServe
+	generateFlag := flag.Bool("generate", false, "emit Go client code instead of serving traffic")
+	flag.Parse()
+	if *generateFlag {
+		mode = runModeGenerate
+	}
+
 	config := &runtimeConfig{}
 	err := envconfig.Process("CONFIGSTORE", config)
 	if err != nil {
@@ -381,19 +396,23 @@ func main() {
 		)
 	}
 
-	// Start gRPC server.
-	go func() {
-		fmt.Println(fmt.Sprintf("Running gRPC server on port %d...", config.GrpcPort))
-		grpcServer.Serve(lis)
-	}()
+	if mode == runModeServe {
+		// Start gRPC server.
+		go func() {
+			fmt.Println(fmt.Sprintf("Running gRPC server on port %d...", config.GrpcPort))
+			grpcServer.Serve(lis)
+		}()
 
-	// Start HTTP server.
-	http.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%s", clientProtoFile)
-	})
-	http.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%s", clientProtoGoCode)
-	})
-	fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
-	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), nil)
+		// Start HTTP server.
+		http.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintf(w, "%s", clientProtoFile)
+		})
+		http.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintf(w, "%s", clientProtoGoCode)
+		})
+		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
+		http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), nil)
+	} else if mode == runModeGenerate {
+		fmt.Println(clientProtoGoCode)
+	}
 }

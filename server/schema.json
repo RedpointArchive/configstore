@@ -1,5 +1,5 @@
 {
-  "name": "configstoreExample",
+  "name": "server",
   "kinds": {
     "User": {
       "fields": [
