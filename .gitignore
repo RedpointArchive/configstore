@@ -2,3 +2,5 @@
 /testclient/configstoreExample/
 /testserver.exe
 /testclient/testserver.exe
+/debug
+/testclient/debug.test

@@ -27,6 +27,12 @@ func convertToType(t configstoreSchemaKindFieldType) *builder.FieldType {
 	return builder.FieldTypeString() // todo, probably fatal instead
 }
 
+type watchTypeEnumValues struct {
+	Created *desc.EnumValueDescriptor
+	Updated *desc.EnumValueDescriptor
+	Deleted *desc.EnumValueDescriptor
+}
+
 func generate() (
 	[]*builder.MessageBuilder,
 	[]*builder.ServiceBuilder,
@@ -36,23 +42,24 @@ func generate() (
 	map[*builder.ServiceBuilder]*configstoreSchemaKind,
 	map[*builder.ServiceBuilder]string,
 	map[string]*desc.MessageDescriptor,
+	*watchTypeEnumValues,
 	error,
 ) {
 	schemaFile, err := os.Open("schema.json")
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 	defer schemaFile.Close()
 
 	schemaByteValue, err := ioutil.ReadAll(schemaFile)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	var schema configstoreSchema
 	err = json.Unmarshal(schemaByteValue, &schema)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	var messages []*builder.MessageBuilder
@@ -60,6 +67,36 @@ func generate() (
 	kindMap := make(map[*builder.ServiceBuilder]*configstoreSchemaKind)
 	kindNameMap := make(map[*builder.ServiceBuilder]string)
 	messageMap := make(map[string]*desc.MessageDescriptor)
+
+	created := builder.NewEnumValue("Created").SetNumber(0)
+	updated := builder.NewEnumValue("Updated").SetNumber(1)
+	deleted := builder.NewEnumValue("Deleted").SetNumber(2)
+
+	watchEventTypeEnum := builder.NewEnum("WatchEventType").
+		AddValue(created).
+		AddValue(updated).
+		AddValue(deleted)
+	var enums []*builder.EnumBuilder
+	enums = append(enums, watchEventTypeEnum)
+
+	createdBuilt, err := created.Build()
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	updatedBuilt, err := updated.Build()
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	deletedBuilt, err := deleted.Build()
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+
+	watchTypeEnumValues := &watchTypeEnumValues{
+		Created: createdBuilt,
+		Updated: updatedBuilt,
+		Deleted: deletedBuilt,
+	}
 
 	for name, kind := range schema.Kinds {
 		// Build the message descriptor for the entity itself
@@ -90,7 +127,7 @@ func generate() (
 			AddField(builder.NewField("limit", builder.FieldTypeUInt32()).SetComments(builder.Comments{LeadingComment: " The maximum number of results to return, or null for no limit"}))
 		listResponseMessage := builder.NewMessage(fmt.Sprintf("List%sResponse", name)).
 			AddField(builder.NewField("next", builder.FieldTypeBytes()).SetComments(builder.Comments{LeadingComment: " The cursor to pass to the start field of the next List call"})).
-			AddField(builder.NewField("moreResults", builder.FieldTypeBool()).SetRepeated().SetComments(builder.Comments{LeadingComment: " True if there are more results available in a future List call"})).
+			AddField(builder.NewField("moreResults", builder.FieldTypeBool()).SetComments(builder.Comments{LeadingComment: " True if there are more results available in a future List call"})).
 			AddField(builder.NewField("entities", builder.FieldTypeMessage(message)).SetRepeated().SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The paginated list of %ss", name)}))
 
 		// Build the request-response message for the Get method
@@ -98,6 +135,14 @@ func generate() (
 			AddField(builder.NewField("id", builder.FieldTypeString()).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID of the %s to load", name)}))
 		getResponseMessage := builder.NewMessage(fmt.Sprintf("Get%sResponse", name)).
 			AddField(builder.NewField("entity", builder.FieldTypeMessage(message)).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The %s that was fetched, or null if it didn't exist", name)}))
+
+		// Build the request-response message for the Watch method
+		watchRequestMessage := builder.NewMessage(fmt.Sprintf("Watch%sRequest", name))
+		watchEventMessage := builder.NewMessage(fmt.Sprintf("Watch%sEvent", name)).
+			AddField(builder.NewField("type", builder.FieldTypeEnum(watchEventTypeEnum)).SetComments(builder.Comments{LeadingComment: " The type of modification"})).
+			AddField(builder.NewField("entity", builder.FieldTypeMessage(message)).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The %s that was created, modified or deleted", name)})).
+			AddField(builder.NewField("oldIndex", builder.FieldTypeInt64()).SetComments(builder.Comments{LeadingComment: " The old index of the entity in the collection, or -1 if it wasn't present"})).
+			AddField(builder.NewField("newIndex", builder.FieldTypeInt64()).SetComments(builder.Comments{LeadingComment: " The new index of the entity in the collection, or -1 if it is no longer present"}))
 
 		// Build the request-response message for the Update method
 		updateRequestMessage := builder.NewMessage(fmt.Sprintf("Update%sRequest", name)).
@@ -121,6 +166,8 @@ func generate() (
 		messages = append(messages, listResponseMessage)
 		messages = append(messages, getRequestMessage)
 		messages = append(messages, getResponseMessage)
+		messages = append(messages, watchRequestMessage)
+		messages = append(messages, watchEventMessage)
 		messages = append(messages, updateRequestMessage)
 		messages = append(messages, updateResponseMessage)
 		messages = append(messages, createRequestMessage)
@@ -139,6 +186,11 @@ func generate() (
 				builder.RpcTypeMessage(getRequestMessage, false),
 				builder.RpcTypeMessage(getResponseMessage, false),
 			).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" Retrieve a single %s, if it exists", name)})).
+			AddMethod(builder.NewMethod(
+				"Watch",
+				builder.RpcTypeMessage(watchRequestMessage, false),
+				builder.RpcTypeMessage(watchEventMessage, true),
+			).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" Watch all %s entities for changes", name)})).
 			AddMethod(builder.NewMethod(
 				"Update",
 				builder.RpcTypeMessage(updateRequestMessage, false),
@@ -163,7 +215,7 @@ func generate() (
 	for _, message := range messages {
 		msgDesc, err := message.Build()
 		if err != nil {
-			return nil, nil, nil, nil, nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 		}
 		messageMap[message.GetName()] = msgDesc
 	}
@@ -177,10 +229,13 @@ func generate() (
 	for _, service := range services {
 		fileBuilder.AddService(service)
 	}
+	for _, enum := range enums {
+		fileBuilder.AddEnum(enum)
+	}
 	fileDesc, err := fileBuilder.Build()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
-	return messages, services, fileBuilder, fileDesc, &schema, kindMap, kindNameMap, messageMap, nil
+	return messages, services, fileBuilder, fileDesc, &schema, kindMap, kindNameMap, messageMap, watchTypeEnumValues, nil
 }

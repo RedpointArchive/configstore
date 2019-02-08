@@ -13,7 +13,7 @@ try {
     Write-Output "Running & testing client..."
     Push-Location testclient
     try {
-        go run .
+        go test -v
         if ($LastExitCode -ne 0) {
             exit $LastExitCode
         }
