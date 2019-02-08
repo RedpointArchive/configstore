@@ -9,6 +9,12 @@ if ($generate) {
 
 Push-Location $PSScriptRoot\server
 try {
+    Write-Output "Fetch deps..."
+    go mod vendor
+    if ($LastExitCode -ne 0) {
+        exit $LastExitCode
+    }
+
     Write-Output "Building server..."
     go build -mod vendor -o server.exe .
     if ($LastExitCode -ne 0) {

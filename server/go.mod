@@ -7,7 +7,7 @@ require (
 	github.com/jhump/protoreflect v1.1.0
 	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/pkg/errors v0.8.1 // indirect
-	github.com/rs/xid v1.2.1
+	github.com/rs/xid v1.2.1 // indirect
 	google.golang.org/grpc v1.18.0
-	gotest.tools v2.2.0+incompatible
+	gotest.tools v2.2.0+incompatible // indirect
 )
