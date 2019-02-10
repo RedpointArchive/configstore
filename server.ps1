@@ -42,6 +42,9 @@ try {
         if ($LastExitCode -ne 0) {
             exit $LastExitCode
         }
+        $Content = Get-Content -Raw -Path .\src\api\meta_pb.js
+        $Content = $Content.Replace("// GENERATED CODE", "/* eslint-disable */`n// GENERATED CODE")
+        Set-Content -Path .\src\api\meta_pb.js -Value $Content
     } finally {
         Pop-Location
     }

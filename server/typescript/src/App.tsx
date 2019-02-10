@@ -1,104 +1,76 @@
 import React, { Component, useState, useEffect } from "react";
 import { GetSchemaResponse } from "./api/meta_pb";
-import logo from "./logo.svg";
 import { GetSchemaRequest } from "./api/meta_pb";
 import { grpc } from "@improbable-eng/grpc-web";
+import { ConfigstoreMetaService } from "./api/meta_pb_service";
+import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary";
 
 const App = () => {
   const [data, setData] = useState<GetSchemaResponse | null>(null);
 
-  useEffect(async () => {
-    const req = new GetSchemaRequest();
-    grpc.unary(ConfigstoreMetaService.GetSchema, {
-      request: req,
-      host: "http://localhost:13390",
-      onEnd: res => {
-        const { status, statusMessage, headers, message, trailers } = res;
-        if (status === grpc.Code.OK && message) {
-          setData(message.toObject());
+  useEffect(() => {
+    if (data === null) {
+      const req = new GetSchemaRequest();
+      grpc.unary(ConfigstoreMetaService.GetSchema, {
+        request: req,
+        host: "http://localhost:13390",
+        onEnd: (res: UnaryOutput<GetSchemaResponse>) => {
+          const { status, statusMessage, headers, message, trailers } = res;
+          if (status === grpc.Code.OK && message) {
+            setData(message);
+          }
         }
-      }
-    });
+      });
+    }
   });
+
+  function t<T>(v: T | undefined): T {
+    return v as T;
+  }
 
   let nav = null;
   if (data != null) {
     nav = (
-      <nav className="col-md-2 d-none d-md-block bg-light sidebar">
-        <div className="sidebar-sticky">
-          <ul className="nav flex-column">
-            <li className="nav-item">
-              <a className="nav-link active" href="#">
-                <span data-feather="home" />
-                Dashboard <span className="sr-only">(current)</span>
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="file" />
-                Orders
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="shopping-cart" />
-                Products
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="users" />
-                Customers
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="bar-chart-2" />
-                Reports
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="layers" />
-                Integrations
-              </a>
-            </li>
-          </ul>
-
-          <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-            <span>Saved reports</span>
-            <a className="d-flex align-items-center text-muted" href="#">
-              <span data-feather="plus-circle" />
+      <>
+        <ul className="nav flex-column">
+          <li className="nav-item">
+            <a className="nav-link active" href="#">
+              Dashboard
             </a>
-          </h6>
-          <ul className="nav flex-column mb-2">
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="file-text" />
-                Current month
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="file-text" />
-                Last quarter
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="file-text" />
-                Social engagement
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" href="#">
-                <span data-feather="file-text" />
-                Year-end sale
-              </a>
-            </li>
-          </ul>
-        </div>
-      </nav>
+          </li>
+        </ul>
+
+        <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+          <span>Kinds</span>
+        </h6>
+        <ul className="nav flex-column">
+          {t(data.getSchema())
+            .getKindsList()
+            .map(kind => (
+              <li className="nav-item">
+                <a className="nav-link" href="#">
+                  {kind.getName()}
+                </a>
+              </li>
+            ))}
+        </ul>
+
+        <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+          <span>SDKs</span>
+        </h6>
+        <ul className="nav flex-column mb-2">
+          <li className="nav-item">
+            <a className="nav-link" href="/sdk/client.proto" target="_blank">
+              gRPC Protocol Spec
+            </a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link" href="/sdk/client.go" target="_blank">
+              gRPC Go Client
+            </a>
+          </li>
+        </ul>
+      </>
     );
   }
 
@@ -112,53 +84,45 @@ const App = () => {
 
       <div className="container-fluid">
         <div className="row">
-          {nav}
+          <nav className="col-md-2 d-none d-md-block bg-light sidebar">
+            <div className="sidebar-sticky">{nav}</div>
+          </nav>
 
-          <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4">
-            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-              <h1 className="h2">Dashboard</h1>
+          <main role="main" className="col-sm-12 col-md-10 ml-sm-auto px-4">
+            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-0 border-bottom">
+              <h1 className="h2">Kind: User</h1>
               <div className="btn-toolbar mb-2 mb-md-0">
                 <div className="btn-group mr-2">
                   <button
                     type="button"
                     className="btn btn-sm btn-outline-secondary"
                   >
-                    Share
+                    Page 1
                   </button>
                   <button
                     type="button"
                     className="btn btn-sm btn-outline-secondary"
                   >
-                    Export
+                    2
                   </button>
                 </div>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-secondary dropdown-toggle"
+                  className="btn btn-sm btn-success"
                 >
-                  <span data-feather="calendar" />
-                  This week
+                  Create User
                 </button>
               </div>
             </div>
-
-            <canvas
-              className="my-4 w-100"
-              id="myChart"
-              width="900"
-              height="380"
-            />
-
-            <h2>Section title</h2>
             <div className="table-responsive">
               <table className="table table-striped table-sm">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Header</th>
-                    <th>Header</th>
-                    <th>Header</th>
-                    <th>Header</th>
+                    <th style={{borderTop: 'none'}}>#</th>
+                    <th style={{borderTop: 'none'}}>Header</th>
+                    <th style={{borderTop: 'none'}}>Header</th>
+                    <th style={{borderTop: 'none'}}>Header</th>
+                    <th style={{borderTop: 'none'}}>Header</th>
                   </tr>
                 </thead>
                 <tbody>

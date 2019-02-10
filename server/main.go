@@ -413,8 +413,15 @@ func main() {
 		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
 		wrappedGrpc := grpcweb.WrapServer(grpcServer)
 		http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			resp.Header().Set("Access-Control-Allow-Origin", "*")
+			resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+			resp.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, x-grpc-web")
+			if req.Method == "OPTIONS" {
+				return
+			}
 			if wrappedGrpc.IsGrpcWebRequest(req) {
 				wrappedGrpc.ServeHTTP(resp, req)
+				return
 			}
 			http.DefaultServeMux.ServeHTTP(resp, req)
 		}))

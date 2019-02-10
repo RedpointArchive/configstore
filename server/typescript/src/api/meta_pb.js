@@ -5,6 +5,7 @@
  *     field starts with 'MSG_' and isn't a translatable message.
  * @public
  */
+/* eslint-disable */
 // GENERATED CODE -- DO NOT EDIT!
 
 var jspb = require('google-protobuf');
@@ -1221,3 +1222,4 @@ proto.meta.ValueType = {
 };
 
 goog.object.extend(exports, proto.meta);
+
