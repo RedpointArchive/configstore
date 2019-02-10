@@ -17,6 +17,35 @@ try {
     rm -Recurse -Force vendor/github.com/golang/protobuf
     git submodule update --init --recursive
 
+    Write-Output "Generate meta.go..."
+    .\protoc.exe --go_out=plugins=grpc:meta .\meta.proto
+    if ($LastExitCode -ne 0) {
+        exit $LastExitCode
+    }
+    $Content = Get-Content -Raw -Path .\meta\meta.pb.go
+    $Content = $Content.Replace("package meta", "package main")
+    Set-Content -Path .\meta\meta.pb.go -Value $Content
+    Move-Item -Path .\meta\meta.pb.go -Destination .\meta.pb.go -Force
+
+    Write-Output "Generate TypeScript gRPC client..."
+    Push-Location .\typescript
+    try {
+        if (!(Test-Path src\api)) {
+            New-Item -ItemType Directory -Path src\api | Out-Null
+        }
+        ..\protoc.exe `
+            --plugin="protoc-gen-ts=.\node_modules\.bin\protoc-gen-ts.cmd" `
+            --js_out="import_style=commonjs,binary:src/api" `
+            --ts_out="service=true:src/api" `
+            -I .. `
+            meta.proto
+        if ($LastExitCode -ne 0) {
+            exit $LastExitCode
+        }
+    } finally {
+        Pop-Location
+    }
+
     Write-Output "Building server..."
     go build -mod vendor -o server.exe .
     if ($LastExitCode -ne 0) {

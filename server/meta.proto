@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package meta;
+
+enum ValueType {
+    Double = 0;
+    Int64 = 1;
+    String = 2;
+    Timestamp = 3;
+    Boolean = 4;
+}
+
+message Value {
+    ValueType type = 1;
+    double doubleValue = 2;
+    int64 int64Value = 3;
+    string stringValue = 4;
+    bytes timestampValue = 5;
+    bool booleanValue = 6;
+}
+
+message Field {
+    int32 id = 1;
+    string name = 2;
+    ValueType type = 3;
+    string comment = 4;
+}
+
+message Kind {
+    string name = 1;
+    repeated Field fields = 2;
+}
+
+message Schema {
+    string name = 1;
+    repeated Kind kinds = 2;
+}
+
+message GetSchemaRequest {
+}
+
+message GetSchemaResponse {
+    Schema schema = 1;
+}
+
+service ConfigstoreMetaService {
+    rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse);
+}

@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jhump/protoreflect/desc/protoprint"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/kelseyhightower/envconfig"
@@ -392,6 +393,10 @@ func main() {
 			)
 		}
 
+		RegisterConfigstoreMetaServiceServer(grpcServer, &configstoreMetaServiceServer{
+			schema: schema,
+		})
+
 		// Start gRPC server.
 		go func() {
 			fmt.Println(fmt.Sprintf("Running gRPC server on port %d...", config.GrpcPort))
@@ -406,7 +411,13 @@ func main() {
 			fmt.Fprintf(w, "%s", clientProtoGoCode)
 		})
 		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
-		http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), nil)
+		wrappedGrpc := grpcweb.WrapServer(grpcServer)
+		http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			if wrappedGrpc.IsGrpcWebRequest(req) {
+				wrappedGrpc.ServeHTTP(resp, req)
+			}
+			http.DefaultServeMux.ServeHTTP(resp, req)
+		}))
 	} else if mode == runModeGenerate {
 		fmt.Println(clientProtoGoCode)
 	}
