@@ -64,7 +64,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	clientProtoGoCode, err := generateGoCode(fileDesc, schema.Name)
+	clientProtoGoCode, err := generateGoCode(fileDesc, schema)
 	if err != nil {
 		log.Fatalln(fmt.Sprintf("can't generate Go code: %s", err))
 	}
@@ -118,10 +118,6 @@ func main() {
 									return nil, err
 								}
 
-								if limit.(uint32) == 0 {
-									return nil, fmt.Errorf("limit must be greater than 0, or omitted")
-								}
-
 								var start interface{}
 								if startBytes != nil {
 									if len(startBytes.([]byte)[:]) > 0 {
@@ -130,16 +126,14 @@ func main() {
 								}
 
 								var snapshots []*firestore.DocumentSnapshot
-								if limit == nil && start == nil {
+								if (limit == nil || limit.(uint32) == 0) && start == nil {
 									snapshots, err = client.Collection(kindName).Documents(ctx).GetAll()
-								} else if limit == nil {
-									ref := client.Doc(start.(string))
-									snapshots, err = client.Collection(kindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(ref.ID).Documents(ctx).GetAll()
+								} else if limit == nil || limit.(uint32) == 0 {
+									snapshots, err = client.Collection(kindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Documents(ctx).GetAll()
 								} else if start == nil {
 									snapshots, err = client.Collection(kindName).Limit(int(limit.(uint32))).Documents(ctx).GetAll()
 								} else {
-									ref := client.Doc(start.(string))
-									snapshots, err = client.Collection(kindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(ref.ID).Limit(int(limit.(uint32))).Documents(ctx).GetAll()
+									snapshots, err = client.Collection(kindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Limit(int(limit.(uint32))).Documents(ctx).GetAll()
 								}
 
 								if err != nil {
@@ -163,14 +157,14 @@ func main() {
 								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
 								out.SetFieldByName("entities", entities)
 
-								if limit != nil {
+								if !(limit == nil || limit.(uint32) == 0) {
 									if uint32(len(entities)) < limit.(uint32) {
 										out.SetFieldByName("moreResults", false)
 									} else {
 										// TODO: query to see if there really are more results, to make this behave like datastore
 										out.SetFieldByName("moreResults", true)
 										last := snapshots[len(snapshots)-1]
-										out.SetFieldByName("next", []byte(last.Ref.Path))
+										out.SetFieldByName("next", []byte(last.Ref.ID))
 									}
 								} else {
 									out.SetFieldByName("moreResults", false)

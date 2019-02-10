@@ -128,6 +128,34 @@ func TestWatchThenCreate(t *testing.T) {
 	}
 }
 
+func TestStore(t *testing.T) {
+	store1, err := NewUserStore(ctx, client)
+	assert.NilError(t, err)
+
+	store2, err := NewUserStore(ctx, client)
+	assert.NilError(t, err)
+
+	user, err := store1.Create(ctx, &User{
+		Id:           "",
+		EmailAddress: "hello@example.com",
+		PasswordHash: "v",
+	})
+	assert.NilError(t, err)
+
+	time.Sleep(1 * time.Second)
+
+	_, ok := store2.GetAndCheck(user.Id)
+	assert.Equal(t, ok, true)
+
+	_, err = store1.Delete(ctx, user.Id)
+	assert.NilError(t, err)
+
+	time.Sleep(1 * time.Second)
+
+	_, ok = store2.GetAndCheck(user.Id)
+	assert.Equal(t, ok, false)
+}
+
 func TestCreateThenUpdateThenGet(t *testing.T) {
 	resp, err := client.Create(ctx, &CreateUserRequest{
 		Entity: &User{
