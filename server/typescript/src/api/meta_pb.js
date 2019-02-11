@@ -13,9 +13,15 @@ var goog = jspb;
 var global = Function('return this')();
 
 goog.exportSymbol('proto.meta.Field', null, global);
+goog.exportSymbol('proto.meta.FieldEditorInfo', null, global);
+goog.exportSymbol('proto.meta.FieldEditorInfoType', null, global);
 goog.exportSymbol('proto.meta.GetSchemaRequest', null, global);
 goog.exportSymbol('proto.meta.GetSchemaResponse', null, global);
 goog.exportSymbol('proto.meta.Kind', null, global);
+goog.exportSymbol('proto.meta.KindEditor', null, global);
+goog.exportSymbol('proto.meta.MetaEntity', null, global);
+goog.exportSymbol('proto.meta.MetaListEntitiesRequest', null, global);
+goog.exportSymbol('proto.meta.MetaListEntitiesResponse', null, global);
 goog.exportSymbol('proto.meta.Schema', null, global);
 goog.exportSymbol('proto.meta.Value', null, global);
 goog.exportSymbol('proto.meta.ValueType', null, global);
@@ -66,12 +72,13 @@ proto.meta.Value.prototype.toObject = function(opt_includeInstance) {
  */
 proto.meta.Value.toObject = function(includeInstance, msg) {
   var f, obj = {
-    type: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    doublevalue: +jspb.Message.getFieldWithDefault(msg, 2, 0.0),
-    int64value: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    stringvalue: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 1, 0),
+    type: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    doublevalue: +jspb.Message.getFieldWithDefault(msg, 3, 0.0),
+    int64value: jspb.Message.getFieldWithDefault(msg, 4, 0),
+    stringvalue: jspb.Message.getFieldWithDefault(msg, 5, ""),
     timestampvalue: msg.getTimestampvalue_asB64(),
-    booleanvalue: jspb.Message.getFieldWithDefault(msg, 6, false)
+    booleanvalue: jspb.Message.getFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -109,26 +116,30 @@ proto.meta.Value.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setId(value);
+      break;
+    case 2:
       var value = /** @type {!proto.meta.ValueType} */ (reader.readEnum());
       msg.setType(value);
       break;
-    case 2:
+    case 3:
       var value = /** @type {number} */ (reader.readDouble());
       msg.setDoublevalue(value);
       break;
-    case 3:
+    case 4:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setInt64value(value);
       break;
-    case 4:
+    case 5:
       var value = /** @type {string} */ (reader.readString());
       msg.setStringvalue(value);
       break;
-    case 5:
+    case 6:
       var value = /** @type {!Uint8Array} */ (reader.readBytes());
       msg.setTimestampvalue(value);
       break;
-    case 6:
+    case 7:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setBooleanvalue(value);
       break;
@@ -161,45 +172,52 @@ proto.meta.Value.prototype.serializeBinary = function() {
  */
 proto.meta.Value.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getId();
+  if (f !== 0) {
+    writer.writeInt32(
+      1,
+      f
+    );
+  }
   f = message.getType();
   if (f !== 0.0) {
     writer.writeEnum(
-      1,
+      2,
       f
     );
   }
   f = message.getDoublevalue();
   if (f !== 0.0) {
     writer.writeDouble(
-      2,
+      3,
       f
     );
   }
   f = message.getInt64value();
   if (f !== 0) {
     writer.writeInt64(
-      3,
+      4,
       f
     );
   }
   f = message.getStringvalue();
   if (f.length > 0) {
     writer.writeString(
-      4,
+      5,
       f
     );
   }
   f = message.getTimestampvalue_asU8();
   if (f.length > 0) {
     writer.writeBytes(
-      5,
+      6,
       f
     );
   }
   f = message.getBooleanvalue();
   if (f) {
     writer.writeBool(
-      6,
+      7,
       f
     );
   }
@@ -207,76 +225,91 @@ proto.meta.Value.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ValueType type = 1;
+ * optional int32 id = 1;
+ * @return {number}
+ */
+proto.meta.Value.prototype.getId = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/** @param {number} value */
+proto.meta.Value.prototype.setId = function(value) {
+  jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+/**
+ * optional ValueType type = 2;
  * @return {!proto.meta.ValueType}
  */
 proto.meta.Value.prototype.getType = function() {
-  return /** @type {!proto.meta.ValueType} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+  return /** @type {!proto.meta.ValueType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
 /** @param {!proto.meta.ValueType} value */
 proto.meta.Value.prototype.setType = function(value) {
-  jspb.Message.setProto3EnumField(this, 1, value);
+  jspb.Message.setProto3EnumField(this, 2, value);
 };
 
 
 /**
- * optional double doubleValue = 2;
+ * optional double doubleValue = 3;
  * @return {number}
  */
 proto.meta.Value.prototype.getDoublevalue = function() {
-  return /** @type {number} */ (+jspb.Message.getFieldWithDefault(this, 2, 0.0));
+  return /** @type {number} */ (+jspb.Message.getFieldWithDefault(this, 3, 0.0));
 };
 
 
 /** @param {number} value */
 proto.meta.Value.prototype.setDoublevalue = function(value) {
-  jspb.Message.setProto3FloatField(this, 2, value);
+  jspb.Message.setProto3FloatField(this, 3, value);
 };
 
 
 /**
- * optional int64 int64Value = 3;
+ * optional int64 int64Value = 4;
  * @return {number}
  */
 proto.meta.Value.prototype.getInt64value = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
 };
 
 
 /** @param {number} value */
 proto.meta.Value.prototype.setInt64value = function(value) {
-  jspb.Message.setProto3IntField(this, 3, value);
+  jspb.Message.setProto3IntField(this, 4, value);
 };
 
 
 /**
- * optional string stringValue = 4;
+ * optional string stringValue = 5;
  * @return {string}
  */
 proto.meta.Value.prototype.getStringvalue = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
 };
 
 
 /** @param {string} value */
 proto.meta.Value.prototype.setStringvalue = function(value) {
-  jspb.Message.setProto3StringField(this, 4, value);
+  jspb.Message.setProto3StringField(this, 5, value);
 };
 
 
 /**
- * optional bytes timestampValue = 5;
+ * optional bytes timestampValue = 6;
  * @return {!(string|Uint8Array)}
  */
 proto.meta.Value.prototype.getTimestampvalue = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
 };
 
 
 /**
- * optional bytes timestampValue = 5;
+ * optional bytes timestampValue = 6;
  * This is a type-conversion wrapper around `getTimestampvalue()`
  * @return {string}
  */
@@ -287,7 +320,7 @@ proto.meta.Value.prototype.getTimestampvalue_asB64 = function() {
 
 
 /**
- * optional bytes timestampValue = 5;
+ * optional bytes timestampValue = 6;
  * Note that Uint8Array is not supported on all browsers.
  * @see http://caniuse.com/Uint8Array
  * This is a type-conversion wrapper around `getTimestampvalue()`
@@ -301,24 +334,24 @@ proto.meta.Value.prototype.getTimestampvalue_asU8 = function() {
 
 /** @param {!(string|Uint8Array)} value */
 proto.meta.Value.prototype.setTimestampvalue = function(value) {
-  jspb.Message.setProto3BytesField(this, 5, value);
+  jspb.Message.setProto3BytesField(this, 6, value);
 };
 
 
 /**
- * optional bool booleanValue = 6;
+ * optional bool booleanValue = 7;
  * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
  * You should avoid comparisons like {@code val === true/false} in those cases.
  * @return {boolean}
  */
 proto.meta.Value.prototype.getBooleanvalue = function() {
-  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 6, false));
+  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 7, false));
 };
 
 
 /** @param {boolean} value */
 proto.meta.Value.prototype.setBooleanvalue = function(value) {
-  jspb.Message.setProto3BooleanField(this, 6, value);
+  jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 
@@ -372,7 +405,8 @@ proto.meta.Field.toObject = function(includeInstance, msg) {
     id: jspb.Message.getFieldWithDefault(msg, 1, 0),
     name: jspb.Message.getFieldWithDefault(msg, 2, ""),
     type: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    comment: jspb.Message.getFieldWithDefault(msg, 4, "")
+    comment: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    editor: (f = msg.getEditor()) && proto.meta.FieldEditorInfo.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -424,6 +458,11 @@ proto.meta.Field.deserializeBinaryFromReader = function(msg, reader) {
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setComment(value);
+      break;
+    case 5:
+      var value = new proto.meta.FieldEditorInfo;
+      reader.readMessage(value,proto.meta.FieldEditorInfo.deserializeBinaryFromReader);
+      msg.setEditor(value);
       break;
     default:
       reader.skipField();
@@ -480,6 +519,14 @@ proto.meta.Field.serializeBinaryToWriter = function(message, writer) {
     writer.writeString(
       4,
       f
+    );
+  }
+  f = message.getEditor();
+  if (f != null) {
+    writer.writeMessage(
+      5,
+      f,
+      proto.meta.FieldEditorInfo.serializeBinaryToWriter
     );
   }
 };
@@ -545,6 +592,430 @@ proto.meta.Field.prototype.setComment = function(value) {
 };
 
 
+/**
+ * optional FieldEditorInfo editor = 5;
+ * @return {?proto.meta.FieldEditorInfo}
+ */
+proto.meta.Field.prototype.getEditor = function() {
+  return /** @type{?proto.meta.FieldEditorInfo} */ (
+    jspb.Message.getWrapperField(this, proto.meta.FieldEditorInfo, 5));
+};
+
+
+/** @param {?proto.meta.FieldEditorInfo|undefined} value */
+proto.meta.Field.prototype.setEditor = function(value) {
+  jspb.Message.setWrapperField(this, 5, value);
+};
+
+
+proto.meta.Field.prototype.clearEditor = function() {
+  this.setEditor(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.Field.prototype.hasEditor = function() {
+  return jspb.Message.getField(this, 5) != null;
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.FieldEditorInfo = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.FieldEditorInfo, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.FieldEditorInfo.displayName = 'proto.meta.FieldEditorInfo';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.FieldEditorInfo.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.FieldEditorInfo.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.FieldEditorInfo} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.FieldEditorInfo.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    displayname: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    type: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    readonly: jspb.Message.getFieldWithDefault(msg, 3, false),
+    foreigntype: jspb.Message.getFieldWithDefault(msg, 4, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.FieldEditorInfo}
+ */
+proto.meta.FieldEditorInfo.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.FieldEditorInfo;
+  return proto.meta.FieldEditorInfo.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.FieldEditorInfo} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.FieldEditorInfo}
+ */
+proto.meta.FieldEditorInfo.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDisplayname(value);
+      break;
+    case 2:
+      var value = /** @type {!proto.meta.FieldEditorInfoType} */ (reader.readEnum());
+      msg.setType(value);
+      break;
+    case 3:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setReadonly(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setForeigntype(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.FieldEditorInfo.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.FieldEditorInfo.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.FieldEditorInfo} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.FieldEditorInfo.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getDisplayname();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      2,
+      f
+    );
+  }
+  f = message.getReadonly();
+  if (f) {
+    writer.writeBool(
+      3,
+      f
+    );
+  }
+  f = message.getForeigntype();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string displayName = 1;
+ * @return {string}
+ */
+proto.meta.FieldEditorInfo.prototype.getDisplayname = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.FieldEditorInfo.prototype.setDisplayname = function(value) {
+  jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional FieldEditorInfoType type = 2;
+ * @return {!proto.meta.FieldEditorInfoType}
+ */
+proto.meta.FieldEditorInfo.prototype.getType = function() {
+  return /** @type {!proto.meta.FieldEditorInfoType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+
+/** @param {!proto.meta.FieldEditorInfoType} value */
+proto.meta.FieldEditorInfo.prototype.setType = function(value) {
+  jspb.Message.setProto3EnumField(this, 2, value);
+};
+
+
+/**
+ * optional bool readonly = 3;
+ * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
+ * You should avoid comparisons like {@code val === true/false} in those cases.
+ * @return {boolean}
+ */
+proto.meta.FieldEditorInfo.prototype.getReadonly = function() {
+  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 3, false));
+};
+
+
+/** @param {boolean} value */
+proto.meta.FieldEditorInfo.prototype.setReadonly = function(value) {
+  jspb.Message.setProto3BooleanField(this, 3, value);
+};
+
+
+/**
+ * optional string foreignType = 4;
+ * @return {string}
+ */
+proto.meta.FieldEditorInfo.prototype.getForeigntype = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.FieldEditorInfo.prototype.setForeigntype = function(value) {
+  jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.KindEditor = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.KindEditor, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.KindEditor.displayName = 'proto.meta.KindEditor';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.KindEditor.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.KindEditor.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.KindEditor} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.KindEditor.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    singular: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    plural: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.KindEditor}
+ */
+proto.meta.KindEditor.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.KindEditor;
+  return proto.meta.KindEditor.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.KindEditor} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.KindEditor}
+ */
+proto.meta.KindEditor.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setSingular(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setPlural(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.KindEditor.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.KindEditor.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.KindEditor} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.KindEditor.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getSingular();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getPlural();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string singular = 1;
+ * @return {string}
+ */
+proto.meta.KindEditor.prototype.getSingular = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.KindEditor.prototype.setSingular = function(value) {
+  jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string plural = 2;
+ * @return {string}
+ */
+proto.meta.KindEditor.prototype.getPlural = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.KindEditor.prototype.setPlural = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
 
 /**
  * Generated by JsPbCodeGenerator.
@@ -601,7 +1072,8 @@ proto.meta.Kind.toObject = function(includeInstance, msg) {
   var f, obj = {
     name: jspb.Message.getFieldWithDefault(msg, 1, ""),
     fieldsList: jspb.Message.toObjectList(msg.getFieldsList(),
-    proto.meta.Field.toObject, includeInstance)
+    proto.meta.Field.toObject, includeInstance),
+    editor: (f = msg.getEditor()) && proto.meta.KindEditor.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -647,6 +1119,11 @@ proto.meta.Kind.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.meta.Field.deserializeBinaryFromReader);
       msg.addFields(value);
       break;
+    case 3:
+      var value = new proto.meta.KindEditor;
+      reader.readMessage(value,proto.meta.KindEditor.deserializeBinaryFromReader);
+      msg.setEditor(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -689,6 +1166,14 @@ proto.meta.Kind.serializeBinaryToWriter = function(message, writer) {
       2,
       f,
       proto.meta.Field.serializeBinaryToWriter
+    );
+  }
+  f = message.getEditor();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto.meta.KindEditor.serializeBinaryToWriter
     );
   }
 };
@@ -737,6 +1222,36 @@ proto.meta.Kind.prototype.addFields = function(opt_value, opt_index) {
 
 proto.meta.Kind.prototype.clearFieldsList = function() {
   this.setFieldsList([]);
+};
+
+
+/**
+ * optional KindEditor editor = 3;
+ * @return {?proto.meta.KindEditor}
+ */
+proto.meta.Kind.prototype.getEditor = function() {
+  return /** @type{?proto.meta.KindEditor} */ (
+    jspb.Message.getWrapperField(this, proto.meta.KindEditor, 3));
+};
+
+
+/** @param {?proto.meta.KindEditor|undefined} value */
+proto.meta.Kind.prototype.setEditor = function(value) {
+  jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+proto.meta.Kind.prototype.clearEditor = function() {
+  this.setEditor(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.Kind.prototype.hasEditor = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -1210,6 +1725,669 @@ proto.meta.GetSchemaResponse.prototype.hasSchema = function() {
 };
 
 
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.MetaListEntitiesRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.MetaListEntitiesRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.MetaListEntitiesRequest.displayName = 'proto.meta.MetaListEntitiesRequest';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.MetaListEntitiesRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.MetaListEntitiesRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.MetaListEntitiesRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaListEntitiesRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    start: msg.getStart_asB64(),
+    limit: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    kindname: jspb.Message.getFieldWithDefault(msg, 3, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.MetaListEntitiesRequest}
+ */
+proto.meta.MetaListEntitiesRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.MetaListEntitiesRequest;
+  return proto.meta.MetaListEntitiesRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.MetaListEntitiesRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.MetaListEntitiesRequest}
+ */
+proto.meta.MetaListEntitiesRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {!Uint8Array} */ (reader.readBytes());
+      msg.setStart(value);
+      break;
+    case 2:
+      var value = /** @type {number} */ (reader.readUint32());
+      msg.setLimit(value);
+      break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setKindname(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.MetaListEntitiesRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.MetaListEntitiesRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.MetaListEntitiesRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaListEntitiesRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getStart_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(
+      1,
+      f
+    );
+  }
+  f = message.getLimit();
+  if (f !== 0) {
+    writer.writeUint32(
+      2,
+      f
+    );
+  }
+  f = message.getKindname();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional bytes start = 1;
+ * @return {!(string|Uint8Array)}
+ */
+proto.meta.MetaListEntitiesRequest.prototype.getStart = function() {
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * optional bytes start = 1;
+ * This is a type-conversion wrapper around `getStart()`
+ * @return {string}
+ */
+proto.meta.MetaListEntitiesRequest.prototype.getStart_asB64 = function() {
+  return /** @type {string} */ (jspb.Message.bytesAsB64(
+      this.getStart()));
+};
+
+
+/**
+ * optional bytes start = 1;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getStart()`
+ * @return {!Uint8Array}
+ */
+proto.meta.MetaListEntitiesRequest.prototype.getStart_asU8 = function() {
+  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
+      this.getStart()));
+};
+
+
+/** @param {!(string|Uint8Array)} value */
+proto.meta.MetaListEntitiesRequest.prototype.setStart = function(value) {
+  jspb.Message.setProto3BytesField(this, 1, value);
+};
+
+
+/**
+ * optional uint32 limit = 2;
+ * @return {number}
+ */
+proto.meta.MetaListEntitiesRequest.prototype.getLimit = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+
+/** @param {number} value */
+proto.meta.MetaListEntitiesRequest.prototype.setLimit = function(value) {
+  jspb.Message.setProto3IntField(this, 2, value);
+};
+
+
+/**
+ * optional string kindName = 3;
+ * @return {string}
+ */
+proto.meta.MetaListEntitiesRequest.prototype.getKindname = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.MetaListEntitiesRequest.prototype.setKindname = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.MetaListEntitiesResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.meta.MetaListEntitiesResponse.repeatedFields_, null);
+};
+goog.inherits(proto.meta.MetaListEntitiesResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.MetaListEntitiesResponse.displayName = 'proto.meta.MetaListEntitiesResponse';
+}
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.meta.MetaListEntitiesResponse.repeatedFields_ = [3];
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.MetaListEntitiesResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.MetaListEntitiesResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaListEntitiesResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    next: msg.getNext_asB64(),
+    moreresults: jspb.Message.getFieldWithDefault(msg, 2, false),
+    entitiesList: jspb.Message.toObjectList(msg.getEntitiesList(),
+    proto.meta.MetaEntity.toObject, includeInstance)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.MetaListEntitiesResponse}
+ */
+proto.meta.MetaListEntitiesResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.MetaListEntitiesResponse;
+  return proto.meta.MetaListEntitiesResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.MetaListEntitiesResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.MetaListEntitiesResponse}
+ */
+proto.meta.MetaListEntitiesResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {!Uint8Array} */ (reader.readBytes());
+      msg.setNext(value);
+      break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setMoreresults(value);
+      break;
+    case 3:
+      var value = new proto.meta.MetaEntity;
+      reader.readMessage(value,proto.meta.MetaEntity.deserializeBinaryFromReader);
+      msg.addEntities(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.MetaListEntitiesResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.MetaListEntitiesResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaListEntitiesResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getNext_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(
+      1,
+      f
+    );
+  }
+  f = message.getMoreresults();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
+  f = message.getEntitiesList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      3,
+      f,
+      proto.meta.MetaEntity.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional bytes next = 1;
+ * @return {!(string|Uint8Array)}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.getNext = function() {
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * optional bytes next = 1;
+ * This is a type-conversion wrapper around `getNext()`
+ * @return {string}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.getNext_asB64 = function() {
+  return /** @type {string} */ (jspb.Message.bytesAsB64(
+      this.getNext()));
+};
+
+
+/**
+ * optional bytes next = 1;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getNext()`
+ * @return {!Uint8Array}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.getNext_asU8 = function() {
+  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
+      this.getNext()));
+};
+
+
+/** @param {!(string|Uint8Array)} value */
+proto.meta.MetaListEntitiesResponse.prototype.setNext = function(value) {
+  jspb.Message.setProto3BytesField(this, 1, value);
+};
+
+
+/**
+ * optional bool moreResults = 2;
+ * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
+ * You should avoid comparisons like {@code val === true/false} in those cases.
+ * @return {boolean}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.getMoreresults = function() {
+  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 2, false));
+};
+
+
+/** @param {boolean} value */
+proto.meta.MetaListEntitiesResponse.prototype.setMoreresults = function(value) {
+  jspb.Message.setProto3BooleanField(this, 2, value);
+};
+
+
+/**
+ * repeated MetaEntity entities = 3;
+ * @return {!Array<!proto.meta.MetaEntity>}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.getEntitiesList = function() {
+  return /** @type{!Array<!proto.meta.MetaEntity>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.meta.MetaEntity, 3));
+};
+
+
+/** @param {!Array<!proto.meta.MetaEntity>} value */
+proto.meta.MetaListEntitiesResponse.prototype.setEntitiesList = function(value) {
+  jspb.Message.setRepeatedWrapperField(this, 3, value);
+};
+
+
+/**
+ * @param {!proto.meta.MetaEntity=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.meta.MetaEntity}
+ */
+proto.meta.MetaListEntitiesResponse.prototype.addEntities = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 3, opt_value, proto.meta.MetaEntity, opt_index);
+};
+
+
+proto.meta.MetaListEntitiesResponse.prototype.clearEntitiesList = function() {
+  this.setEntitiesList([]);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.MetaEntity = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.meta.MetaEntity.repeatedFields_, null);
+};
+goog.inherits(proto.meta.MetaEntity, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.MetaEntity.displayName = 'proto.meta.MetaEntity';
+}
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.meta.MetaEntity.repeatedFields_ = [2];
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.MetaEntity.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.MetaEntity.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.MetaEntity} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaEntity.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    valuesList: jspb.Message.toObjectList(msg.getValuesList(),
+    proto.meta.Value.toObject, includeInstance)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.MetaEntity}
+ */
+proto.meta.MetaEntity.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.MetaEntity;
+  return proto.meta.MetaEntity.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.MetaEntity} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.MetaEntity}
+ */
+proto.meta.MetaEntity.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setId(value);
+      break;
+    case 2:
+      var value = new proto.meta.Value;
+      reader.readMessage(value,proto.meta.Value.deserializeBinaryFromReader);
+      msg.addValues(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.MetaEntity.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.MetaEntity.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.MetaEntity} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaEntity.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getId();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getValuesList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      2,
+      f,
+      proto.meta.Value.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string id = 1;
+ * @return {string}
+ */
+proto.meta.MetaEntity.prototype.getId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.MetaEntity.prototype.setId = function(value) {
+  jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * repeated Value values = 2;
+ * @return {!Array<!proto.meta.Value>}
+ */
+proto.meta.MetaEntity.prototype.getValuesList = function() {
+  return /** @type{!Array<!proto.meta.Value>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.meta.Value, 2));
+};
+
+
+/** @param {!Array<!proto.meta.Value>} value */
+proto.meta.MetaEntity.prototype.setValuesList = function(value) {
+  jspb.Message.setRepeatedWrapperField(this, 2, value);
+};
+
+
+/**
+ * @param {!proto.meta.Value=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.meta.Value}
+ */
+proto.meta.MetaEntity.prototype.addValues = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 2, opt_value, proto.meta.Value, opt_index);
+};
+
+
+proto.meta.MetaEntity.prototype.clearValuesList = function() {
+  this.setValuesList([]);
+};
+
+
 /**
  * @enum {number}
  */
@@ -1219,6 +2397,15 @@ proto.meta.ValueType = {
   STRING: 2,
   TIMESTAMP: 3,
   BOOLEAN: 4
+};
+
+/**
+ * @enum {number}
+ */
+proto.meta.FieldEditorInfoType = {
+  DEFAULT: 0,
+  PASSWORD: 1,
+  LOOKUP: 2
 };
 
 goog.object.extend(exports, proto.meta);

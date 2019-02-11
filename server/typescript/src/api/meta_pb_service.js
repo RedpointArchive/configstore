@@ -19,6 +19,15 @@ ConfigstoreMetaService.GetSchema = {
   responseType: meta_pb.GetSchemaResponse
 };
 
+ConfigstoreMetaService.MetaList = {
+  methodName: "MetaList",
+  service: ConfigstoreMetaService,
+  requestStream: false,
+  responseStream: false,
+  requestType: meta_pb.MetaListEntitiesRequest,
+  responseType: meta_pb.MetaListEntitiesResponse
+};
+
 exports.ConfigstoreMetaService = ConfigstoreMetaService;
 
 function ConfigstoreMetaServiceClient(serviceHost, options) {
@@ -31,6 +40,37 @@ ConfigstoreMetaServiceClient.prototype.getSchema = function getSchema(requestMes
     callback = arguments[1];
   }
   var client = grpc.unary(ConfigstoreMetaService.GetSchema, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+ConfigstoreMetaServiceClient.prototype.metaList = function metaList(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(ConfigstoreMetaService.MetaList, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

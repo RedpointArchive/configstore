@@ -13,9 +13,19 @@ type ConfigstoreMetaServiceGetSchema = {
   readonly responseType: typeof meta_pb.GetSchemaResponse;
 };
 
+type ConfigstoreMetaServiceMetaList = {
+  readonly methodName: string;
+  readonly service: typeof ConfigstoreMetaService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof meta_pb.MetaListEntitiesRequest;
+  readonly responseType: typeof meta_pb.MetaListEntitiesResponse;
+};
+
 export class ConfigstoreMetaService {
   static readonly serviceName: string;
   static readonly GetSchema: ConfigstoreMetaServiceGetSchema;
+  static readonly MetaList: ConfigstoreMetaServiceMetaList;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -58,6 +68,15 @@ export class ConfigstoreMetaServiceClient {
   getSchema(
     requestMessage: meta_pb.GetSchemaRequest,
     callback: (error: ServiceError|null, responseMessage: meta_pb.GetSchemaResponse|null) => void
+  ): UnaryResponse;
+  metaList(
+    requestMessage: meta_pb.MetaListEntitiesRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaListEntitiesResponse|null) => void
+  ): UnaryResponse;
+  metaList(
+    requestMessage: meta_pb.MetaListEntitiesRequest,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaListEntitiesResponse|null) => void
   ): UnaryResponse;
 }
 

@@ -8,6 +8,12 @@ type configstoreSchema struct {
 type configstoreSchemaKind struct {
 	Ancestors []string                     `json:"ancestors"`
 	Fields    []configstoreSchemaKindField `json:"fields"`
+	Editor    configstoreSchemaKindEditor  `json:"editor"`
+}
+
+type configstoreSchemaKindEditor struct {
+	Singular string `json:"singular"`
+	Plural   string `json:"plural"`
 }
 
 type configstoreSchemaKindFieldType string
@@ -21,8 +27,24 @@ const (
 )
 
 type configstoreSchemaKindField struct {
-	ID      int32                          `json:"id"`
-	Name    string                         `json:"name"`
-	Type    configstoreSchemaKindFieldType `json:"type"`
-	Comment string                         `json:"comment"`
+	ID      int32                            `json:"id"`
+	Name    string                           `json:"name"`
+	Type    configstoreSchemaKindFieldType   `json:"type"`
+	Comment string                           `json:"comment"`
+	Editor  configstoreSchemaKindFieldEditor `json:"editor"`
+}
+
+type configstoreSchemaKindFieldEditorType string
+
+const (
+	editorTypeDefault  configstoreSchemaKindFieldEditorType = ""
+	editorTypePassword configstoreSchemaKindFieldEditorType = "password"
+	editorTypeLookup   configstoreSchemaKindFieldEditorType = "lookup"
+)
+
+type configstoreSchemaKindFieldEditor struct {
+	DisplayName string                               `json:"displayName"`
+	Type        configstoreSchemaKindFieldEditorType `json:"type"`
+	Readonly    bool                                 `json:"readonly"`
+	ForeignType string                               `json:"foreignType"`
 }

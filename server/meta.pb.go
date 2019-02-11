@@ -56,13 +56,42 @@ func (ValueType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{0}
 }
 
+type FieldEditorInfoType int32
+
+const (
+	FieldEditorInfoType_Default  FieldEditorInfoType = 0
+	FieldEditorInfoType_Password FieldEditorInfoType = 1
+	FieldEditorInfoType_Lookup   FieldEditorInfoType = 2
+)
+
+var FieldEditorInfoType_name = map[int32]string{
+	0: "Default",
+	1: "Password",
+	2: "Lookup",
+}
+
+var FieldEditorInfoType_value = map[string]int32{
+	"Default":  0,
+	"Password": 1,
+	"Lookup":   2,
+}
+
+func (x FieldEditorInfoType) String() string {
+	return proto.EnumName(FieldEditorInfoType_name, int32(x))
+}
+
+func (FieldEditorInfoType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{1}
+}
+
 type Value struct {
-	Type                 ValueType `protobuf:"varint,1,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
-	DoubleValue          float64   `protobuf:"fixed64,2,opt,name=doubleValue,proto3" json:"doubleValue,omitempty"`
-	Int64Value           int64     `protobuf:"varint,3,opt,name=int64Value,proto3" json:"int64Value,omitempty"`
-	StringValue          string    `protobuf:"bytes,4,opt,name=stringValue,proto3" json:"stringValue,omitempty"`
-	TimestampValue       []byte    `protobuf:"bytes,5,opt,name=timestampValue,proto3" json:"timestampValue,omitempty"`
-	BooleanValue         bool      `protobuf:"varint,6,opt,name=booleanValue,proto3" json:"booleanValue,omitempty"`
+	Id                   int32     `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type                 ValueType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
+	DoubleValue          float64   `protobuf:"fixed64,3,opt,name=doubleValue,proto3" json:"doubleValue,omitempty"`
+	Int64Value           int64     `protobuf:"varint,4,opt,name=int64Value,proto3" json:"int64Value,omitempty"`
+	StringValue          string    `protobuf:"bytes,5,opt,name=stringValue,proto3" json:"stringValue,omitempty"`
+	TimestampValue       []byte    `protobuf:"bytes,6,opt,name=timestampValue,proto3" json:"timestampValue,omitempty"`
+	BooleanValue         bool      `protobuf:"varint,7,opt,name=booleanValue,proto3" json:"booleanValue,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
@@ -92,6 +121,13 @@ func (m *Value) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Value proto.InternalMessageInfo
+
+func (m *Value) GetId() int32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
 
 func (m *Value) GetType() ValueType {
 	if m != nil {
@@ -136,13 +172,14 @@ func (m *Value) GetBooleanValue() bool {
 }
 
 type Field struct {
-	Id                   int32     `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string    `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Type                 ValueType `protobuf:"varint,3,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
-	Comment              string    `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	Id                   int32            `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string           `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Type                 ValueType        `protobuf:"varint,3,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
+	Comment              string           `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Editor               *FieldEditorInfo `protobuf:"bytes,5,opt,name=editor,proto3" json:"editor,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
 }
 
 func (m *Field) Reset()         { *m = Field{} }
@@ -198,19 +235,137 @@ func (m *Field) GetComment() string {
 	return ""
 }
 
-type Kind struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Fields               []*Field `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
+func (m *Field) GetEditor() *FieldEditorInfo {
+	if m != nil {
+		return m.Editor
+	}
+	return nil
+}
+
+type FieldEditorInfo struct {
+	DisplayName          string              `protobuf:"bytes,1,opt,name=displayName,proto3" json:"displayName,omitempty"`
+	Type                 FieldEditorInfoType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.FieldEditorInfoType" json:"type,omitempty"`
+	Readonly             bool                `protobuf:"varint,3,opt,name=readonly,proto3" json:"readonly,omitempty"`
+	ForeignType          string              `protobuf:"bytes,4,opt,name=foreignType,proto3" json:"foreignType,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *FieldEditorInfo) Reset()         { *m = FieldEditorInfo{} }
+func (m *FieldEditorInfo) String() string { return proto.CompactTextString(m) }
+func (*FieldEditorInfo) ProtoMessage()    {}
+func (*FieldEditorInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{2}
+}
+
+func (m *FieldEditorInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_FieldEditorInfo.Unmarshal(m, b)
+}
+func (m *FieldEditorInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_FieldEditorInfo.Marshal(b, m, deterministic)
+}
+func (m *FieldEditorInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FieldEditorInfo.Merge(m, src)
+}
+func (m *FieldEditorInfo) XXX_Size() int {
+	return xxx_messageInfo_FieldEditorInfo.Size(m)
+}
+func (m *FieldEditorInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_FieldEditorInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FieldEditorInfo proto.InternalMessageInfo
+
+func (m *FieldEditorInfo) GetDisplayName() string {
+	if m != nil {
+		return m.DisplayName
+	}
+	return ""
+}
+
+func (m *FieldEditorInfo) GetType() FieldEditorInfoType {
+	if m != nil {
+		return m.Type
+	}
+	return FieldEditorInfoType_Default
+}
+
+func (m *FieldEditorInfo) GetReadonly() bool {
+	if m != nil {
+		return m.Readonly
+	}
+	return false
+}
+
+func (m *FieldEditorInfo) GetForeignType() string {
+	if m != nil {
+		return m.ForeignType
+	}
+	return ""
+}
+
+type KindEditor struct {
+	Singular             string   `protobuf:"bytes,1,opt,name=singular,proto3" json:"singular,omitempty"`
+	Plural               string   `protobuf:"bytes,2,opt,name=plural,proto3" json:"plural,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *KindEditor) Reset()         { *m = KindEditor{} }
+func (m *KindEditor) String() string { return proto.CompactTextString(m) }
+func (*KindEditor) ProtoMessage()    {}
+func (*KindEditor) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{3}
+}
+
+func (m *KindEditor) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_KindEditor.Unmarshal(m, b)
+}
+func (m *KindEditor) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_KindEditor.Marshal(b, m, deterministic)
+}
+func (m *KindEditor) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KindEditor.Merge(m, src)
+}
+func (m *KindEditor) XXX_Size() int {
+	return xxx_messageInfo_KindEditor.Size(m)
+}
+func (m *KindEditor) XXX_DiscardUnknown() {
+	xxx_messageInfo_KindEditor.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KindEditor proto.InternalMessageInfo
+
+func (m *KindEditor) GetSingular() string {
+	if m != nil {
+		return m.Singular
+	}
+	return ""
+}
+
+func (m *KindEditor) GetPlural() string {
+	if m != nil {
+		return m.Plural
+	}
+	return ""
+}
+
+type Kind struct {
+	Name                 string      `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Fields               []*Field    `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
+	Editor               *KindEditor `protobuf:"bytes,3,opt,name=editor,proto3" json:"editor,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
 }
 
 func (m *Kind) Reset()         { *m = Kind{} }
 func (m *Kind) String() string { return proto.CompactTextString(m) }
 func (*Kind) ProtoMessage()    {}
 func (*Kind) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{2}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{4}
 }
 
 func (m *Kind) XXX_Unmarshal(b []byte) error {
@@ -245,6 +400,13 @@ func (m *Kind) GetFields() []*Field {
 	return nil
 }
 
+func (m *Kind) GetEditor() *KindEditor {
+	if m != nil {
+		return m.Editor
+	}
+	return nil
+}
+
 type Schema struct {
 	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Kinds                []*Kind  `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty"`
@@ -257,7 +419,7 @@ func (m *Schema) Reset()         { *m = Schema{} }
 func (m *Schema) String() string { return proto.CompactTextString(m) }
 func (*Schema) ProtoMessage()    {}
 func (*Schema) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{3}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{5}
 }
 
 func (m *Schema) XXX_Unmarshal(b []byte) error {
@@ -302,7 +464,7 @@ func (m *GetSchemaRequest) Reset()         { *m = GetSchemaRequest{} }
 func (m *GetSchemaRequest) String() string { return proto.CompactTextString(m) }
 func (*GetSchemaRequest) ProtoMessage()    {}
 func (*GetSchemaRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{4}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{6}
 }
 
 func (m *GetSchemaRequest) XXX_Unmarshal(b []byte) error {
@@ -334,7 +496,7 @@ func (m *GetSchemaResponse) Reset()         { *m = GetSchemaResponse{} }
 func (m *GetSchemaResponse) String() string { return proto.CompactTextString(m) }
 func (*GetSchemaResponse) ProtoMessage()    {}
 func (*GetSchemaResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{5}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{7}
 }
 
 func (m *GetSchemaResponse) XXX_Unmarshal(b []byte) error {
@@ -362,46 +524,228 @@ func (m *GetSchemaResponse) GetSchema() *Schema {
 	return nil
 }
 
+type MetaListEntitiesRequest struct {
+	Start                []byte   `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	Limit                uint32   `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	KindName             string   `protobuf:"bytes,3,opt,name=kindName,proto3" json:"kindName,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MetaListEntitiesRequest) Reset()         { *m = MetaListEntitiesRequest{} }
+func (m *MetaListEntitiesRequest) String() string { return proto.CompactTextString(m) }
+func (*MetaListEntitiesRequest) ProtoMessage()    {}
+func (*MetaListEntitiesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{8}
+}
+
+func (m *MetaListEntitiesRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaListEntitiesRequest.Unmarshal(m, b)
+}
+func (m *MetaListEntitiesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaListEntitiesRequest.Marshal(b, m, deterministic)
+}
+func (m *MetaListEntitiesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaListEntitiesRequest.Merge(m, src)
+}
+func (m *MetaListEntitiesRequest) XXX_Size() int {
+	return xxx_messageInfo_MetaListEntitiesRequest.Size(m)
+}
+func (m *MetaListEntitiesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaListEntitiesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaListEntitiesRequest proto.InternalMessageInfo
+
+func (m *MetaListEntitiesRequest) GetStart() []byte {
+	if m != nil {
+		return m.Start
+	}
+	return nil
+}
+
+func (m *MetaListEntitiesRequest) GetLimit() uint32 {
+	if m != nil {
+		return m.Limit
+	}
+	return 0
+}
+
+func (m *MetaListEntitiesRequest) GetKindName() string {
+	if m != nil {
+		return m.KindName
+	}
+	return ""
+}
+
+type MetaListEntitiesResponse struct {
+	Next                 []byte        `protobuf:"bytes,1,opt,name=next,proto3" json:"next,omitempty"`
+	MoreResults          bool          `protobuf:"varint,2,opt,name=moreResults,proto3" json:"moreResults,omitempty"`
+	Entities             []*MetaEntity `protobuf:"bytes,3,rep,name=entities,proto3" json:"entities,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *MetaListEntitiesResponse) Reset()         { *m = MetaListEntitiesResponse{} }
+func (m *MetaListEntitiesResponse) String() string { return proto.CompactTextString(m) }
+func (*MetaListEntitiesResponse) ProtoMessage()    {}
+func (*MetaListEntitiesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{9}
+}
+
+func (m *MetaListEntitiesResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaListEntitiesResponse.Unmarshal(m, b)
+}
+func (m *MetaListEntitiesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaListEntitiesResponse.Marshal(b, m, deterministic)
+}
+func (m *MetaListEntitiesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaListEntitiesResponse.Merge(m, src)
+}
+func (m *MetaListEntitiesResponse) XXX_Size() int {
+	return xxx_messageInfo_MetaListEntitiesResponse.Size(m)
+}
+func (m *MetaListEntitiesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaListEntitiesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaListEntitiesResponse proto.InternalMessageInfo
+
+func (m *MetaListEntitiesResponse) GetNext() []byte {
+	if m != nil {
+		return m.Next
+	}
+	return nil
+}
+
+func (m *MetaListEntitiesResponse) GetMoreResults() bool {
+	if m != nil {
+		return m.MoreResults
+	}
+	return false
+}
+
+func (m *MetaListEntitiesResponse) GetEntities() []*MetaEntity {
+	if m != nil {
+		return m.Entities
+	}
+	return nil
+}
+
+type MetaEntity struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Values               []*Value `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MetaEntity) Reset()         { *m = MetaEntity{} }
+func (m *MetaEntity) String() string { return proto.CompactTextString(m) }
+func (*MetaEntity) ProtoMessage()    {}
+func (*MetaEntity) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{10}
+}
+
+func (m *MetaEntity) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaEntity.Unmarshal(m, b)
+}
+func (m *MetaEntity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaEntity.Marshal(b, m, deterministic)
+}
+func (m *MetaEntity) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaEntity.Merge(m, src)
+}
+func (m *MetaEntity) XXX_Size() int {
+	return xxx_messageInfo_MetaEntity.Size(m)
+}
+func (m *MetaEntity) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaEntity.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaEntity proto.InternalMessageInfo
+
+func (m *MetaEntity) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *MetaEntity) GetValues() []*Value {
+	if m != nil {
+		return m.Values
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterEnum("meta.ValueType", ValueType_name, ValueType_value)
+	proto.RegisterEnum("meta.FieldEditorInfoType", FieldEditorInfoType_name, FieldEditorInfoType_value)
 	proto.RegisterType((*Value)(nil), "meta.Value")
 	proto.RegisterType((*Field)(nil), "meta.Field")
+	proto.RegisterType((*FieldEditorInfo)(nil), "meta.FieldEditorInfo")
+	proto.RegisterType((*KindEditor)(nil), "meta.KindEditor")
 	proto.RegisterType((*Kind)(nil), "meta.Kind")
 	proto.RegisterType((*Schema)(nil), "meta.Schema")
 	proto.RegisterType((*GetSchemaRequest)(nil), "meta.GetSchemaRequest")
 	proto.RegisterType((*GetSchemaResponse)(nil), "meta.GetSchemaResponse")
+	proto.RegisterType((*MetaListEntitiesRequest)(nil), "meta.MetaListEntitiesRequest")
+	proto.RegisterType((*MetaListEntitiesResponse)(nil), "meta.MetaListEntitiesResponse")
+	proto.RegisterType((*MetaEntity)(nil), "meta.MetaEntity")
 }
 
 func init() { proto.RegisterFile("meta.proto", fileDescriptor_3b5ea8fe65782bcc) }
 
 var fileDescriptor_3b5ea8fe65782bcc = []byte{
-	// 405 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x52, 0x4d, 0x6f, 0xd4, 0x30,
-	0x14, 0xc4, 0xf9, 0x2a, 0x79, 0x59, 0x96, 0xf0, 0x0e, 0x65, 0xc5, 0x01, 0x59, 0x01, 0xa1, 0x88,
-	0x43, 0x0f, 0x0b, 0x42, 0x42, 0x42, 0x20, 0x01, 0x02, 0x01, 0xe2, 0xe2, 0xad, 0x7a, 0xcf, 0x6e,
-	0x5e, 0x8b, 0x21, 0xb1, 0x43, 0xec, 0x45, 0xea, 0x7f, 0xe5, 0xc7, 0xa0, 0xd8, 0x69, 0x48, 0x17,
-	0xd4, 0x9b, 0x33, 0x33, 0x1a, 0xcf, 0x78, 0x02, 0xd0, 0x92, 0xad, 0x4e, 0xba, 0x5e, 0x5b, 0x8d,
-	0xd1, 0x70, 0x2e, 0x7e, 0x33, 0x88, 0xcf, 0xaa, 0x66, 0x4f, 0xf8, 0x08, 0x22, 0x7b, 0xd9, 0xd1,
-	0x8a, 0x71, 0x56, 0x2e, 0xd7, 0x77, 0x4f, 0x9c, 0xd4, 0x51, 0xa7, 0x97, 0x1d, 0x09, 0x47, 0x22,
-	0x87, 0xac, 0xd6, 0xfb, 0x6d, 0x43, 0x8e, 0x58, 0x05, 0x9c, 0x95, 0x4c, 0xcc, 0x21, 0x7c, 0x08,
-	0x20, 0x95, 0x7d, 0xf1, 0xdc, 0x0b, 0x42, 0xce, 0xca, 0x50, 0xcc, 0x90, 0xc1, 0xc1, 0xd8, 0x5e,
-	0xaa, 0x0b, 0x2f, 0x88, 0x38, 0x2b, 0x53, 0x31, 0x87, 0xf0, 0x09, 0x2c, 0xad, 0x6c, 0xc9, 0xd8,
-	0xaa, 0xed, 0xbc, 0x28, 0xe6, 0xac, 0x5c, 0x88, 0x03, 0x14, 0x0b, 0x58, 0x6c, 0xb5, 0x6e, 0xa8,
-	0x52, 0x5e, 0x95, 0x70, 0x56, 0xde, 0x16, 0xd7, 0xb0, 0xe2, 0x3b, 0xc4, 0x1f, 0x24, 0x35, 0x35,
-	0x2e, 0x21, 0x90, 0xb5, 0xeb, 0x16, 0x8b, 0x40, 0xd6, 0x88, 0x10, 0xa9, 0xaa, 0xf5, 0x0d, 0x52,
-	0xe1, 0xce, 0xd3, 0x0b, 0x84, 0x37, 0xbd, 0xc0, 0x0a, 0x8e, 0x76, 0xba, 0x6d, 0x49, 0xd9, 0x31,
-	0xfb, 0xd5, 0x67, 0xf1, 0x06, 0xa2, 0x2f, 0x52, 0xfd, 0xb5, 0x66, 0xd7, 0xac, 0x93, 0xf3, 0x21,
-	0x87, 0x59, 0x05, 0x3c, 0x2c, 0xb3, 0x75, 0xe6, 0xcd, 0x5d, 0x36, 0x31, 0x52, 0xc5, 0x6b, 0x48,
-	0x36, 0xbb, 0x6f, 0xd4, 0x56, 0xff, 0xb5, 0xe0, 0x10, 0xff, 0x90, 0x6a, 0x72, 0x00, 0xef, 0x30,
-	0xdc, 0x28, 0x3c, 0x51, 0x20, 0xe4, 0x1f, 0xc9, 0x7a, 0x0b, 0x41, 0x3f, 0xf7, 0x64, 0x6c, 0xf1,
-	0x12, 0xee, 0xcd, 0x30, 0xd3, 0x69, 0x65, 0x08, 0x1f, 0x43, 0x62, 0x1c, 0xe2, 0x2e, 0xc8, 0xd6,
-	0x0b, 0xef, 0x35, 0xaa, 0x46, 0xee, 0xe9, 0x67, 0x48, 0xa7, 0xf2, 0x08, 0x90, 0xbc, 0x77, 0x2b,
-	0xe7, 0xb7, 0x30, 0x85, 0xf8, 0xd3, 0x30, 0x68, 0xce, 0x06, 0x78, 0xe3, 0xa6, 0xcb, 0x03, 0xbc,
-	0x03, 0xe9, 0xe9, 0xd5, 0x42, 0x79, 0x88, 0x19, 0x1c, 0xbd, 0xf5, 0x53, 0xe4, 0xd1, 0xfa, 0x0c,
-	0x8e, 0xdf, 0x69, 0x75, 0x2e, 0x2f, 0x8c, 0xd5, 0x3d, 0x7d, 0x25, 0x5b, 0x6d, 0xa8, 0xff, 0x25,
-	0x77, 0x84, 0xaf, 0x20, 0x9d, 0x02, 0xe2, 0xb1, 0x0f, 0x72, 0xd8, 0xe2, 0xc1, 0xfd, 0x7f, 0x70,
-	0xdf, 0x64, 0x9b, 0xb8, 0x7f, 0xf9, 0xd9, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xbb, 0x80, 0xb5,
-	0x4a, 0xd9, 0x02, 0x00, 0x00,
+	// 707 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x54, 0xdd, 0x6e, 0xd3, 0x4c,
+	0x10, 0xed, 0xc6, 0x89, 0x1b, 0x4f, 0xd2, 0xd6, 0xdf, 0x7e, 0xd0, 0x86, 0x4a, 0x54, 0x96, 0x41,
+	0xc8, 0xaa, 0x68, 0x2f, 0x02, 0x42, 0x42, 0xaa, 0x10, 0x3f, 0x2d, 0xa8, 0x50, 0x10, 0xda, 0x56,
+	0xdc, 0x6f, 0x9b, 0x4d, 0x58, 0xd5, 0xf6, 0x1a, 0xef, 0xba, 0x90, 0x1b, 0xde, 0x83, 0x3b, 0x78,
+	0x3f, 0x1e, 0x02, 0xed, 0x4f, 0x1c, 0x37, 0x0d, 0xdc, 0xed, 0x9c, 0x99, 0x3d, 0x33, 0x73, 0x76,
+	0x67, 0x00, 0x32, 0xa6, 0xe8, 0x7e, 0x51, 0x0a, 0x25, 0x70, 0x5b, 0x9f, 0xe3, 0xdf, 0x08, 0x3a,
+	0x9f, 0x68, 0x5a, 0x31, 0xbc, 0x0e, 0x2d, 0x3e, 0x1a, 0xa0, 0x08, 0x25, 0x1d, 0xd2, 0xe2, 0x23,
+	0x7c, 0x0f, 0xda, 0x6a, 0x5a, 0xb0, 0x41, 0x2b, 0x42, 0xc9, 0xfa, 0x70, 0x63, 0xdf, 0x5c, 0x35,
+	0xa1, 0x67, 0xd3, 0x82, 0x11, 0xe3, 0xc4, 0x11, 0xf4, 0x46, 0xa2, 0x3a, 0x4f, 0x99, 0x71, 0x0c,
+	0xbc, 0x08, 0x25, 0x88, 0x34, 0x21, 0xbc, 0x03, 0xc0, 0x73, 0xf5, 0xe4, 0xb1, 0x0d, 0x68, 0x47,
+	0x28, 0xf1, 0x48, 0x03, 0xd1, 0x0c, 0x52, 0x95, 0x3c, 0x9f, 0xd8, 0x80, 0x4e, 0x84, 0x92, 0x80,
+	0x34, 0x21, 0xfc, 0x00, 0xd6, 0x15, 0xcf, 0x98, 0x54, 0x34, 0x2b, 0x6c, 0x90, 0x1f, 0xa1, 0xa4,
+	0x4f, 0x16, 0x50, 0x1c, 0x43, 0xff, 0x5c, 0x88, 0x94, 0xd1, 0xdc, 0x46, 0xad, 0x46, 0x28, 0xe9,
+	0x92, 0x6b, 0x58, 0xfc, 0x03, 0x41, 0xe7, 0x35, 0x67, 0xe9, 0xe8, 0x46, 0xbb, 0x18, 0xda, 0x39,
+	0xcd, 0x6c, 0xbb, 0x01, 0x31, 0xe7, 0x5a, 0x02, 0xef, 0x5f, 0x12, 0x0c, 0x60, 0xf5, 0x42, 0x64,
+	0x19, 0xcb, 0x95, 0xe9, 0x2e, 0x20, 0x33, 0x13, 0xef, 0x81, 0xcf, 0x46, 0x5c, 0x89, 0xd2, 0x74,
+	0xd5, 0x1b, 0xde, 0xb6, 0x04, 0x26, 0xff, 0x91, 0x71, 0x1c, 0xe7, 0x63, 0x41, 0x5c, 0x50, 0xfc,
+	0x13, 0xc1, 0xc6, 0x82, 0xcf, 0xe8, 0xcb, 0x65, 0x91, 0xd2, 0xe9, 0x07, 0x5d, 0x1c, 0xb2, 0xea,
+	0x34, 0x20, 0xbc, 0x77, 0xed, 0x99, 0xee, 0x2c, 0x4d, 0xd1, 0xa8, 0x76, 0x1b, 0xba, 0x25, 0xa3,
+	0x23, 0x91, 0xa7, 0x53, 0xd3, 0x56, 0x97, 0xd4, 0xb6, 0x4e, 0x36, 0x16, 0x25, 0xe3, 0x93, 0x5c,
+	0x5f, 0x70, 0xdd, 0x34, 0xa1, 0xf8, 0x39, 0xc0, 0x3b, 0x9e, 0x3b, 0x66, 0xcd, 0x25, 0x79, 0x3e,
+	0xa9, 0x52, 0x5a, 0xba, 0xca, 0x6a, 0x1b, 0x6f, 0x82, 0x5f, 0xa4, 0x55, 0x49, 0x53, 0x27, 0xa8,
+	0xb3, 0x62, 0x0e, 0x6d, 0xcd, 0x50, 0xcb, 0x8d, 0xae, 0xc9, 0xed, 0x8f, 0x75, 0xe1, 0x72, 0xd0,
+	0x8a, 0xbc, 0xa4, 0x37, 0xec, 0x35, 0x9a, 0x21, 0xce, 0x85, 0x93, 0x5a, 0x54, 0xcf, 0x88, 0x1a,
+	0xda, 0xa0, 0x79, 0x59, 0xb5, 0x9e, 0xcf, 0xc0, 0x3f, 0xbd, 0xf8, 0xcc, 0x32, 0xba, 0x34, 0x59,
+	0x04, 0x9d, 0x4b, 0x9e, 0xd7, 0xb9, 0x60, 0x4e, 0x43, 0xac, 0x23, 0xc6, 0x10, 0xbe, 0x61, 0xca,
+	0x52, 0x10, 0xf6, 0xa5, 0x62, 0x52, 0xc5, 0x4f, 0xe1, 0xbf, 0x06, 0x26, 0x0b, 0x91, 0x4b, 0x86,
+	0xef, 0x83, 0x2f, 0x0d, 0x62, 0x12, 0xf4, 0x86, 0x7d, 0xcb, 0xe5, 0xa2, 0x9c, 0x2f, 0xa6, 0xb0,
+	0xf5, 0x9e, 0x29, 0x7a, 0xc2, 0xa5, 0x3a, 0xca, 0x15, 0x57, 0x9c, 0x49, 0xc7, 0x8a, 0x6f, 0x41,
+	0x47, 0x2a, 0x5a, 0x2a, 0x73, 0xbf, 0x4f, 0xac, 0xa1, 0xd1, 0x94, 0x67, 0x5c, 0x19, 0x05, 0xd7,
+	0x88, 0x35, 0xb4, 0xe8, 0xba, 0x3c, 0xf3, 0x1d, 0x3c, 0x2b, 0xfa, 0xcc, 0x8e, 0xbf, 0xc3, 0xe0,
+	0x66, 0x0a, 0x57, 0xa4, 0xd6, 0x80, 0x7d, 0x9b, 0xa5, 0x30, 0x67, 0xfd, 0xe0, 0x99, 0x28, 0x19,
+	0x61, 0xb2, 0x4a, 0x95, 0x34, 0x79, 0xba, 0xa4, 0x09, 0xe1, 0x87, 0xd0, 0x65, 0x8e, 0x69, 0xe0,
+	0x19, 0xa1, 0x9c, 0xde, 0x3a, 0x8f, 0xc9, 0x31, 0x25, 0x75, 0x44, 0xfc, 0x02, 0x60, 0x8e, 0x37,
+	0x26, 0x2c, 0x70, 0x0b, 0xc5, 0xbf, 0xd2, 0xb3, 0xb3, 0xf0, 0xbc, 0x66, 0x9e, 0x88, 0x73, 0xed,
+	0xbe, 0x85, 0xa0, 0x1e, 0x30, 0x0c, 0xe0, 0x1f, 0x9a, 0x55, 0x12, 0xae, 0xe0, 0x00, 0x3a, 0xc7,
+	0x7a, 0x6b, 0x84, 0x48, 0xc3, 0xa7, 0x66, 0x3f, 0x84, 0x2d, 0xbc, 0x06, 0xc1, 0xd9, 0x6c, 0x0d,
+	0x84, 0x1e, 0xee, 0xc1, 0xea, 0x4b, 0x3b, 0xef, 0x61, 0x7b, 0xf7, 0x00, 0xfe, 0x5f, 0x32, 0x08,
+	0x3a, 0xe6, 0x90, 0x8d, 0x69, 0x95, 0xaa, 0x70, 0x05, 0xf7, 0xa1, 0xfb, 0x91, 0x4a, 0xf9, 0x55,
+	0x94, 0x23, 0xcb, 0x7c, 0x22, 0xc4, 0x65, 0x55, 0x84, 0xad, 0xe1, 0x2f, 0x04, 0x9b, 0xaf, 0x44,
+	0x3e, 0xe6, 0x13, 0xa9, 0x44, 0xc9, 0x74, 0x63, 0xa7, 0xac, 0xbc, 0xe2, 0x17, 0x0c, 0x1f, 0x40,
+	0x50, 0xff, 0x02, 0xbc, 0x69, 0xdb, 0x58, 0xfc, 0x2a, 0xdb, 0x5b, 0x37, 0x70, 0xf7, 0x12, 0xc7,
+	0xd0, 0x9d, 0xbd, 0x12, 0xbe, 0x3b, 0x57, 0x73, 0xc9, 0xc7, 0xd8, 0xde, 0xf9, 0x9b, 0xdb, 0x52,
+	0x9d, 0xfb, 0x66, 0x95, 0x3f, 0xfa, 0x13, 0x00, 0x00, 0xff, 0xff, 0xa3, 0xf3, 0xbe, 0x60, 0xd8,
+	0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -417,6 +761,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ConfigstoreMetaServiceClient interface {
 	GetSchema(ctx context.Context, in *GetSchemaRequest, opts ...grpc.CallOption) (*GetSchemaResponse, error)
+	MetaList(ctx context.Context, in *MetaListEntitiesRequest, opts ...grpc.CallOption) (*MetaListEntitiesResponse, error)
 }
 
 type configstoreMetaServiceClient struct {
@@ -436,9 +781,19 @@ func (c *configstoreMetaServiceClient) GetSchema(ctx context.Context, in *GetSch
 	return out, nil
 }
 
+func (c *configstoreMetaServiceClient) MetaList(ctx context.Context, in *MetaListEntitiesRequest, opts ...grpc.CallOption) (*MetaListEntitiesResponse, error) {
+	out := new(MetaListEntitiesResponse)
+	err := c.cc.Invoke(ctx, "/meta.ConfigstoreMetaService/MetaList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigstoreMetaServiceServer is the server API for ConfigstoreMetaService service.
 type ConfigstoreMetaServiceServer interface {
 	GetSchema(context.Context, *GetSchemaRequest) (*GetSchemaResponse, error)
+	MetaList(context.Context, *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error)
 }
 
 func RegisterConfigstoreMetaServiceServer(s *grpc.Server, srv ConfigstoreMetaServiceServer) {
@@ -463,6 +818,24 @@ func _ConfigstoreMetaService_GetSchema_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigstoreMetaService_MetaList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaListEntitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigstoreMetaServiceServer).MetaList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/meta.ConfigstoreMetaService/MetaList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigstoreMetaServiceServer).MetaList(ctx, req.(*MetaListEntitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _ConfigstoreMetaService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "meta.ConfigstoreMetaService",
 	HandlerType: (*ConfigstoreMetaServiceServer)(nil),
@@ -470,6 +843,10 @@ var _ConfigstoreMetaService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSchema",
 			Handler:    _ConfigstoreMetaService_GetSchema_Handler,
+		},
+		{
+			MethodName: "MetaList",
+			Handler:    _ConfigstoreMetaService_MetaList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

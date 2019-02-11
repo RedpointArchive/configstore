@@ -11,12 +11,13 @@ enum ValueType {
 }
 
 message Value {
-    ValueType type = 1;
-    double doubleValue = 2;
-    int64 int64Value = 3;
-    string stringValue = 4;
-    bytes timestampValue = 5;
-    bool booleanValue = 6;
+    int32 id = 1;
+    ValueType type = 2;
+    double doubleValue = 3;
+    int64 int64Value = 4;
+    string stringValue = 5;
+    bytes timestampValue = 6;
+    bool booleanValue = 7;
 }
 
 message Field {
@@ -24,11 +25,31 @@ message Field {
     string name = 2;
     ValueType type = 3;
     string comment = 4;
+    FieldEditorInfo editor = 5;
+}
+
+enum FieldEditorInfoType {
+    Default = 0;
+    Password = 1;
+    Lookup = 2;
+}
+
+message FieldEditorInfo {
+    string displayName = 1;
+    FieldEditorInfoType type = 2;
+    bool readonly = 3;
+    string foreignType = 4;
+}
+
+message KindEditor {
+    string singular = 1;
+    string plural = 2;
 }
 
 message Kind {
     string name = 1;
     repeated Field fields = 2;
+    KindEditor editor = 3;
 }
 
 message Schema {
@@ -43,6 +64,24 @@ message GetSchemaResponse {
     Schema schema = 1;
 }
 
+message MetaListEntitiesRequest {
+    bytes start = 1;
+    uint32 limit = 2;
+    string kindName = 3;
+}
+
+message MetaListEntitiesResponse {
+    bytes next = 1;
+    bool moreResults = 2;
+    repeated MetaEntity entities = 3;
+}
+
+message MetaEntity {
+    string id = 1;
+    repeated Value values = 2;
+}
+
 service ConfigstoreMetaService {
     rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse);
+    rpc MetaList(MetaListEntitiesRequest) returns (MetaListEntitiesResponse);
 }

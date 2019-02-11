@@ -1,4 +1,9 @@
 {
     "go.testFlags": ["-v", "-mod", "vendor"],
-    "go.buildFlags": ["-mod", "vendor"]
+    "go.buildFlags": [
+        "-mod",
+        "vendor"
+    ],
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true
 }

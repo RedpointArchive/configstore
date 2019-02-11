@@ -4,12 +4,16 @@ import { GetSchemaRequest } from "./api/meta_pb";
 import { grpc } from "@improbable-eng/grpc-web";
 import { ConfigstoreMetaService } from "./api/meta_pb_service";
 import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary";
+import { Switch, Route, RouteComponentProps } from "react-router";
+import { KindRoute, KindRouteMatch } from "./routes/KindRoute";
+import { BrowserRouter, Link, NavLink } from "react-router-dom";
+import { g } from "./core";
 
 const App = () => {
-  const [data, setData] = useState<GetSchemaResponse | null>(null);
+  const [schema, setSchema] = useState<GetSchemaResponse | null>(null);
 
   useEffect(() => {
-    if (data === null) {
+    if (schema === null) {
       const req = new GetSchemaRequest();
       grpc.unary(ConfigstoreMetaService.GetSchema, {
         request: req,
@@ -17,26 +21,23 @@ const App = () => {
         onEnd: (res: UnaryOutput<GetSchemaResponse>) => {
           const { status, statusMessage, headers, message, trailers } = res;
           if (status === grpc.Code.OK && message) {
-            setData(message);
+            setSchema(message);
           }
         }
       });
     }
   });
 
-  function t<T>(v: T | undefined): T {
-    return v as T;
-  }
-
   let nav = null;
-  if (data != null) {
+  let content = null;
+  if (schema != null) {
     nav = (
       <>
         <ul className="nav flex-column">
           <li className="nav-item">
-            <a className="nav-link active" href="#">
+            <NavLink className="nav-link" activeClassName="active" to="/" exact>
               Dashboard
-            </a>
+            </NavLink>
           </li>
         </ul>
 
@@ -44,13 +45,17 @@ const App = () => {
           <span>Kinds</span>
         </h6>
         <ul className="nav flex-column">
-          {t(data.getSchema())
+          {g(schema.getSchema())
             .getKindsList()
             .map(kind => (
               <li className="nav-item">
-                <a className="nav-link" href="#">
+                <NavLink
+                  className="nav-link"
+                  activeClassName="active"
+                  to={`/kind/${kind.getName()}`}
+                >
                   {kind.getName()}
-                </a>
+                </NavLink>
               </li>
             ))}
         </ul>
@@ -72,179 +77,39 @@ const App = () => {
         </ul>
       </>
     );
+    content = (
+      <Switch>
+        <Route path="/kind/:kind">
+          {(props: RouteComponentProps<KindRouteMatch>) => (
+            <KindRoute {...props} schema={schema} />
+          )}
+        </Route>
+      </Switch>
+    );
   }
 
   return (
-    <>
-      <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-        <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">
-          configstore
-        </a>
-      </nav>
+    <BrowserRouter>
+      <>
+        <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+          <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">
+            configstore
+          </a>
+        </nav>
 
-      <div className="container-fluid">
-        <div className="row">
-          <nav className="col-md-2 d-none d-md-block bg-light sidebar">
-            <div className="sidebar-sticky">{nav}</div>
-          </nav>
+        <div className="container-fluid">
+          <div className="row">
+            <nav className="col-md-2 d-none d-md-block bg-light sidebar">
+              <div className="sidebar-sticky">{nav}</div>
+            </nav>
 
-          <main role="main" className="col-sm-12 col-md-10 ml-sm-auto px-4">
-            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-0 border-bottom">
-              <h1 className="h2">Kind: User</h1>
-              <div className="btn-toolbar mb-2 mb-md-0">
-                <div className="btn-group mr-2">
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-secondary"
-                  >
-                    Page 1
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-secondary"
-                  >
-                    2
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-success"
-                >
-                  Create User
-                </button>
-              </div>
-            </div>
-            <div className="table-responsive">
-              <table className="table table-striped table-sm">
-                <thead>
-                  <tr>
-                    <th style={{borderTop: 'none'}}>#</th>
-                    <th style={{borderTop: 'none'}}>Header</th>
-                    <th style={{borderTop: 'none'}}>Header</th>
-                    <th style={{borderTop: 'none'}}>Header</th>
-                    <th style={{borderTop: 'none'}}>Header</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>1,001</td>
-                    <td>Lorem</td>
-                    <td>ipsum</td>
-                    <td>dolor</td>
-                    <td>sit</td>
-                  </tr>
-                  <tr>
-                    <td>1,002</td>
-                    <td>amet</td>
-                    <td>consectetur</td>
-                    <td>adipiscing</td>
-                    <td>elit</td>
-                  </tr>
-                  <tr>
-                    <td>1,003</td>
-                    <td>Integer</td>
-                    <td>nec</td>
-                    <td>odio</td>
-                    <td>Praesent</td>
-                  </tr>
-                  <tr>
-                    <td>1,003</td>
-                    <td>libero</td>
-                    <td>Sed</td>
-                    <td>cursus</td>
-                    <td>ante</td>
-                  </tr>
-                  <tr>
-                    <td>1,004</td>
-                    <td>dapibus</td>
-                    <td>diam</td>
-                    <td>Sed</td>
-                    <td>nisi</td>
-                  </tr>
-                  <tr>
-                    <td>1,005</td>
-                    <td>Nulla</td>
-                    <td>quis</td>
-                    <td>sem</td>
-                    <td>at</td>
-                  </tr>
-                  <tr>
-                    <td>1,006</td>
-                    <td>nibh</td>
-                    <td>elementum</td>
-                    <td>imperdiet</td>
-                    <td>Duis</td>
-                  </tr>
-                  <tr>
-                    <td>1,007</td>
-                    <td>sagittis</td>
-                    <td>ipsum</td>
-                    <td>Praesent</td>
-                    <td>mauris</td>
-                  </tr>
-                  <tr>
-                    <td>1,008</td>
-                    <td>Fusce</td>
-                    <td>nec</td>
-                    <td>tellus</td>
-                    <td>sed</td>
-                  </tr>
-                  <tr>
-                    <td>1,009</td>
-                    <td>augue</td>
-                    <td>semper</td>
-                    <td>porta</td>
-                    <td>Mauris</td>
-                  </tr>
-                  <tr>
-                    <td>1,010</td>
-                    <td>massa</td>
-                    <td>Vestibulum</td>
-                    <td>lacinia</td>
-                    <td>arcu</td>
-                  </tr>
-                  <tr>
-                    <td>1,011</td>
-                    <td>eget</td>
-                    <td>nulla</td>
-                    <td>Class</td>
-                    <td>aptent</td>
-                  </tr>
-                  <tr>
-                    <td>1,012</td>
-                    <td>taciti</td>
-                    <td>sociosqu</td>
-                    <td>ad</td>
-                    <td>litora</td>
-                  </tr>
-                  <tr>
-                    <td>1,013</td>
-                    <td>torquent</td>
-                    <td>per</td>
-                    <td>conubia</td>
-                    <td>nostra</td>
-                  </tr>
-                  <tr>
-                    <td>1,014</td>
-                    <td>per</td>
-                    <td>inceptos</td>
-                    <td>himenaeos</td>
-                    <td>Curabitur</td>
-                  </tr>
-                  <tr>
-                    <td>1,015</td>
-                    <td>sodales</td>
-                    <td>ligula</td>
-                    <td>in</td>
-                    <td>libero</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </main>
+            <main role="main" className="col-sm-12 col-md-10 ml-sm-auto px-4">
+              {content}
+            </main>
+          </div>
         </div>
-      </div>
-    </>
+      </>
+    </BrowserRouter>
   );
 };
 

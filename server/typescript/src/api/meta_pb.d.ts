@@ -4,6 +4,9 @@
 import * as jspb from "google-protobuf";
 
 export class Value extends jspb.Message {
+  getId(): number;
+  setId(value: number): void;
+
   getType(): ValueType;
   setType(value: ValueType): void;
 
@@ -36,6 +39,7 @@ export class Value extends jspb.Message {
 
 export namespace Value {
   export type AsObject = {
+    id: number,
     type: ValueType,
     doublevalue: number,
     int64value: number,
@@ -58,6 +62,11 @@ export class Field extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  hasEditor(): boolean;
+  clearEditor(): void;
+  getEditor(): FieldEditorInfo | undefined;
+  setEditor(value?: FieldEditorInfo): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Field.AsObject;
   static toObject(includeInstance: boolean, msg: Field): Field.AsObject;
@@ -74,6 +83,63 @@ export namespace Field {
     name: string,
     type: ValueType,
     comment: string,
+    editor?: FieldEditorInfo.AsObject,
+  }
+}
+
+export class FieldEditorInfo extends jspb.Message {
+  getDisplayname(): string;
+  setDisplayname(value: string): void;
+
+  getType(): FieldEditorInfoType;
+  setType(value: FieldEditorInfoType): void;
+
+  getReadonly(): boolean;
+  setReadonly(value: boolean): void;
+
+  getForeigntype(): string;
+  setForeigntype(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FieldEditorInfo.AsObject;
+  static toObject(includeInstance: boolean, msg: FieldEditorInfo): FieldEditorInfo.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FieldEditorInfo, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FieldEditorInfo;
+  static deserializeBinaryFromReader(message: FieldEditorInfo, reader: jspb.BinaryReader): FieldEditorInfo;
+}
+
+export namespace FieldEditorInfo {
+  export type AsObject = {
+    displayname: string,
+    type: FieldEditorInfoType,
+    readonly: boolean,
+    foreigntype: string,
+  }
+}
+
+export class KindEditor extends jspb.Message {
+  getSingular(): string;
+  setSingular(value: string): void;
+
+  getPlural(): string;
+  setPlural(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): KindEditor.AsObject;
+  static toObject(includeInstance: boolean, msg: KindEditor): KindEditor.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: KindEditor, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): KindEditor;
+  static deserializeBinaryFromReader(message: KindEditor, reader: jspb.BinaryReader): KindEditor;
+}
+
+export namespace KindEditor {
+  export type AsObject = {
+    singular: string,
+    plural: string,
   }
 }
 
@@ -85,6 +151,11 @@ export class Kind extends jspb.Message {
   getFieldsList(): Array<Field>;
   setFieldsList(value: Array<Field>): void;
   addFields(value?: Field, index?: number): Field;
+
+  hasEditor(): boolean;
+  clearEditor(): void;
+  getEditor(): KindEditor | undefined;
+  setEditor(value?: KindEditor): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Kind.AsObject;
@@ -100,6 +171,7 @@ export namespace Kind {
   export type AsObject = {
     name: string,
     fieldsList: Array<Field.AsObject>,
+    editor?: KindEditor.AsObject,
   }
 }
 
@@ -167,11 +239,105 @@ export namespace GetSchemaResponse {
   }
 }
 
+export class MetaListEntitiesRequest extends jspb.Message {
+  getStart(): Uint8Array | string;
+  getStart_asU8(): Uint8Array;
+  getStart_asB64(): string;
+  setStart(value: Uint8Array | string): void;
+
+  getLimit(): number;
+  setLimit(value: number): void;
+
+  getKindname(): string;
+  setKindname(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaListEntitiesRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaListEntitiesRequest): MetaListEntitiesRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaListEntitiesRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaListEntitiesRequest;
+  static deserializeBinaryFromReader(message: MetaListEntitiesRequest, reader: jspb.BinaryReader): MetaListEntitiesRequest;
+}
+
+export namespace MetaListEntitiesRequest {
+  export type AsObject = {
+    start: Uint8Array | string,
+    limit: number,
+    kindname: string,
+  }
+}
+
+export class MetaListEntitiesResponse extends jspb.Message {
+  getNext(): Uint8Array | string;
+  getNext_asU8(): Uint8Array;
+  getNext_asB64(): string;
+  setNext(value: Uint8Array | string): void;
+
+  getMoreresults(): boolean;
+  setMoreresults(value: boolean): void;
+
+  clearEntitiesList(): void;
+  getEntitiesList(): Array<MetaEntity>;
+  setEntitiesList(value: Array<MetaEntity>): void;
+  addEntities(value?: MetaEntity, index?: number): MetaEntity;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaListEntitiesResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaListEntitiesResponse): MetaListEntitiesResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaListEntitiesResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaListEntitiesResponse;
+  static deserializeBinaryFromReader(message: MetaListEntitiesResponse, reader: jspb.BinaryReader): MetaListEntitiesResponse;
+}
+
+export namespace MetaListEntitiesResponse {
+  export type AsObject = {
+    next: Uint8Array | string,
+    moreresults: boolean,
+    entitiesList: Array<MetaEntity.AsObject>,
+  }
+}
+
+export class MetaEntity extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  clearValuesList(): void;
+  getValuesList(): Array<Value>;
+  setValuesList(value: Array<Value>): void;
+  addValues(value?: Value, index?: number): Value;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaEntity.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaEntity): MetaEntity.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaEntity, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaEntity;
+  static deserializeBinaryFromReader(message: MetaEntity, reader: jspb.BinaryReader): MetaEntity;
+}
+
+export namespace MetaEntity {
+  export type AsObject = {
+    id: string,
+    valuesList: Array<Value.AsObject>,
+  }
+}
+
 export enum ValueType {
   DOUBLE = 0,
   INT64 = 1,
   STRING = 2,
   TIMESTAMP = 3,
   BOOLEAN = 4,
+}
+
+export enum FieldEditorInfoType {
+  DEFAULT = 0,
+  PASSWORD = 1,
+  LOOKUP = 2,
 }
 

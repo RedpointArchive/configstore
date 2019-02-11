@@ -37,6 +37,8 @@ const (
 	runModeGenerate runMode = "generate"
 )
 
+var client *firestore.Client
+
 func main() {
 	mode := runModeServe
 	generateFlag := flag.Bool("generate", false, "emit Go client code instead of serving traffic")
@@ -77,7 +79,7 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		client, err := app.Firestore(ctx)
+		client, err = app.Firestore(ctx)
 		if err != nil {
 			log.Fatalln(err)
 		}
