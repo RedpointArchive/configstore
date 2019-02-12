@@ -65,7 +65,7 @@ func main() {
 	printer := new(protoprint.Printer)
 	clientProtoFile, err := printer.PrintProtoToString(fileDesc)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Sprintf("can't generate protobuf spec: %s", err))
 	}
 	clientProtoGoCode, err := generateGoCode(fileDesc, schema)
 	if err != nil {
@@ -149,6 +149,7 @@ func main() {
 										messageFactory,
 										messageMap[kindName],
 										snapshot,
+										messageMap["Key"],
 									)
 									if err != nil {
 										return nil, err
@@ -187,12 +188,26 @@ func main() {
 									return nil, err
 								}
 
-								id, err := in.TryGetFieldByName("id")
+								key, err := in.TryGetFieldByName("key")
 								if err != nil {
 									return nil, err
 								}
 
-								snapshot, err := client.Collection(kindName).Doc(id.(string)).Get(ctx)
+								keyV, ok := key.(*dynamic.Message)
+								if !ok {
+									return nil, fmt.Errorf("unable to read key")
+								}
+
+								id, err := convertDynamicMessageIntoID(
+									messageFactory,
+									messageMap["Key"],
+									keyV,
+								)
+								if err != nil {
+									return nil, err
+								}
+
+								snapshot, err := client.Collection(kindName).Doc(id).Get(ctx)
 								if err != nil {
 									return nil, err
 								}
@@ -201,6 +216,7 @@ func main() {
 									messageFactory,
 									messageMap[kindName],
 									snapshot,
+									messageMap["Key"],
 								)
 								if err != nil {
 									return nil, err
@@ -237,6 +253,7 @@ func main() {
 									messageFactory,
 									messageMap[kindName],
 									entity.(*dynamic.Message),
+									messageMap["Key"],
 								)
 
 								if id == "" {
@@ -279,6 +296,7 @@ func main() {
 									messageFactory,
 									messageMap[kindName],
 									entity.(*dynamic.Message),
+									messageMap["Key"],
 								)
 
 								if id != "" {
@@ -291,7 +309,10 @@ func main() {
 								}
 
 								// set the ID back
-								entity.(*dynamic.Message).SetFieldByName("id", ref.ID)
+								key := messageFactory.NewDynamicMessage(messageMap["Key"])
+								key.SetFieldByName("val", ref.ID)
+								key.SetFieldByName("isSet", true)
+								entity.(*dynamic.Message).SetFieldByName("key", key)
 
 								responseMessageDescriptor := messageMap[fmt.Sprintf("Create%sResponse", kindName)]
 								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
@@ -311,12 +332,26 @@ func main() {
 									return nil, err
 								}
 
-								id, err := in.TryGetFieldByName("id")
+								key, err := in.TryGetFieldByName("key")
 								if err != nil {
 									return nil, err
 								}
 
-								snapshot, err := client.Collection(kindName).Doc(id.(string)).Get(ctx)
+								keyV, ok := key.(*dynamic.Message)
+								if !ok {
+									return nil, fmt.Errorf("unable to read key")
+								}
+
+								id, err := convertDynamicMessageIntoID(
+									messageFactory,
+									messageMap["Key"],
+									keyV,
+								)
+								if err != nil {
+									return nil, err
+								}
+
+								snapshot, err := client.Collection(kindName).Doc(id).Get(ctx)
 								if err != nil {
 									return nil, err
 								}
@@ -325,12 +360,13 @@ func main() {
 									messageFactory,
 									messageMap[kindName],
 									snapshot,
+									messageMap["Key"],
 								)
 								if err != nil {
 									return nil, err
 								}
 
-								_, err = client.Collection(kindName).Doc(id.(string)).Delete(ctx)
+								_, err = client.Collection(kindName).Doc(id).Delete(ctx)
 								if err != nil {
 									return nil, err
 								}
@@ -362,6 +398,7 @@ func main() {
 											messageFactory,
 											messageMap[kindName],
 											change.Doc,
+											messageMap["Key"],
 										)
 										if err != nil {
 											return err

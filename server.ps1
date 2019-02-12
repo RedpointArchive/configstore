@@ -1,5 +1,6 @@
 param(
-    [switch][bool]$generate
+    [switch][bool]$generate,
+    [switch][bool]$SkipDeps
 )
 
 $Args = ""
@@ -9,13 +10,19 @@ if ($generate) {
 
 Push-Location $PSScriptRoot\server
 try {
-    Write-Output "Fetch deps..."
-    go mod vendor
-    if ($LastExitCode -ne 0) {
-        exit $LastExitCode
+    if (!$SkipDeps) {
+        Write-Output "Fetch deps..."
+        go get -u github.com/golang/protobuf/protoc-gen-go
+        if ($LastExitCode -ne 0) {
+            exit $LastExitCode
+        }
+        go mod vendor
+        if ($LastExitCode -ne 0) {
+            exit $LastExitCode
+        }
+        rm -Recurse -Force vendor/github.com/golang/protobuf
+        git submodule update --init --recursive
     }
-    rm -Recurse -Force vendor/github.com/golang/protobuf
-    git submodule update --init --recursive
 
     Write-Output "Generate meta.go..."
     .\protoc.exe --go_out=plugins=grpc:meta .\meta.proto
@@ -30,6 +37,10 @@ try {
     Write-Output "Generate TypeScript gRPC client..."
     Push-Location .\typescript
     try {
+        yarn
+        if ($LastExitCode -ne 0) {
+            exit $LastExitCode
+        }
         if (!(Test-Path src\api)) {
             New-Item -ItemType Directory -Path src\api | Out-Null
         }

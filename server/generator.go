@@ -7,11 +7,16 @@ import (
 	"log"
 	"os"
 
+	_ "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/builder"
 )
 
-func convertToType(t configstoreSchemaKindFieldType) *builder.FieldType {
+func convertToType(
+	t configstoreSchemaKindFieldType,
+	keyMessage *builder.MessageBuilder,
+	timestampMessage *desc.MessageDescriptor,
+) *builder.FieldType {
 	switch t {
 	case typeDouble:
 		return builder.FieldTypeDouble()
@@ -20,9 +25,13 @@ func convertToType(t configstoreSchemaKindFieldType) *builder.FieldType {
 	case typeString:
 		return builder.FieldTypeString()
 	case typeTimestamp:
-		return builder.FieldTypeBytes() // todo fix this
+		return builder.FieldTypeImportedMessage(timestampMessage)
 	case typeBoolean:
 		return builder.FieldTypeBool()
+	case typeBytes:
+		return builder.FieldTypeBytes()
+	case typeKey:
+		return builder.FieldTypeMessage(keyMessage)
 	}
 	return builder.FieldTypeString() // todo, probably fatal instead
 }
@@ -45,6 +54,22 @@ func generate(path string) (
 	*watchTypeEnumValues,
 	error,
 ) {
+	timestampFileDescriptor, err := desc.LoadFileDescriptor("google/protobuf/timestamp.proto")
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+
+	var timestampMessage *desc.MessageDescriptor
+	for _, tfd := range timestampFileDescriptor.GetMessageTypes() {
+		if tfd.GetName() == "Timestamp" {
+			timestampMessage = tfd
+			break
+		}
+	}
+	if timestampMessage == nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("unable to locate Timestamp proto descriptor in google/protobuf/timestamp.proto")
+	}
+
 	schemaFile, err := os.Open(path)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
@@ -67,6 +92,19 @@ func generate(path string) (
 	kindMap := make(map[*builder.ServiceBuilder]*configstoreSchemaKind)
 	kindNameMap := make(map[*builder.ServiceBuilder]string)
 	messageMap := make(map[string]*desc.MessageDescriptor)
+
+	keyMessage := builder.NewMessage("Key")
+	keyMessage.AddField(
+		builder.NewField("val", builder.FieldTypeString()).
+			SetNumber(1).
+			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The string representation of the key")}),
+	)
+	keyMessage.AddField(
+		builder.NewField("isSet", builder.FieldTypeBool()).
+			SetNumber(2).
+			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" Whether the key is considered set (non-empty); ignored on writes")}),
+	)
+	messages = append(messages, keyMessage)
 
 	created := builder.NewEnumValue("Created").SetNumber(0)
 	updated := builder.NewEnumValue("Updated").SetNumber(1)
@@ -102,9 +140,9 @@ func generate(path string) (
 		// Build the message descriptor for the entity itself
 		message := builder.NewMessage(name)
 		message.AddField(
-			builder.NewField("id", builder.FieldTypeString()).
+			builder.NewField("key", builder.FieldTypeMessage(keyMessage)).
 				SetNumber(1).
-				SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID of the %s", name)}),
+				SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The key of the %s", name)}),
 		)
 		for _, field := range kind.Fields {
 			if field.ID == 1 {
@@ -113,7 +151,7 @@ func generate(path string) (
 			message.AddField(
 				builder.NewField(
 					field.Name,
-					convertToType(field.Type),
+					convertToType(field.Type, keyMessage, timestampMessage),
 				).
 					SetNumber(field.ID).
 					SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" %s", field.Comment)}),
@@ -132,7 +170,7 @@ func generate(path string) (
 
 		// Build the request-response message for the Get method
 		getRequestMessage := builder.NewMessage(fmt.Sprintf("Get%sRequest", name)).
-			AddField(builder.NewField("id", builder.FieldTypeString()).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID of the %s to load", name)}))
+			AddField(builder.NewField("key", builder.FieldTypeMessage(keyMessage)).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID of the %s to load", name)}))
 		getResponseMessage := builder.NewMessage(fmt.Sprintf("Get%sResponse", name)).
 			AddField(builder.NewField("entity", builder.FieldTypeMessage(message)).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The %s that was fetched, or null if it didn't exist", name)}))
 
@@ -158,7 +196,7 @@ func generate(path string) (
 
 		// Build the request-response message for the Delete method
 		deleteRequestMessage := builder.NewMessage(fmt.Sprintf("Delete%sRequest", name)).
-			AddField(builder.NewField("id", builder.FieldTypeString()).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID of the %s to delete", name)}))
+			AddField(builder.NewField("key", builder.FieldTypeMessage(keyMessage)).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID of the %s to delete", name)}))
 		deleteResponseMessage := builder.NewMessage(fmt.Sprintf("Delete%sResponse", name)).
 			AddField(builder.NewField("entity", builder.FieldTypeMessage(message)).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The version of the %s entity that was deleted", name)}))
 

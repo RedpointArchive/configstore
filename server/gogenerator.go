@@ -7,6 +7,7 @@ import (
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 	_ "github.com/golang/protobuf/protoc-gen-go/grpc"
+	_ "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/jhump/protoreflect/desc"
 )
 
@@ -20,10 +21,10 @@ type <ENTITY>ImplStore struct {
 type <ENTITY>Store interface {
 	Create(ctx context.Context, entity *<ENTITY>) (*<ENTITY>, error)
 	Update(ctx context.Context, entity *<ENTITY>) (*<ENTITY>, error)
-	Delete(ctx context.Context, id string) (*<ENTITY>, error)
-	GetAndCheck(id string) (*<ENTITY>, bool)
-	Get(id string) *<ENTITY>
-	GetIds() []string
+	Delete(ctx context.Context, key *Key) (*<ENTITY>, error)
+	GetAndCheck(key *Key) (*<ENTITY>, bool)
+	Get(key *Key) *<ENTITY>
+	GetKeys() []*Key
 }
 
 func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTITY>Store, error) {
@@ -47,9 +48,9 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 			}
 			if change.Type == WatchEventType_Created ||
 				change.Type == WatchEventType_Updated {
-				ref.store[change.Entity.Id] = change.Entity
+				ref.store[change.Entity.Key.Val] = change.Entity
 			} else if change.Type == WatchEventType_Deleted {
-				delete(ref.store, change.Entity.Id)
+				delete(ref.store, change.Entity.Key.Val)
 			}
 		}
 	}()
@@ -63,7 +64,7 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 			return nil, err
 		}
 		for _, entity := range resp.Entities {
-			ref.store[entity.Id] = entity
+			ref.store[entity.Key.Val] = entity
 		}
 		if !resp.MoreResults {
 			break
@@ -73,22 +74,22 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 	return ref, nil
 }
 
-func (c *<ENTITY>ImplStore) GetIds() []string {
-	keys := make([]string, len(c.store))
+func (c *<ENTITY>ImplStore) GetKeys() []*Key {
+	keys := make([]*Key, len(c.store))
 	i := 0
-	for key, _ := range c.store {
-		keys[i] = key
+	for _, entity := range c.store {
+		keys[i] = entity.Key
 		i += 1
 	}
 	return keys
 }
 
-func (c *<ENTITY>ImplStore) Get(id string) *<ENTITY> {
-	return c.store[id]
+func (c *<ENTITY>ImplStore) Get(key *Key) *<ENTITY> {
+	return c.store[key.Val]
 }
 
-func (c *<ENTITY>ImplStore) GetAndCheck(id string) (*<ENTITY>, bool) {
-	val, ok := c.store[id]
+func (c *<ENTITY>ImplStore) GetAndCheck(key *Key) (*<ENTITY>, bool) {
+	val, ok := c.store[key.Val]
 	return val, ok
 }
 
@@ -99,7 +100,7 @@ func (c *<ENTITY>ImplStore) Create(ctx context.Context, entity *<ENTITY>) (*<ENT
 	if err != nil {
 		return nil, err
 	}
-	c.store[resp.Entity.Id] = resp.Entity
+	c.store[resp.Entity.Key.Val] = resp.Entity
 	return resp.Entity, nil
 }
 
@@ -110,18 +111,18 @@ func (c *<ENTITY>ImplStore) Update(ctx context.Context, entity *<ENTITY>) (*<ENT
 	if err != nil {
 		return nil, err
 	}
-	c.store[resp.Entity.Id] = resp.Entity
+	c.store[resp.Entity.Key.Val] = resp.Entity
 	return resp.Entity, nil
 }
 
-func (c *<ENTITY>ImplStore) Delete(ctx context.Context, id string) (*<ENTITY>, error) {
+func (c *<ENTITY>ImplStore) Delete(ctx context.Context, key *Key) (*<ENTITY>, error) {
 	resp, err := c.client.Delete(ctx, &Delete<ENTITY>Request{
-		Id: id,
+		Key: key,
 	})
 	if err != nil {
 		return nil, err
 	}
-	delete(c.store, resp.Entity.Id)
+	delete(c.store, resp.Entity.Key.Val)
 	return resp.Entity, nil
 }
 
@@ -134,6 +135,12 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *configstoreSchema) (s
 	packageName := schema.Name
 	protoFileName := fmt.Sprintf("%s.proto", schema.Name)
 	parameter := "plugins=grpc"
+
+	timestampFileDescriptor, err := desc.LoadFileDescriptor("google/protobuf/timestamp.proto")
+	if err != nil {
+		return "", err
+	}
+	timestampFileProto := timestampFileDescriptor.AsFileDescriptorProto()
 
 	str := packageName
 	strName := protoFileName
@@ -152,10 +159,17 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *configstoreSchema) (s
 		g.Request.ProtoFile,
 		fileDescProto,
 	)
+	g.Request.ProtoFile = append(
+		g.Request.ProtoFile,
+		timestampFileProto,
+	)
 
 	genFiles := make(map[string]*generator.FileDescriptor)
 	genFiles[protoFileName] = &generator.FileDescriptor{
 		FileDescriptorProto: fileDescProto,
+	}
+	genFiles["google/protobuf/timestamp.proto"] = &generator.FileDescriptor{
+		FileDescriptorProto: timestampFileProto,
 	}
 
 	g.CommandLineParameters(g.Request.GetParameter())
@@ -170,7 +184,7 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *configstoreSchema) (s
 	// Now add our automatically synchronising store code
 	extendedCode := standardCode
 	extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"", 1)
-	for kindName, _ := range schema.Kinds {
+	for kindName := range schema.Kinds {
 		extendedCode = fmt.Sprintf(
 			"%s\n%s",
 			extendedCode,

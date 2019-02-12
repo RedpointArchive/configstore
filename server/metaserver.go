@@ -118,7 +118,10 @@ func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaLi
 	var entities []*MetaEntity
 	for _, snapshot := range snapshots {
 		entity := &MetaEntity{
-			Id: snapshot.Ref.ID,
+			Key: &Key{
+				Val:   snapshot.Ref.ID,
+				IsSet: true,
+			},
 		}
 		for key, value := range snapshot.Data() {
 			for _, field := range kindInfo.Fields {
@@ -128,15 +131,60 @@ func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaLi
 					}
 					switch field.Type {
 					case typeDouble:
-						f.DoubleValue = value.(float64)
+						switch v := value.(type) {
+						case float64:
+							f.DoubleValue = v
+						default:
+							f.DoubleValue = 0
+						}
 					case typeInt64:
-						f.Int64Value = value.(int64)
+						switch v := value.(type) {
+						case int64:
+							f.Int64Value = v
+						default:
+							f.Int64Value = 0
+						}
 					case typeString:
-						f.StringValue = value.(string)
+						switch v := value.(type) {
+						case string:
+							f.StringValue = v
+						default:
+							f.StringValue = ""
+						}
 					case typeTimestamp:
-						f.TimestampValue = value.([]byte)
+						switch v := value.(type) {
+						case []byte:
+							f.TimestampValue = v
+						default:
+							f.TimestampValue = nil
+						}
 					case typeBoolean:
-						f.BooleanValue = value.(bool)
+						switch v := value.(type) {
+						case bool:
+							f.BooleanValue = v
+						default:
+							f.BooleanValue = false
+						}
+					case typeBytes:
+						switch v := value.(type) {
+						case []byte:
+							f.BytesValue = v
+						default:
+							f.BytesValue = nil
+						}
+					case typeKey:
+						switch v := value.(type) {
+						case *firestore.DocumentRef:
+							f.KeyValue = &Key{
+								Val:   v.ID,
+								IsSet: true,
+							}
+						default:
+							f.KeyValue = &Key{
+								Val:   "",
+								IsSet: false,
+							}
+						}
 					}
 					entity.Values = append(entity.Values, f)
 					break

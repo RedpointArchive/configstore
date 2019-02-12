@@ -24,6 +24,8 @@ const (
 	typeString    configstoreSchemaKindFieldType = "string"
 	typeTimestamp configstoreSchemaKindFieldType = "timestamp"
 	typeBoolean   configstoreSchemaKindFieldType = "bool"
+	typeBytes     configstoreSchemaKindFieldType = "bytes"
+	typeKey       configstoreSchemaKindFieldType = "key"
 )
 
 type configstoreSchemaKindField struct {
