@@ -49,32 +49,20 @@ type commonMessageDescriptors struct {
 	Key         *desc.MessageDescriptor
 }
 
-type generatorResult {
-	Messages []*builder.MessageBuilder
-	Services []*builder.ServiceBuilder
-	FileBuilder *builder.FileBuilder
-	FileDesc *desc.FileDescriptor
-	Schema *configstoreSchema
-	KindMap map[*builder.ServiceBuilder]*configstoreSchemaKind
-	KindNameMap map[*builder.ServiceBuilder]string
-	MessageMap map[string]*desc.MessageDescriptor
-	WatchTypeEnumValues *watchTypeEnumValues
+type generatorResult struct {
+	Messages                 []*builder.MessageBuilder
+	Services                 []*builder.ServiceBuilder
+	FileBuilder              *builder.FileBuilder
+	FileDesc                 *desc.FileDescriptor
+	Schema                   *configstoreSchema
+	KindMap                  map[*builder.ServiceBuilder]*configstoreSchemaKind
+	KindNameMap              map[*builder.ServiceBuilder]string
+	MessageMap               map[string]*desc.MessageDescriptor
+	WatchTypeEnumValues      *watchTypeEnumValues
 	CommonMessageDescriptors *commonMessageDescriptors
 }
 
-func generate(path string) (*generatorResult, error) (
-	[]*builder.MessageBuilder,
-	[]*builder.ServiceBuilder,
-	*builder.FileBuilder,
-	*desc.FileDescriptor,
-	*configstoreSchema,
-	map[*builder.ServiceBuilder]*configstoreSchemaKind,
-	map[*builder.ServiceBuilder]string,
-	map[string]*desc.MessageDescriptor,
-	*watchTypeEnumValues,
-	*commonMessageDescriptors,
-	error,
-) {
+func generate(path string) (*generatorResult, error) {
 	timestampFileDescriptor, err := desc.LoadFileDescriptor("google/protobuf/timestamp.proto")
 	if err != nil {
 		return nil, err
@@ -348,15 +336,15 @@ func generate(path string) (*generatorResult, error) (
 	}
 
 	return &generatorResult{
-		Messages: messages, 
-		Services: services, 
-		FileBuilder: fileBuilder, 
-		FileDesc: fileDesc, 
-		Schema: &schema, 
-		KindMap: kindMap, 
-		KindNameMap: kindNameMap, 
-		MessageMap: messageMap, 
-		WatchTypeEnumValues: watchTypeEnumValues,
+		Messages:                 messages,
+		Services:                 services,
+		FileBuilder:              fileBuilder,
+		FileDesc:                 fileDesc,
+		Schema:                   &schema,
+		KindMap:                  kindMap,
+		KindNameMap:              kindNameMap,
+		MessageMap:               messageMap,
+		WatchTypeEnumValues:      watchTypeEnumValues,
 		CommonMessageDescriptors: common,
 	}, nil
 }

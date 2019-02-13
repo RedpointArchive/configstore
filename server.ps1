@@ -1,6 +1,7 @@
 param(
     [switch][bool]$generate,
-    [switch][bool]$SkipDeps
+    [switch][bool]$SkipDeps,
+    [switch][bool]$BuildOnly
 )
 
 $Args = ""
@@ -66,14 +67,16 @@ try {
         exit $LastExitCode
     }
 
-    Write-Output "Running & testing server..."
-    $env:CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID="configstore-test-001"
-    $env:CONFIGSTORE_GRPC_PORT="13389"
-    $env:CONFIGSTORE_HTTP_PORT="13390"
-    $env:CONFIGSTORE_SCHEMA_PATH="schema.json"
-    .\server.exe $Args
-    if ($LastExitCode -ne 0) {
-        exit $LastExitCode
+    if (!$BuildOnly) {
+        Write-Output "Running & testing server..."
+        $env:CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID="configstore-test-001"
+        $env:CONFIGSTORE_GRPC_PORT="13389"
+        $env:CONFIGSTORE_HTTP_PORT="13390"
+        $env:CONFIGSTORE_SCHEMA_PATH="schema.json"
+        .\server.exe $Args
+        if ($LastExitCode -ne 0) {
+            exit $LastExitCode
+        }
     }
 } finally {
     Pop-Location

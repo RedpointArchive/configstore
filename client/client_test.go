@@ -38,14 +38,13 @@ func TestMain(m *testing.M) {
 func TestCreate(t *testing.T) {
 	resp, err := client.Create(ctx, &CreateUserRequest{
 		Entity: &User{
-			Key:          &Key{},
+			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
 		},
 	})
 	assert.NilError(t, err)
-	assert.Assert(t, resp.Entity.Key.IsSet)
-	assert.Assert(t, resp.Entity.Key.Val != "")
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 }
@@ -53,7 +52,7 @@ func TestCreate(t *testing.T) {
 func TestCreateWithTimestamp(t *testing.T) {
 	resp, err := client.Create(ctx, &CreateUserRequest{
 		Entity: &User{
-			Key:          &Key{},
+			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
 			DateLastLoginUtc: &timestamp.Timestamp{
@@ -63,8 +62,7 @@ func TestCreateWithTimestamp(t *testing.T) {
 		},
 	})
 	assert.NilError(t, err)
-	assert.Assert(t, resp.Entity.Key.IsSet)
-	assert.Assert(t, resp.Entity.Key.Val != "")
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 	assert.Equal(t, resp.Entity.DateLastLoginUtc.Seconds, int64(1))
@@ -81,14 +79,13 @@ func TestList(t *testing.T) {
 func TestCreateThenGet(t *testing.T) {
 	resp, err := client.Create(ctx, &CreateUserRequest{
 		Entity: &User{
-			Key:          &Key{},
+			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
 		},
 	})
 	assert.NilError(t, err)
-	assert.Assert(t, resp.Entity.Key.IsSet)
-	assert.Assert(t, resp.Entity.Key.Val != "")
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 
@@ -96,7 +93,7 @@ func TestCreateThenGet(t *testing.T) {
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
-	assert.Equal(t, resp2.Entity.Key.Val, resp.Entity.Key.Val)
+	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
 	assert.Equal(t, resp2.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp2.Entity.PasswordHash, "what")
 }
@@ -129,14 +126,13 @@ func TestWatchThenCreate(t *testing.T) {
 
 	resp, err := client.Create(ctx, &CreateUserRequest{
 		Entity: &User{
-			Key:          &Key{},
+			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
 			PasswordHash: testID.String(),
 		},
 	})
 	assert.NilError(t, err)
-	assert.Assert(t, resp.Entity.Key.IsSet)
-	assert.Assert(t, resp.Entity.Key.Val != "")
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, testID.String())
 
@@ -161,7 +157,7 @@ func TestStore(t *testing.T) {
 	assert.NilError(t, err)
 
 	user, err := store1.Create(ctx, &User{
-		Key:          &Key{},
+		Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 		EmailAddress: "hello@example.com",
 		PasswordHash: "v",
 	})
@@ -184,14 +180,13 @@ func TestStore(t *testing.T) {
 func TestCreateThenUpdateThenGet(t *testing.T) {
 	resp, err := client.Create(ctx, &CreateUserRequest{
 		Entity: &User{
-			Key:          &Key{},
+			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
 		},
 	})
 	assert.NilError(t, err)
-	assert.Assert(t, resp.Entity.Key.IsSet)
-	assert.Assert(t, resp.Entity.Key.Val != "")
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 
@@ -201,7 +196,7 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 		Entity: resp.Entity,
 	})
 	assert.NilError(t, err)
-	assert.Equal(t, resp2.Entity.Key.Val, resp.Entity.Key.Val)
+	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
 	assert.Equal(t, resp2.Entity.EmailAddress, "update@example.com")
 	assert.Equal(t, resp2.Entity.PasswordHash, "what")
 
@@ -209,7 +204,7 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
-	assert.Equal(t, resp3.Entity.Key.Val, resp2.Entity.Key.Val)
+	assert.Equal(t, resp3.Entity.Key.Path[0].GetName(), resp2.Entity.Key.Path[0].GetName())
 	assert.Equal(t, resp3.Entity.EmailAddress, "update@example.com")
 	assert.Equal(t, resp3.Entity.PasswordHash, "what")
 }
@@ -217,14 +212,13 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 func TestCreateThenDeleteThenGet(t *testing.T) {
 	resp, err := client.Create(ctx, &CreateUserRequest{
 		Entity: &User{
-			Key:          &Key{},
+			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
 			PasswordHash: "what",
 		},
 	})
 	assert.NilError(t, err)
-	assert.Assert(t, resp.Entity.Key.IsSet)
-	assert.Assert(t, resp.Entity.Key.Val != "")
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 
@@ -232,7 +226,7 @@ func TestCreateThenDeleteThenGet(t *testing.T) {
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
-	assert.Equal(t, resp2.Entity.Key.Val, resp.Entity.Key.Val)
+	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
 	assert.Equal(t, resp2.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp2.Entity.PasswordHash, "what")
 

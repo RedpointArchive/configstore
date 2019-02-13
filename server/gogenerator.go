@@ -12,8 +12,132 @@ import (
 )
 
 const (
+	extendedOnceCode = `
+func CreateTopLevelKey(partitionId *PartitionId, pathElement *PathElement) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{pathElement},
+	}
+}
+
+func CreateIncompleteTopLevelKey(partitionId *PartitionId, kind string) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: kind,
+			},
+		},
+	}
+}
+
+func CreateDescendantKey(parent *Key, pathElement *PathElement) *Key {
+	newKey := &Key{
+		PartitionId: &PartitionId{
+			Namespace: parent.PartitionId.Namespace,
+		},
+		Path: nil,
+	}
+	for _, elem := range parent.Path {
+		switch elem.IdType.(type) {
+		case *PathElement_Id:
+			newKey.Path = append(newKey.Path, &PathElement{
+				Kind: elem.Kind,
+				IdType: &PathElement_Id{
+					Id: elem.GetId(),
+				},
+			})
+			break
+		case *PathElement_Name:
+			newKey.Path = append(newKey.Path, &PathElement{
+				Kind: elem.Kind,
+				IdType: &PathElement_Name{
+					Name: elem.GetName(),
+				},
+			})
+			break
+		}
+	}
+	switch pathElement.IdType.(type) {
+	case *PathElement_Id:
+		newKey.Path = append(newKey.Path, &PathElement{
+			Kind: pathElement.Kind,
+			IdType: &PathElement_Id{
+				Id: pathElement.GetId(),
+			},
+		})
+		break
+	case *PathElement_Name:
+		newKey.Path = append(newKey.Path, &PathElement{
+			Kind: pathElement.Kind,
+			IdType: &PathElement_Name{
+				Name: pathElement.GetName(),
+			},
+		})
+		break
+	}
+	return newKey
+}
+
+func SerializeKey(key *Key) string {
+	var elements []string
+	for _, pathElement := range key.Path {
+		if _, ok := pathElement.IdType.(*PathElement_Id); ok {
+			elements = append(elements, fmt.Sprintf("id=%d", pathElement.GetId()))
+		} else {
+			elements = append(elements, fmt.Sprintf("name=%s", pathElement.GetName()))
+		}
+	}
+	return fmt.Sprintf("ns=%s|%s", key.PartitionId.Namespace, strings.Join(elements, "|"))
+}
+
+func CompareKeys(a *Key, b *Key) bool {
+	return SerializeKey(a) == SerializeKey(b)
+}
+`
 	extendedTemplateCode = `
+func CreateTopLevel_<ENTITY>_NameKey(partitionId *PartitionId, name string) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: "<ENTITY>",
+				IdType: &PathElement_Name{
+					Name: name,
+				},
+			},
+		},
+	}
+}
+
+func CreateTopLevel_<ENTITY>_IdKey(partitionId *PartitionId, id int64) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: "<ENTITY>",
+				IdType: &PathElement_Id{
+				  Id: id,
+				},
+			},
+		},
+	}
+}
+
+func CreateTopLevel_<ENTITY>_IncompleteKey(partitionId *PartitionId) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: "<ENTITY>",
+				IdType: nil,
+			},
+		},
+	}
+}
+	
 type <ENTITY>ImplStore struct {
+	sync.RWMutex
 	client <ENTITY>ServiceClient
 	store map[string]*<ENTITY>
 }
@@ -48,9 +172,13 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 			}
 			if change.Type == WatchEventType_Created ||
 				change.Type == WatchEventType_Updated {
-				ref.store[change.Entity.Key.Val] = change.Entity
+				ref.Lock()
+				ref.store[SerializeKey(change.Entity.Key)] = change.Entity
+				ref.Unlock()
 			} else if change.Type == WatchEventType_Deleted {
-				delete(ref.store, change.Entity.Key.Val)
+				ref.Lock()
+				delete(ref.store, SerializeKey(change.Entity.Key))
+				ref.Unlock()
 			}
 		}
 	}()
@@ -64,7 +192,9 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 			return nil, err
 		}
 		for _, entity := range resp.Entities {
-			ref.store[entity.Key.Val] = entity
+			ref.Lock()
+			ref.store[SerializeKey(entity.Key)] = entity
+			ref.Unlock()
 		}
 		if !resp.MoreResults {
 			break
@@ -85,11 +215,15 @@ func (c *<ENTITY>ImplStore) GetKeys() []*Key {
 }
 
 func (c *<ENTITY>ImplStore) Get(key *Key) *<ENTITY> {
-	return c.store[key.Val]
+	c.RLock()
+	defer c.RUnlock()
+	return c.store[SerializeKey(key)]
 }
 
 func (c *<ENTITY>ImplStore) GetAndCheck(key *Key) (*<ENTITY>, bool) {
-	val, ok := c.store[key.Val]
+	c.RLock()
+	defer c.RUnlock()
+	val, ok := c.store[SerializeKey(key)]
 	return val, ok
 }
 
@@ -100,7 +234,9 @@ func (c *<ENTITY>ImplStore) Create(ctx context.Context, entity *<ENTITY>) (*<ENT
 	if err != nil {
 		return nil, err
 	}
-	c.store[resp.Entity.Key.Val] = resp.Entity
+	c.Lock()
+	c.store[SerializeKey(resp.Entity.Key)] = resp.Entity
+	c.Unlock()
 	return resp.Entity, nil
 }
 
@@ -111,7 +247,9 @@ func (c *<ENTITY>ImplStore) Update(ctx context.Context, entity *<ENTITY>) (*<ENT
 	if err != nil {
 		return nil, err
 	}
-	c.store[resp.Entity.Key.Val] = resp.Entity
+	c.Lock()
+	c.store[SerializeKey(resp.Entity.Key)] = resp.Entity
+	c.Unlock()
 	return resp.Entity, nil
 }
 
@@ -122,7 +260,9 @@ func (c *<ENTITY>ImplStore) Delete(ctx context.Context, key *Key) (*<ENTITY>, er
 	if err != nil {
 		return nil, err
 	}
-	delete(c.store, resp.Entity.Key.Val)
+	c.Lock()
+	delete(c.store, SerializeKey(resp.Entity.Key))
+	c.Unlock()
 	return resp.Entity, nil
 }
 
@@ -183,7 +323,8 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *configstoreSchema) (s
 
 	// Now add our automatically synchronising store code
 	extendedCode := standardCode
-	extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"", 1)
+	extendedCode = fmt.Sprintf("%s\n%s", standardCode, extendedOnceCode)
+	extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"", 1)
 	for kindName := range schema.Kinds {
 		extendedCode = fmt.Sprintf(
 			"%s\n%s",

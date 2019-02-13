@@ -14,18 +14,22 @@ type configstoreMetaServiceServer struct {
 func convertType(t configstoreSchemaKindFieldType) ValueType {
 	switch t {
 	case typeDouble:
-		return ValueType_Double
+		return ValueType_TypeDouble
 	case typeInt64:
-		return ValueType_Int64
+		return ValueType_TypeInt64
 	case typeString:
-		return ValueType_String
+		return ValueType_TypeString
 	case typeTimestamp:
-		return ValueType_Timestamp
+		return ValueType_TypeTimestamp
 	case typeBoolean:
-		return ValueType_Boolean
+		return ValueType_TypeBoolean
+	case typeBytes:
+		return ValueType_TypeBytes
+	case typeKey:
+		return ValueType_TypeKey
 	}
 
-	return ValueType_Double
+	return ValueType_TypeDouble
 }
 
 func convertEditorType(t configstoreSchemaKindFieldEditorType) FieldEditorInfoType {
@@ -117,11 +121,13 @@ func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaLi
 
 	var entities []*MetaEntity
 	for _, snapshot := range snapshots {
+		key, err := convertDocumentRefToMetaKey(snapshot.Ref)
+		if err != nil {
+			fmt.Printf("error while converting firestore ref to meta key: %v", err)
+			continue
+		}
 		entity := &MetaEntity{
-			Key: &Key{
-				Val:   snapshot.Ref.ID,
-				IsSet: true,
-			},
+			Key: key,
 		}
 		for key, value := range snapshot.Data() {
 			for _, field := range kindInfo.Fields {
@@ -175,15 +181,13 @@ func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaLi
 					case typeKey:
 						switch v := value.(type) {
 						case *firestore.DocumentRef:
-							f.KeyValue = &Key{
-								Val:   v.ID,
-								IsSet: true,
+							f.KeyValue, err = convertDocumentRefToMetaKey(v)
+							if err != nil {
+								f.KeyValue = nil
+								fmt.Printf("error while converting firestore ref to meta key: %v", err)
 							}
 						default:
-							f.KeyValue = &Key{
-								Val:   "",
-								IsSet: false,
-							}
+							f.KeyValue = nil
 						}
 					}
 					entity.Values = append(entity.Values, f)

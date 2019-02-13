@@ -38,6 +38,8 @@ func convertDocumentRefToKey(
 		pathElement.SetFieldByName("name", ref.ID)
 
 		reversePaths = append(reversePaths, pathElement)
+
+		ref = ref.Parent.Parent
 	}
 
 	var paths []*dynamic.Message
@@ -60,12 +62,30 @@ func convertKeyToDocumentRef(
 	namespaceRaw := partitionID.(*dynamic.Message).GetFieldByName("namespace")
 	namespace := namespaceRaw.(string)
 
-	if namespace != "" {
-		return nil, fmt.Errorf("namespace must be nil for Firestore-backed entity")
+	firestoreTestCollection := client.Collection("Test")
+	firestoreNamespace := firestoreTestCollection.Path[0:(len(firestoreTestCollection.Path) - len(firestoreTestCollection.ID) - 1)]
+
+	if namespace == "" {
+		namespace = firestoreNamespace
+	}
+	if namespace != firestoreNamespace {
+		return nil, fmt.Errorf("namespace must be either omitted, or match '%s' for this Firestore-backed entity", firestoreNamespace)
 	}
 
-	pathsRaw := key.GetFieldByName("paths")
-	paths := pathsRaw.([]*dynamic.Message)
+	pathsRaw := key.GetFieldByName("path")
+	pathsArray, ok := pathsRaw.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("key path is not expected array of path elements")
+	}
+	var paths []*dynamic.Message
+	for idx, e := range pathsArray {
+		pe, ok := e.(*dynamic.Message)
+		if !ok {
+			return nil, fmt.Errorf("key path is not expected array of path elements (element %d)", idx)
+		} else {
+			paths = append(paths, pe)
+		}
+	}
 
 	var ref *firestore.DocumentRef
 	for _, pathElement := range paths {
@@ -79,6 +99,48 @@ func convertKeyToDocumentRef(
 	}
 
 	return ref, nil
+}
+
+func convertDocumentRefToMetaKey(
+	ref *firestore.DocumentRef,
+) (*Key, error) {
+	lastCollection := getTopLevelParent(ref)
+	if lastCollection == nil {
+		return nil, fmt.Errorf("ref has no top level parent")
+	}
+
+	partitionID := &PartitionId{
+		Namespace: lastCollection.Path[0:(len(lastCollection.Path) - len(lastCollection.ID) - 1)],
+	}
+
+	var reversePaths []*PathElement
+	for ref != nil {
+		pathElement := &PathElement{
+			Kind: ref.Parent.ID,
+			IdType: &PathElement_Name{
+				Name: ref.ID,
+			},
+		}
+
+		reversePaths = append(reversePaths, pathElement)
+	}
+
+	var paths []*PathElement
+	for i := len(reversePaths) - 1; i >= 0; i-- {
+		paths = append(paths, reversePaths[i])
+	}
+
+	return &Key{
+		PartitionId: partitionID,
+		Path:        paths,
+	}, nil
+}
+
+func convertMetaKeyToDocumentRef(
+	client *firestore.Client,
+	key *Key,
+) (*firestore.DocumentRef, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 func convertSnapshotToDynamicMessage(
@@ -115,21 +177,25 @@ func convertSnapshotToDynamicMessage(
 	return out, nil
 }
 
-func convertDynamicMessageIntoKeyAndDataMap(
+func convertDynamicMessageIntoRefAndDataMap(
 	client *firestore.Client,
 	messageFactory *dynamic.MessageFactory,
 	messageDescriptor *desc.MessageDescriptor,
 	message *dynamic.Message,
-	keyMessageDescriptor *desc.MessageDescriptor,
 ) (*firestore.DocumentRef, map[string]interface{}, error) {
 	keyRaw, err := message.TryGetFieldByName("key")
 	if err != nil {
 		return nil, nil, err
 	}
 
+	keyCon, ok := keyRaw.(*dynamic.Message)
+	if !ok {
+		return nil, nil, fmt.Errorf("key of unexpected type")
+	}
+
 	key, err := convertKeyToDocumentRef(
 		client,
-		keyRaw,
+		keyCon,
 	)
 	if err != nil {
 		return nil, nil, err
