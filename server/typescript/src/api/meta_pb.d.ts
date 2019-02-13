@@ -3,12 +3,75 @@
 
 import * as jspb from "google-protobuf";
 
-export class Key extends jspb.Message {
-  getVal(): string;
-  setVal(value: string): void;
+export class PartitionId extends jspb.Message {
+  getNamespace(): string;
+  setNamespace(value: string): void;
 
-  getIsset(): boolean;
-  setIsset(value: boolean): void;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PartitionId.AsObject;
+  static toObject(includeInstance: boolean, msg: PartitionId): PartitionId.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PartitionId, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PartitionId;
+  static deserializeBinaryFromReader(message: PartitionId, reader: jspb.BinaryReader): PartitionId;
+}
+
+export namespace PartitionId {
+  export type AsObject = {
+    namespace: string,
+  }
+}
+
+export class PathElement extends jspb.Message {
+  getKind(): string;
+  setKind(value: string): void;
+
+  hasId(): boolean;
+  clearId(): void;
+  getId(): number;
+  setId(value: number): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): string;
+  setName(value: string): void;
+
+  getIdtypeCase(): PathElement.IdtypeCase;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PathElement.AsObject;
+  static toObject(includeInstance: boolean, msg: PathElement): PathElement.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PathElement, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PathElement;
+  static deserializeBinaryFromReader(message: PathElement, reader: jspb.BinaryReader): PathElement;
+}
+
+export namespace PathElement {
+  export type AsObject = {
+    kind: string,
+    id: number,
+    name: string,
+  }
+
+  export enum IdtypeCase {
+    IDTYPE_NOT_SET = 0,
+    ID = 2,
+    NAME = 3,
+  }
+}
+
+export class Key extends jspb.Message {
+  hasPartitionid(): boolean;
+  clearPartitionid(): void;
+  getPartitionid(): PartitionId | undefined;
+  setPartitionid(value?: PartitionId): void;
+
+  clearPathList(): void;
+  getPathList(): Array<PathElement>;
+  setPathList(value: Array<PathElement>): void;
+  addPath(value?: PathElement, index?: number): PathElement;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Key.AsObject;
@@ -22,8 +85,8 @@ export class Key extends jspb.Message {
 
 export namespace Key {
   export type AsObject = {
-    val: string,
-    isset: boolean,
+    partitionid?: PartitionId.AsObject,
+    pathList: Array<PathElement.AsObject>,
   }
 }
 
@@ -366,13 +429,13 @@ export namespace MetaEntity {
 }
 
 export enum ValueType {
-  DOUBLE = 0,
-  INT64 = 1,
-  STRING = 2,
-  TIMESTAMP = 3,
-  BOOLEAN = 4,
-  BYTES = 5,
-  KEY_ = 6,
+  TYPEDOUBLE = 0,
+  TYPEINT64 = 1,
+  TYPESTRING = 2,
+  TYPETIMESTAMP = 3,
+  TYPEBOOLEAN = 4,
+  TYPEBYTES = 5,
+  TYPEKEY = 6,
 }
 
 export enum FieldEditorInfoType {

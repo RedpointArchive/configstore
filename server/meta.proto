@@ -2,19 +2,31 @@ syntax = "proto3";
 
 package meta;
 
+message PartitionId {
+    string namespace = 1;
+}
+
+message PathElement {
+    string kind = 1;
+    oneof idType {
+        int64 id = 2;
+        string name = 3;
+    }
+}
+
 message Key {
-    string val = 1;
-    bool isSet = 2;
+    PartitionId partitionId = 1;
+    repeated PathElement path = 2;
 }
 
 enum ValueType {
-    Double = 0;
-    Int64 = 1;
-    String = 2;
-    Timestamp = 3;
-    Boolean = 4;
-    Bytes = 5;
-    Key_ = 6;
+    TypeDouble = 0;
+    TypeInt64 = 1;
+    TypeString = 2;
+    TypeTimestamp = 3;
+    TypeBoolean = 4;
+    TypeBytes = 5;
+    TypeKey = 6;
 }
 
 message Value {

@@ -9,15 +9,92 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
+func getTopLevelParent(ref *firestore.DocumentRef) *firestore.CollectionRef {
+	var lastCollection *firestore.CollectionRef
+	for ref != nil {
+		lastCollection = ref.Parent
+		ref = lastCollection.Parent
+	}
+	return lastCollection
+}
+
+func convertDocumentRefToKey(
+	messageFactory *dynamic.MessageFactory,
+	ref *firestore.DocumentRef,
+	common *commonMessageDescriptors,
+) (*dynamic.Message, error) {
+	lastCollection := getTopLevelParent(ref)
+	if lastCollection == nil {
+		return nil, fmt.Errorf("ref has no top level parent")
+	}
+
+	partitionID := messageFactory.NewDynamicMessage(common.PartitionId)
+	partitionID.SetFieldByName("namespace", lastCollection.Path[0:(len(lastCollection.Path)-len(lastCollection.ID)-1)])
+
+	var reversePaths []*dynamic.Message
+	for ref != nil {
+		pathElement := messageFactory.NewDynamicMessage(common.PathElement)
+		pathElement.SetFieldByName("kind", ref.Parent.ID)
+		pathElement.SetFieldByName("name", ref.ID)
+
+		reversePaths = append(reversePaths, pathElement)
+	}
+
+	var paths []*dynamic.Message
+	for i := len(reversePaths) - 1; i >= 0; i-- {
+		paths = append(paths, reversePaths[i])
+	}
+
+	key := messageFactory.NewDynamicMessage(common.Key)
+	key.SetFieldByName("partitionId", partitionID)
+	key.SetFieldByName("path", paths)
+
+	return key, nil
+}
+
+func convertKeyToDocumentRef(
+	client *firestore.Client,
+	key *dynamic.Message,
+) (*firestore.DocumentRef, error) {
+	partitionID := key.GetFieldByName("partitionId")
+	namespaceRaw := partitionID.(*dynamic.Message).GetFieldByName("namespace")
+	namespace := namespaceRaw.(string)
+
+	if namespace != "" {
+		return nil, fmt.Errorf("namespace must be nil for Firestore-backed entity")
+	}
+
+	pathsRaw := key.GetFieldByName("paths")
+	paths := pathsRaw.([]*dynamic.Message)
+
+	var ref *firestore.DocumentRef
+	for _, pathElement := range paths {
+		if ref == nil {
+			ref = client.Collection(pathElement.GetFieldByName("kind").(string)).
+				Doc(pathElement.GetFieldByName("name").(string))
+		} else {
+			ref = ref.Collection(pathElement.GetFieldByName("kind").(string)).
+				Doc(pathElement.GetFieldByName("name").(string))
+		}
+	}
+
+	return ref, nil
+}
+
 func convertSnapshotToDynamicMessage(
 	messageFactory *dynamic.MessageFactory,
 	messageDescriptor *desc.MessageDescriptor,
 	snapshot *firestore.DocumentSnapshot,
-	keyMessageDescriptor *desc.MessageDescriptor,
+	common *commonMessageDescriptors,
 ) (*dynamic.Message, error) {
-	key := messageFactory.NewDynamicMessage(keyMessageDescriptor)
-	key.SetFieldByName("val", snapshot.Ref.ID)
-	key.SetFieldByName("isSet", true)
+	key, err := convertDocumentRefToKey(
+		messageFactory,
+		snapshot.Ref,
+		common,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	out := messageFactory.NewDynamicMessage(messageDescriptor)
 	out.SetFieldByName("key", key)
@@ -38,53 +115,24 @@ func convertSnapshotToDynamicMessage(
 	return out, nil
 }
 
-func convertDynamicMessageIntoID(
-	messageFactory *dynamic.MessageFactory,
-	keyMessageDescriptor *desc.MessageDescriptor,
-	message *dynamic.Message,
-) (string, error) {
-	valRaw, err := message.TryGetFieldByName("val")
-	if err != nil {
-		return "", err
-	}
-	switch vv := valRaw.(type) {
-	case string:
-		return vv, nil
-	default:
-		return "", nil
-	}
-}
-
-func convertDynamicMessageIntoIDAndDataMap(
+func convertDynamicMessageIntoKeyAndDataMap(
+	client *firestore.Client,
 	messageFactory *dynamic.MessageFactory,
 	messageDescriptor *desc.MessageDescriptor,
 	message *dynamic.Message,
 	keyMessageDescriptor *desc.MessageDescriptor,
-) (string, map[string]interface{}, error) {
+) (*firestore.DocumentRef, map[string]interface{}, error) {
 	keyRaw, err := message.TryGetFieldByName("key")
 	if err != nil {
-		return "", nil, err
+		return nil, nil, err
 	}
 
-	var id string
-	switch v := keyRaw.(type) {
-	case *dynamic.Message:
-		valRaw, err := v.TryGetFieldByName("val")
-		if err != nil {
-			return "", nil, err
-		}
-		switch vv := valRaw.(type) {
-		case string:
-			id = vv
-			break
-		default:
-			id = ""
-			break
-		}
-		break
-	default:
-		id = ""
-		break
+	key, err := convertKeyToDocumentRef(
+		client,
+		keyRaw,
+	)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	m := make(map[string]interface{})
@@ -97,5 +145,5 @@ func convertDynamicMessageIntoIDAndDataMap(
 		m[fieldDescriptor.GetName()] = field
 	}
 
-	return id, m, nil
+	return key, m, nil
 }

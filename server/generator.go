@@ -42,7 +42,27 @@ type watchTypeEnumValues struct {
 	Deleted *desc.EnumValueDescriptor
 }
 
-func generate(path string) (
+type commonMessageDescriptors struct {
+	Timestamp   *desc.MessageDescriptor
+	PartitionId *desc.MessageDescriptor
+	PathElement *desc.MessageDescriptor
+	Key         *desc.MessageDescriptor
+}
+
+type generatorResult {
+	Messages []*builder.MessageBuilder
+	Services []*builder.ServiceBuilder
+	FileBuilder *builder.FileBuilder
+	FileDesc *desc.FileDescriptor
+	Schema *configstoreSchema
+	KindMap map[*builder.ServiceBuilder]*configstoreSchemaKind
+	KindNameMap map[*builder.ServiceBuilder]string
+	MessageMap map[string]*desc.MessageDescriptor
+	WatchTypeEnumValues *watchTypeEnumValues
+	CommonMessageDescriptors *commonMessageDescriptors
+}
+
+func generate(path string) (*generatorResult, error) (
 	[]*builder.MessageBuilder,
 	[]*builder.ServiceBuilder,
 	*builder.FileBuilder,
@@ -52,11 +72,12 @@ func generate(path string) (
 	map[*builder.ServiceBuilder]string,
 	map[string]*desc.MessageDescriptor,
 	*watchTypeEnumValues,
+	*commonMessageDescriptors,
 	error,
 ) {
 	timestampFileDescriptor, err := desc.LoadFileDescriptor("google/protobuf/timestamp.proto")
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	var timestampMessage *desc.MessageDescriptor
@@ -67,44 +88,96 @@ func generate(path string) (
 		}
 	}
 	if timestampMessage == nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("unable to locate Timestamp proto descriptor in google/protobuf/timestamp.proto")
+		return nil, fmt.Errorf("unable to locate Timestamp proto descriptor in google/protobuf/timestamp.proto")
 	}
 
 	schemaFile, err := os.Open(path)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 	defer schemaFile.Close()
 
 	schemaByteValue, err := ioutil.ReadAll(schemaFile)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	var schema configstoreSchema
 	err = json.Unmarshal(schemaByteValue, &schema)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	var messages []*builder.MessageBuilder
 	var services []*builder.ServiceBuilder
+	var enums []*builder.EnumBuilder
 	kindMap := make(map[*builder.ServiceBuilder]*configstoreSchemaKind)
 	kindNameMap := make(map[*builder.ServiceBuilder]string)
 	messageMap := make(map[string]*desc.MessageDescriptor)
 
+	partitionIdMessage := builder.NewMessage("PartitionId")
+	partitionIdMessage.AddField(
+		builder.NewField("namespace", builder.FieldTypeString()).
+			SetNumber(1),
+	)
+	messages = append(messages, partitionIdMessage)
+
+	pathElementIdMessage := builder.NewOneOf("idType")
+	pathElementIdMessage.AddChoice(
+		builder.NewField("id", builder.FieldTypeInt64()).
+			SetNumber(2).
+			SetOptional().
+			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID in the path component")}),
+	)
+	pathElementIdMessage.AddChoice(
+		builder.NewField("name", builder.FieldTypeString()).
+			SetNumber(3).
+			SetOptional().
+			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The name in the path component")}),
+	)
+
+	pathElementMessage := builder.NewMessage("PathElement")
+	pathElementMessage.AddField(
+		builder.NewField("kind", builder.FieldTypeString()).
+			SetNumber(1).
+			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The kind in the path component")}),
+	)
+	pathElementMessage.AddOneOf(pathElementIdMessage)
+	messages = append(messages, pathElementMessage)
+
 	keyMessage := builder.NewMessage("Key")
 	keyMessage.AddField(
-		builder.NewField("val", builder.FieldTypeString()).
+		builder.NewField("partitionId", builder.FieldTypeMessage(partitionIdMessage)).
 			SetNumber(1).
-			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The string representation of the key")}),
+			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The partition that the entity is stored in; if omitted, the default is used")}),
 	)
 	keyMessage.AddField(
-		builder.NewField("isSet", builder.FieldTypeBool()).
+		builder.NewField("path", builder.FieldTypeMessage(pathElementMessage)).
 			SetNumber(2).
-			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" Whether the key is considered set (non-empty); ignored on writes")}),
+			SetRepeated().
+			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The path to the entity")}),
 	)
 	messages = append(messages, keyMessage)
+
+	partitionIdDescriptor, err := partitionIdMessage.Build()
+	if err != nil {
+		return nil, err
+	}
+	pathElementDescriptor, err := pathElementMessage.Build()
+	if err != nil {
+		return nil, err
+	}
+	keyDescriptor, err := keyMessage.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	common := &commonMessageDescriptors{
+		Timestamp:   timestampMessage,
+		PartitionId: partitionIdDescriptor,
+		PathElement: pathElementDescriptor,
+		Key:         keyDescriptor,
+	}
 
 	created := builder.NewEnumValue("Created").SetNumber(0)
 	updated := builder.NewEnumValue("Updated").SetNumber(1)
@@ -114,20 +187,19 @@ func generate(path string) (
 		AddValue(created).
 		AddValue(updated).
 		AddValue(deleted)
-	var enums []*builder.EnumBuilder
 	enums = append(enums, watchEventTypeEnum)
 
 	createdBuilt, err := created.Build()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 	updatedBuilt, err := updated.Build()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 	deletedBuilt, err := deleted.Build()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	watchTypeEnumValues := &watchTypeEnumValues{
@@ -253,7 +325,7 @@ func generate(path string) (
 	for _, message := range messages {
 		msgDesc, err := message.Build()
 		if err != nil {
-			return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+			return nil, err
 		}
 		messageMap[message.GetName()] = msgDesc
 	}
@@ -272,8 +344,19 @@ func generate(path string) (
 	}
 	fileDesc, err := fileBuilder.Build()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
-	return messages, services, fileBuilder, fileDesc, &schema, kindMap, kindNameMap, messageMap, watchTypeEnumValues, nil
+	return &generatorResult{
+		Messages: messages, 
+		Services: services, 
+		FileBuilder: fileBuilder, 
+		FileDesc: fileDesc, 
+		Schema: &schema, 
+		KindMap: kindMap, 
+		KindNameMap: kindNameMap, 
+		MessageMap: messageMap, 
+		WatchTypeEnumValues: watchTypeEnumValues,
+		CommonMessageDescriptors: common,
+	}, nil
 }
