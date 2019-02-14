@@ -180,8 +180,37 @@ func convertSnapshotToDynamicMessage(
 			switch value.(type) {
 			case int64:
 				err = out.TrySetFieldByName(name, uint64(value.(int64)))
+				break
 			default:
 				err = fmt.Errorf("unexpected firestore value for uint64 field")
+				break
+			}
+		} else if fd.GetType() == dpb.FieldDescriptorProto_TYPE_MESSAGE {
+			switch fd.GetMessageType().GetName() {
+			case "Key":
+				if value == nil {
+					err = out.TrySetFieldByName(name, nil)
+				} else {
+					switch value.(type) {
+					case *firestore.DocumentRef:
+						key, err := convertDocumentRefToKey(
+							messageFactory,
+							value.(*firestore.DocumentRef),
+							common,
+						)
+						if err == nil {
+							err = out.TrySetFieldByName(name, key)
+						}
+						break
+					default:
+						err = fmt.Errorf("expected key in Firestore for key type, but got something else")
+						break
+					}
+				}
+				break
+			default:
+				err = out.TrySetFieldByName(name, value)
+				break
 			}
 		} else {
 			err = out.TrySetFieldByName(name, value)
@@ -232,8 +261,36 @@ func convertDynamicMessageIntoRefAndDataMap(
 			// We store uint64 as int64 inside Firestore, as Firestore
 			// does not support uint64 natively
 			m[fieldDescriptor.GetName()] = int64(field.(uint64))
+			break
+		case *dynamic.Message:
+			dm := field.(*dynamic.Message)
+			switch dm.GetMessageDescriptor().GetName() {
+			case "Key":
+				partitionIdFd := dm.GetMessageDescriptor().FindFieldByName("partitionId")
+				pathFd := dm.GetMessageDescriptor().FindFieldByName("path")
+
+				if dm.HasField(partitionIdFd) && dm.HasField(pathFd) {
+					nkey, err := convertKeyToDocumentRef(
+						client,
+						dm,
+					)
+					if err != nil {
+						return nil, nil, err
+					}
+					m[fieldDescriptor.GetName()] = nkey
+				} else {
+					m[fieldDescriptor.GetName()] = nil
+				}
+				break
+			case "Timestamp":
+				m[fieldDescriptor.GetName()] = field
+				break
+			default:
+				return nil, nil, fmt.Errorf("field '%s' contained unknown protobuf message", fieldDescriptor.GetName())
+			}
 		default:
 			m[fieldDescriptor.GetName()] = field
+			break
 		}
 	}
 

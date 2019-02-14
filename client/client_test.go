@@ -8,10 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/grpc"
-
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/rs/xid"
+	"google.golang.org/grpc"
 
 	"testing"
 
@@ -21,6 +20,7 @@ import (
 var ctx context.Context
 var client UserServiceClient
 var intTestClient IntegerTestServiceClient
+var nilKeyTestClient NilKeyTestServiceClient
 
 func TestMain(m *testing.M) {
 	conn, err := grpc.Dial("127.0.0.1:13389", grpc.WithInsecure())
@@ -34,6 +34,7 @@ func TestMain(m *testing.M) {
 	ctx = context.Background()
 	client = NewUserServiceClient(conn)
 	intTestClient = NewIntegerTestServiceClient(conn)
+	nilKeyTestClient = NewNilKeyTestServiceClient(conn)
 	os.Exit(m.Run())
 }
 
@@ -54,6 +55,44 @@ func TestUInt64Storage(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
 	assert.Equal(t, resp2.Entity.UnsignedInt, uint64(18446744073709551615))
+}
+
+func TestNilKeyStorage(t *testing.T) {
+	resp, err := nilKeyTestClient.Create(ctx, &CreateNilKeyTestRequest{
+		Entity: &NilKeyTest{
+			Key:        CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{}),
+			NilKeyTest: nil,
+		},
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
+	assert.Assert(t, resp.Entity.NilKeyTest == nil)
+
+	resp2, err := nilKeyTestClient.Get(ctx, &GetNilKeyTestRequest{
+		Key: resp.Entity.Key,
+	})
+	assert.NilError(t, err)
+	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
+	assert.Assert(t, resp2.Entity.NilKeyTest == nil)
+}
+
+func TestKeyStorage(t *testing.T) {
+	resp, err := nilKeyTestClient.Create(ctx, &CreateNilKeyTestRequest{
+		Entity: &NilKeyTest{
+			Key:        CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{}),
+			NilKeyTest: CreateTopLevel_NilKeyTest_NameKey(&PartitionId{}, "Hello World"),
+		},
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
+	assert.Assert(t, resp.Entity.NilKeyTest.Path[0].GetName() != "")
+
+	resp2, err := nilKeyTestClient.Get(ctx, &GetNilKeyTestRequest{
+		Key: resp.Entity.Key,
+	})
+	assert.NilError(t, err)
+	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
+	assert.Equal(t, resp2.Entity.NilKeyTest.Path[0].GetName(), resp.Entity.NilKeyTest.Path[0].GetName())
 }
 
 func TestCreate(t *testing.T) {

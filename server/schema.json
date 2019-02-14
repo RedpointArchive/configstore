@@ -41,7 +41,7 @@
     "IntegerTest": {
       "editor": {
         "singular": "IntegerTest",
-        "plural": "Integer Tests"
+        "plural": "IntegerTests"
       },
       "fields": [
         {
@@ -51,6 +51,23 @@
           "comment": "Testing a uint64",
           "editor": {
             "displayName": "Uint64"
+          }
+        }
+      ]
+    },
+    "NilKeyTest": {
+      "editor": {
+        "singular": "NilKeyTest",
+        "plural": "NilKeyTests"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "nilKeyTest",
+          "type": "key",
+          "comment": "Testing a nil key",
+          "editor": {
+            "displayName": "NilKey"
           }
         }
       ]
