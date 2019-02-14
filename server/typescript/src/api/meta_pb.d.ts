@@ -3,6 +3,93 @@
 
 import * as jspb from "google-protobuf";
 
+export class PartitionId extends jspb.Message {
+  getNamespace(): string;
+  setNamespace(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PartitionId.AsObject;
+  static toObject(includeInstance: boolean, msg: PartitionId): PartitionId.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PartitionId, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PartitionId;
+  static deserializeBinaryFromReader(message: PartitionId, reader: jspb.BinaryReader): PartitionId;
+}
+
+export namespace PartitionId {
+  export type AsObject = {
+    namespace: string,
+  }
+}
+
+export class PathElement extends jspb.Message {
+  getKind(): string;
+  setKind(value: string): void;
+
+  hasId(): boolean;
+  clearId(): void;
+  getId(): number;
+  setId(value: number): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): string;
+  setName(value: string): void;
+
+  getIdtypeCase(): PathElement.IdtypeCase;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PathElement.AsObject;
+  static toObject(includeInstance: boolean, msg: PathElement): PathElement.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PathElement, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PathElement;
+  static deserializeBinaryFromReader(message: PathElement, reader: jspb.BinaryReader): PathElement;
+}
+
+export namespace PathElement {
+  export type AsObject = {
+    kind: string,
+    id: number,
+    name: string,
+  }
+
+  export enum IdtypeCase {
+    IDTYPE_NOT_SET = 0,
+    ID = 2,
+    NAME = 3,
+  }
+}
+
+export class Key extends jspb.Message {
+  hasPartitionid(): boolean;
+  clearPartitionid(): void;
+  getPartitionid(): PartitionId | undefined;
+  setPartitionid(value?: PartitionId): void;
+
+  clearPathList(): void;
+  getPathList(): Array<PathElement>;
+  setPathList(value: Array<PathElement>): void;
+  addPath(value?: PathElement, index?: number): PathElement;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): Key.AsObject;
+  static toObject(includeInstance: boolean, msg: Key): Key.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: Key, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Key;
+  static deserializeBinaryFromReader(message: Key, reader: jspb.BinaryReader): Key;
+}
+
+export namespace Key {
+  export type AsObject = {
+    partitionid?: PartitionId.AsObject,
+    pathList: Array<PathElement.AsObject>,
+  }
+}
+
 export class Value extends jspb.Message {
   getId(): number;
   setId(value: number): void;
@@ -27,6 +114,16 @@ export class Value extends jspb.Message {
   getBooleanvalue(): boolean;
   setBooleanvalue(value: boolean): void;
 
+  getBytesvalue(): Uint8Array | string;
+  getBytesvalue_asU8(): Uint8Array;
+  getBytesvalue_asB64(): string;
+  setBytesvalue(value: Uint8Array | string): void;
+
+  hasKeyvalue(): boolean;
+  clearKeyvalue(): void;
+  getKeyvalue(): Key | undefined;
+  setKeyvalue(value?: Key): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Value.AsObject;
   static toObject(includeInstance: boolean, msg: Value): Value.AsObject;
@@ -46,6 +143,8 @@ export namespace Value {
     stringvalue: string,
     timestampvalue: Uint8Array | string,
     booleanvalue: boolean,
+    bytesvalue: Uint8Array | string,
+    keyvalue?: Key.AsObject,
   }
 }
 
@@ -302,8 +401,10 @@ export namespace MetaListEntitiesResponse {
 }
 
 export class MetaEntity extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
+  hasKey(): boolean;
+  clearKey(): void;
+  getKey(): Key | undefined;
+  setKey(value?: Key): void;
 
   clearValuesList(): void;
   getValuesList(): Array<Value>;
@@ -322,17 +423,19 @@ export class MetaEntity extends jspb.Message {
 
 export namespace MetaEntity {
   export type AsObject = {
-    id: string,
+    key?: Key.AsObject,
     valuesList: Array<Value.AsObject>,
   }
 }
 
 export enum ValueType {
-  DOUBLE = 0,
-  INT64 = 1,
-  STRING = 2,
-  TIMESTAMP = 3,
-  BOOLEAN = 4,
+  TYPEDOUBLE = 0,
+  TYPEINT64 = 1,
+  TYPESTRING = 2,
+  TYPETIMESTAMP = 3,
+  TYPEBOOLEAN = 4,
+  TYPEBYTES = 5,
+  TYPEKEY = 6,
 }
 
 export enum FieldEditorInfoType {

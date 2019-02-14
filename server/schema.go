@@ -21,9 +21,13 @@ type configstoreSchemaKindFieldType string
 const (
 	typeDouble    configstoreSchemaKindFieldType = "double"
 	typeInt64     configstoreSchemaKindFieldType = "int64"
+	typeUInt64    configstoreSchemaKindFieldType = "uint64"
 	typeString    configstoreSchemaKindFieldType = "string"
 	typeTimestamp configstoreSchemaKindFieldType = "timestamp"
-	typeBoolean   configstoreSchemaKindFieldType = "bool"
+	typeBool      configstoreSchemaKindFieldType = "bool"
+	typeBoolean   configstoreSchemaKindFieldType = "boolean"
+	typeBytes     configstoreSchemaKindFieldType = "bytes"
+	typeKey       configstoreSchemaKindFieldType = "key"
 )
 
 type configstoreSchemaKindField struct {

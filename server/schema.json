@@ -38,6 +38,40 @@
         }
       ]
     },
+    "IntegerTest": {
+      "editor": {
+        "singular": "IntegerTest",
+        "plural": "IntegerTests"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "unsignedInt",
+          "type": "uint64",
+          "comment": "Testing a uint64",
+          "editor": {
+            "displayName": "Uint64"
+          }
+        }
+      ]
+    },
+    "NilKeyTest": {
+      "editor": {
+        "singular": "NilKeyTest",
+        "plural": "NilKeyTests"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "nilKeyTest",
+          "type": "key",
+          "comment": "Testing a nil key",
+          "editor": {
+            "displayName": "NilKey"
+          }
+        }
+      ]
+    },
     "Project": {
       "editor": {
         "singular": "Project",
@@ -60,17 +94,25 @@
         "singular": "ProjectAccess",
         "plural": "ProjectAccesses"
       },
-      "ancestors": ["Project"],
       "fields": [
         {
           "id": 2,
           "name": "user",
           "type": "key",
+          "foreignType": "User",
           "comment": "The user that has access to the project",
           "editor": {
-            "displayName": "User",
-            "type": "lookup",
-            "foreignType": "User"
+            "displayName": "User"
+          }
+        },
+        {
+          "id": 3,
+          "name": "project",
+          "type": "key",
+          "foreignType": "Project",
+          "comment": "The project the user has access to",
+          "editor": {
+            "displayName": "Project"
           }
         }
       ]

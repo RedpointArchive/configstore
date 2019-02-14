@@ -1,11 +1,18 @@
-param()
+param(
+    [switch][bool]$SkipDeps
+)
 
 Push-Location $PSScriptRoot\client
 try {
-    Write-Output "Fetch deps..."
-    Push-Location $env:SYSTEMDRIVE
-    go get -u github.com/golang/protobuf/proto
-    Pop-Location
+    if (!$SkipDeps) {
+        Write-Output "Fetch deps..."
+        Push-Location $env:SYSTEMDRIVE
+        go get -u github.com/golang/protobuf/proto
+        if ($LastExitCode -ne 0) {
+            exit $LastExitCode
+        }
+        Pop-Location
+    }
 
     Write-Output "Generating client..."
     $env:CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID="configstore-test-001"
@@ -15,6 +22,14 @@ try {
     ..\server\server.exe -generate | Out-File -Encoding UTF8 -Force -FilePath .\client.go
     if ($LastExitCode -ne 0) {
         exit $LastExitCode
+    }
+
+    Write-Output "Fetch client deps..."
+    if (!$SkipDeps) {
+        go get ./...
+        if ($LastExitCode -ne 0) {
+            exit $LastExitCode
+        }
     }
 
     Write-Output "Running & testing client..."

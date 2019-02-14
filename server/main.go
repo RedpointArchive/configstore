@@ -56,18 +56,18 @@ func main() {
 	ctx := context.Background()
 
 	// Generate the schema and gRPC types based on schema.json
-	_, services, fileBuilder, fileDesc, schema, _, kindNameMap, messageMap, watchTypeEnumValues, err := generate(config.SchemaPath)
+	genResult, err := generate(config.SchemaPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Emit the testclient protobuf specification
 	printer := new(protoprint.Printer)
-	clientProtoFile, err := printer.PrintProtoToString(fileDesc)
+	clientProtoFile, err := printer.PrintProtoToString(genResult.FileDesc)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Sprintf("can't generate protobuf spec: %s", err))
 	}
-	clientProtoGoCode, err := generateGoCode(fileDesc, schema)
+	clientProtoGoCode, err := generateGoCode(genResult.FileDesc, genResult.Schema)
 	if err != nil {
 		log.Fatalln(fmt.Sprintf("can't generate Go code: %s", err))
 	}
@@ -92,13 +92,13 @@ func main() {
 		}
 		grpcServer := grpc.NewServer()
 		emptyServer := new(emptyServerInterface)
-		for _, service := range services {
+		for _, service := range genResult.Services {
 			// kindSchema := kindMap[service]
-			kindName := kindNameMap[service]
+			kindName := genResult.KindNameMap[service]
 
 			grpcServer.RegisterService(
 				&grpc.ServiceDesc{
-					ServiceName: fmt.Sprintf("%s.%s", schema.Name, service.GetName()),
+					ServiceName: fmt.Sprintf("%s.%s", genResult.Schema.Name, service.GetName()),
 					HandlerType: (*emptyServerInterface)(nil),
 					Methods: []grpc.MethodDesc{
 						{
@@ -106,7 +106,7 @@ func main() {
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 								messageFactory := dynamic.NewMessageFactoryWithDefaults()
 
-								requestMessageDescriptor := messageMap[fmt.Sprintf("List%sRequest", kindName)]
+								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("List%sRequest", kindName)]
 								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
 								if err := dec(in); err != nil {
 									return nil, err
@@ -147,8 +147,9 @@ func main() {
 								for _, snapshot := range snapshots {
 									entity, err := convertSnapshotToDynamicMessage(
 										messageFactory,
-										messageMap[kindName],
+										genResult.MessageMap[kindName],
 										snapshot,
+										genResult.CommonMessageDescriptors,
 									)
 									if err != nil {
 										return nil, err
@@ -156,7 +157,7 @@ func main() {
 									entities = append(entities, entity)
 								}
 
-								responseMessageDescriptor := messageMap[fmt.Sprintf("List%sResponse", kindName)]
+								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("List%sResponse", kindName)]
 								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
 								out.SetFieldByName("entities", entities)
 
@@ -181,32 +182,49 @@ func main() {
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 								messageFactory := dynamic.NewMessageFactoryWithDefaults()
 
-								requestMessageDescriptor := messageMap[fmt.Sprintf("Get%sRequest", kindName)]
+								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Get%sRequest", kindName)]
 								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
 								if err := dec(in); err != nil {
 									return nil, err
 								}
 
-								id, err := in.TryGetFieldByName("id")
+								key, err := in.TryGetFieldByName("key")
 								if err != nil {
 									return nil, err
 								}
 
-								snapshot, err := client.Collection(kindName).Doc(id.(string)).Get(ctx)
+								keyV, ok := key.(*dynamic.Message)
+								if !ok {
+									return nil, fmt.Errorf("unable to read key")
+								}
+
+								ref, err := convertKeyToDocumentRef(
+									client,
+									keyV,
+								)
+								if err != nil {
+									return nil, err
+								}
+
+								// TODO: Validate that the last component of Kind in the DocumentRef
+								// matches our expected type.
+
+								snapshot, err := ref.Get(ctx)
 								if err != nil {
 									return nil, err
 								}
 
 								entity, err := convertSnapshotToDynamicMessage(
 									messageFactory,
-									messageMap[kindName],
+									genResult.MessageMap[kindName],
 									snapshot,
+									genResult.CommonMessageDescriptors,
 								)
 								if err != nil {
 									return nil, err
 								}
 
-								responseMessageDescriptor := messageMap[fmt.Sprintf("Get%sResponse", kindName)]
+								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Get%sResponse", kindName)]
 								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
 								out.SetFieldByName("entity", entity)
 
@@ -218,7 +236,7 @@ func main() {
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 								messageFactory := dynamic.NewMessageFactoryWithDefaults()
 
-								requestMessageDescriptor := messageMap[fmt.Sprintf("Update%sRequest", kindName)]
+								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Update%sRequest", kindName)]
 								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
 								if err := dec(in); err != nil {
 									return nil, err
@@ -233,22 +251,26 @@ func main() {
 									return nil, fmt.Errorf("entity must not be nil")
 								}
 
-								id, data, err := convertDynamicMessageIntoIDAndDataMap(
+								ref, data, err := convertDynamicMessageIntoRefAndDataMap(
+									client,
 									messageFactory,
-									messageMap[kindName],
+									genResult.MessageMap[kindName],
 									entity.(*dynamic.Message),
 								)
-
-								if id == "" {
-									return nil, fmt.Errorf("entity must be set")
-								}
-
-								_, err = client.Collection(kindName).Doc(id).Set(ctx, data)
 								if err != nil {
 									return nil, err
 								}
 
-								responseMessageDescriptor := messageMap[fmt.Sprintf("Update%sResponse", kindName)]
+								if ref == nil {
+									return nil, fmt.Errorf("entity must be set")
+								}
+
+								_, err = ref.Set(ctx, data)
+								if err != nil {
+									return nil, err
+								}
+
+								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Update%sResponse", kindName)]
 								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
 								out.SetFieldByName("entity", entity)
 
@@ -260,7 +282,7 @@ func main() {
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 								messageFactory := dynamic.NewMessageFactoryWithDefaults()
 
-								requestMessageDescriptor := messageMap[fmt.Sprintf("Create%sRequest", kindName)]
+								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Create%sRequest", kindName)]
 								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
 								if err := dec(in); err != nil {
 									return nil, err
@@ -275,25 +297,38 @@ func main() {
 									return nil, fmt.Errorf("entity must not be nil")
 								}
 
-								id, data, err := convertDynamicMessageIntoIDAndDataMap(
+								ref, data, err := convertDynamicMessageIntoRefAndDataMap(
+									client,
 									messageFactory,
-									messageMap[kindName],
+									genResult.MessageMap[kindName],
 									entity.(*dynamic.Message),
 								)
-
-								if id != "" {
-									return nil, fmt.Errorf("entity must be nil / empty / unset")
+								if err != nil {
+									return nil, err
 								}
 
-								ref, _, err := client.Collection(kindName).Add(ctx, data)
+								if ref.ID == "" {
+									ref, _, err = ref.Parent.Add(ctx, data)
+								} else {
+									_, err = ref.Create(ctx, data)
+								}
+								if err != nil {
+									return nil, err
+								}
+
+								key, err := convertDocumentRefToKey(
+									messageFactory,
+									ref,
+									genResult.CommonMessageDescriptors,
+								)
 								if err != nil {
 									return nil, err
 								}
 
 								// set the ID back
-								entity.(*dynamic.Message).SetFieldByName("id", ref.ID)
+								entity.(*dynamic.Message).SetFieldByName("key", key)
 
-								responseMessageDescriptor := messageMap[fmt.Sprintf("Create%sResponse", kindName)]
+								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Create%sResponse", kindName)]
 								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
 								out.SetFieldByName("entity", entity)
 
@@ -305,37 +340,53 @@ func main() {
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 								messageFactory := dynamic.NewMessageFactoryWithDefaults()
 
-								requestMessageDescriptor := messageMap[fmt.Sprintf("Delete%sRequest", kindName)]
+								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Delete%sRequest", kindName)]
 								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
 								if err := dec(in); err != nil {
 									return nil, err
 								}
 
-								id, err := in.TryGetFieldByName("id")
+								key, err := in.TryGetFieldByName("key")
 								if err != nil {
 									return nil, err
 								}
 
-								snapshot, err := client.Collection(kindName).Doc(id.(string)).Get(ctx)
+								keyV, ok := key.(*dynamic.Message)
+								if !ok {
+									return nil, fmt.Errorf("unable to read key")
+								}
+
+								ref, err := convertKeyToDocumentRef(
+									client,
+									keyV,
+								)
+								if err != nil {
+									return nil, err
+								}
+
+								// TODO: Validate ref is of the correct kind
+
+								snapshot, err := ref.Get(ctx)
 								if err != nil {
 									return nil, err
 								}
 
 								entity, err := convertSnapshotToDynamicMessage(
 									messageFactory,
-									messageMap[kindName],
+									genResult.MessageMap[kindName],
 									snapshot,
+									genResult.CommonMessageDescriptors,
 								)
 								if err != nil {
 									return nil, err
 								}
 
-								_, err = client.Collection(kindName).Doc(id.(string)).Delete(ctx)
+								_, err = ref.Delete(ctx)
 								if err != nil {
 									return nil, err
 								}
 
-								responseMessageDescriptor := messageMap[fmt.Sprintf("Delete%sResponse", kindName)]
+								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Delete%sResponse", kindName)]
 								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
 								out.SetFieldByName("entity", entity)
 
@@ -360,22 +411,23 @@ func main() {
 									for _, change := range snapshot.Changes {
 										entity, err := convertSnapshotToDynamicMessage(
 											messageFactory,
-											messageMap[kindName],
+											genResult.MessageMap[kindName],
 											change.Doc,
+											genResult.CommonMessageDescriptors,
 										)
 										if err != nil {
 											return err
 										}
 
-										responseMessageDescriptor := messageMap[fmt.Sprintf("Watch%sEvent", kindName)]
+										responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Watch%sEvent", kindName)]
 										out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
 										switch change.Kind {
 										case firestore.DocumentAdded:
-											out.SetFieldByName("type", watchTypeEnumValues.Created.GetNumber())
+											out.SetFieldByName("type", genResult.WatchTypeEnumValues.Created.GetNumber())
 										case firestore.DocumentModified:
-											out.SetFieldByName("type", watchTypeEnumValues.Updated.GetNumber())
+											out.SetFieldByName("type", genResult.WatchTypeEnumValues.Updated.GetNumber())
 										case firestore.DocumentRemoved:
-											out.SetFieldByName("type", watchTypeEnumValues.Deleted.GetNumber())
+											out.SetFieldByName("type", genResult.WatchTypeEnumValues.Deleted.GetNumber())
 										}
 										out.SetFieldByName("entity", entity)
 										out.SetFieldByName("oldIndex", change.OldIndex)
@@ -389,14 +441,14 @@ func main() {
 							},
 						},
 					},
-					Metadata: fileBuilder.GetName(),
+					Metadata: genResult.FileBuilder.GetName(),
 				},
 				emptyServer,
 			)
 		}
 
 		RegisterConfigstoreMetaServiceServer(grpcServer, &configstoreMetaServiceServer{
-			schema: schema,
+			schema: genResult.Schema,
 		})
 
 		// Start gRPC server.
