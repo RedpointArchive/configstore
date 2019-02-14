@@ -6,7 +6,7 @@ import {
   MetaListEntitiesResponse,
   MetaListEntitiesRequest
 } from "../api/meta_pb";
-import { g } from "../core";
+import { g, serializeKey } from "../core";
 import { grpc } from "@improbable-eng/grpc-web";
 import { ConfigstoreMetaService } from "../api/meta_pb_service";
 import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary";
@@ -89,16 +89,16 @@ export const KindListRoute = (props: KindListRouteProps) => {
     dataset = [];
     for (const entity of data.getEntitiesList()) {
       dataset.push(
-        <tr key={entity.getId()}>
+        <tr key={serializeKey(g(entity.getKey()))}>
           <td className="w-checkbox">
             <input
               type="checkbox"
-              checked={selected.v.has(entity.getId())}
+              checked={selected.v.has(serializeKey(g(entity.getKey())))}
               onChange={e => {
                 if (e.target.checked) {
-                  selected.v.add(entity.getId());
+                  selected.v.add(serializeKey(g(entity.getKey())));
                 } else {
-                  selected.v.delete(entity.getId());
+                  selected.v.delete(serializeKey(g(entity.getKey())));
                 }
                 setSelected({ v: selected.v });
               }}
@@ -106,9 +106,11 @@ export const KindListRoute = (props: KindListRouteProps) => {
           </td>
           <td>
             <Link
-              to={`/kind/${props.match.params.kind}/edit/${entity.getId()}`}
+              to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                g(entity.getKey())
+              )}`}
             >
-              {entity.getId()}
+              {serializeKey(g(entity.getKey()))}
             </Link>
           </td>
           {kindSchema.getFieldsList().map(field => {
@@ -126,7 +128,9 @@ export const KindListRoute = (props: KindListRouteProps) => {
           })}
           <td className="w-checkbox">
             <Link
-              to={`/kind/${props.match.params.kind}/edit/${entity.getId()}`}
+              to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                g(entity.getKey())
+              )}`}
             >
               <FontAwesomeIcon icon={faPencilAlt} />
             </Link>
@@ -170,8 +174,10 @@ export const KindListRoute = (props: KindListRouteProps) => {
                     data !== null
                       ? data
                           .getEntitiesList()
-                          .filter(value => !selected.v.has(value.getId()))
-                          .length === 0
+                          .filter(
+                            value =>
+                              !selected.v.has(serializeKey(g(value.getKey())))
+                          ).length === 0
                         ? true
                         : false
                       : false
@@ -181,7 +187,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
                       if (e.target.checked) {
                         selected.v.clear();
                         for (const entity of data.getEntitiesList()) {
-                          selected.v.add(entity.getId());
+                          selected.v.add(serializeKey(g(entity.getKey())));
                         }
                       } else {
                         selected.v.clear();

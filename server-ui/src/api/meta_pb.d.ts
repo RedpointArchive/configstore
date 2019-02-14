@@ -124,6 +124,9 @@ export class Value extends jspb.Message {
   getKeyvalue(): Key | undefined;
   setKeyvalue(value?: Key): void;
 
+  getUint64value(): number;
+  setUint64value(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Value.AsObject;
   static toObject(includeInstance: boolean, msg: Value): Value.AsObject;
@@ -145,6 +148,7 @@ export namespace Value {
     booleanvalue: boolean,
     bytesvalue: Uint8Array | string,
     keyvalue?: Key.AsObject,
+    uint64value: number,
   }
 }
 
@@ -436,6 +440,7 @@ export enum ValueType {
   TYPEBOOLEAN = 4,
   TYPEBYTES = 5,
   TYPEKEY = 6,
+  TYPEUINT64 = 7,
 }
 
 export enum FieldEditorInfoType {

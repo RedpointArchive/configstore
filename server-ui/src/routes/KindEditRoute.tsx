@@ -162,8 +162,9 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
         </div>
         {kindSchema.getFieldsList().map(field => {
           switch (field.getType()) {
-            case ValueType.DOUBLE:
-            case ValueType.INT64:
+            case ValueType.TYPEDOUBLE:
+            case ValueType.TYPEINT64:
+            case ValueType.TYPEUINT64:
               return (
                 <div className="form-group">
                   <label>{g(field.getEditor()).getDisplayname()}</label>
@@ -178,7 +179,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                   </small>
                 </div>
               );
-            case ValueType.STRING:
+            case ValueType.TYPESTRING:
               return (
                 <div className="form-group">
                   <label>{g(field.getEditor()).getDisplayname()}</label>
@@ -192,7 +193,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                   </small>
                 </div>
               );
-            case ValueType.BOOLEAN:
+            case ValueType.TYPEBOOLEAN:
               return (
                 <div className="form-check">
                   <input
@@ -208,7 +209,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                   </small>
                 </div>
               );
-            case ValueType.TIMESTAMP:
+            case ValueType.TYPETIMESTAMP:
               return (
                 <div className="form-group">
                   <label>{g(field.getEditor()).getDisplayname()}</label>

@@ -687,7 +687,8 @@ proto.meta.Value.toObject = function(includeInstance, msg) {
     timestampvalue: msg.getTimestampvalue_asB64(),
     booleanvalue: jspb.Message.getFieldWithDefault(msg, 7, false),
     bytesvalue: msg.getBytesvalue_asB64(),
-    keyvalue: (f = msg.getKeyvalue()) && proto.meta.Key.toObject(includeInstance, f)
+    keyvalue: (f = msg.getKeyvalue()) && proto.meta.Key.toObject(includeInstance, f),
+    uint64value: jspb.Message.getFieldWithDefault(msg, 10, 0)
   };
 
   if (includeInstance) {
@@ -760,6 +761,10 @@ proto.meta.Value.deserializeBinaryFromReader = function(msg, reader) {
       var value = new proto.meta.Key;
       reader.readMessage(value,proto.meta.Key.deserializeBinaryFromReader);
       msg.setKeyvalue(value);
+      break;
+    case 10:
+      var value = /** @type {number} */ (reader.readUint64());
+      msg.setUint64value(value);
       break;
     default:
       reader.skipField();
@@ -852,6 +857,13 @@ proto.meta.Value.serializeBinaryToWriter = function(message, writer) {
       9,
       f,
       proto.meta.Key.serializeBinaryToWriter
+    );
+  }
+  f = message.getUint64value();
+  if (f !== 0) {
+    writer.writeUint64(
+      10,
+      f
     );
   }
 };
@@ -1054,6 +1066,21 @@ proto.meta.Value.prototype.clearKeyvalue = function() {
  */
 proto.meta.Value.prototype.hasKeyvalue = function() {
   return jspb.Message.getField(this, 9) != null;
+};
+
+
+/**
+ * optional uint64 uint64Value = 10;
+ * @return {number}
+ */
+proto.meta.Value.prototype.getUint64value = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 10, 0));
+};
+
+
+/** @param {number} value */
+proto.meta.Value.prototype.setUint64value = function(value) {
+  jspb.Message.setProto3IntField(this, 10, value);
 };
 
 
@@ -3117,7 +3144,8 @@ proto.meta.ValueType = {
   TYPETIMESTAMP: 3,
   TYPEBOOLEAN: 4,
   TYPEBYTES: 5,
-  TYPEKEY: 6
+  TYPEKEY: 6,
+  TYPEUINT64: 7
 };
 
 /**

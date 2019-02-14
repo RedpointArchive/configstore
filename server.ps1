@@ -17,12 +17,6 @@ try {
         if ($LastExitCode -ne 0) {
             exit $LastExitCode
         }
-        go mod vendor
-        if ($LastExitCode -ne 0) {
-            exit $LastExitCode
-        }
-        rm -Recurse -Force vendor/github.com/golang/protobuf
-        git submodule update --init --recursive
     }
 
     Write-Output "Generate meta.go..."
