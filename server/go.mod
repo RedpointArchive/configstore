@@ -12,6 +12,7 @@ require (
 	github.com/rs/cors v1.6.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	golang.org/x/net v0.0.0-20181106065722-10aee1819953
+	google.golang.org/api v0.1.0
 	google.golang.org/grpc v1.18.0
 	gotest.tools v2.2.0+incompatible // indirect
 )

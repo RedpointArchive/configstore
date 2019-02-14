@@ -1,0 +1,11 @@
+/.git/
+/.vscode/
+/screenshots/
+/server-ui/node_modules/
+/server/server.exe
+/server/protoc.exe
+/*.ps1
+/README
+/LICENSE
+/server/meta.pb.go
+/client/client.go

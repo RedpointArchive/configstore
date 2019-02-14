@@ -1,6 +1,6 @@
 # configstore
 
-*configstore is a Go server that lets you define your schema in JSON, and automatically generates a gRPC API with List/Get/Create/Update/Delete methods to access and modify those entities in Google Cloud Firestore.*
+_configstore is a Go server that lets you define your schema in JSON, and automatically generates a gRPC API with List/Get/Create/Update/Delete methods to access and modify those entities in Google Cloud Firestore._
 
 Basically, configstore is a server that provides a gRPC CRUD interface for the kinds of entities that you describe. You just specify the schema for kinds as JSON, and configstore produces a `.proto` file you can use to generate clients in various languages.
 
@@ -10,9 +10,17 @@ configstore is entirely stateless; all data is stored on Google Cloud Firestore.
 
 configstore is a very early prototype, and isn't ready for production usage.
 
-You can run the test server on Windows by running `.\server.ps1`. You'll most likely need to authenticate your local computer with Application Default Credentials, and set `$env:GOOGLE_CLOUD_PROJECT_ID` to the Google Cloud project that is running your Firestore instance.
+You can bulid and test the image by running
 
-You can test that it works for the example schema by running `.\client.ps1`. You'll need to manually create a `User` entity in Firestore with an `emailAddress` string property, since the only implemented gRPC method for kinds in configstore is `Get`.
+```
+docker build . --tag=configstore
+```
+
+You can then run configstore with an invocation similar to the following:
+
+```
+docker run --rm -p 13389:13389 -p 13390:13390 -v your_schema.json:/schema.json -e CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID="your-cloud-project" -e CONFIGSTORE_GRPC_PORT=13389 -e CONFIGSTORE_HTTP_PORT=13390 -e CONFIGSTORE_SCHEMA_PATH="/schema.json" -v your_service_account.json:/adc.json -e GOOGLE_APPLICATION_CREDENTIALS=/adc.json --name=configstore configstore
+```
 
 ## Screenshots
 

@@ -1,0 +1,17 @@
+{
+  "note1": "In case you're wondering, no, these aren't valid live credentials.",
+  "note2": "However, the Go SDK for Firestore requires GOOGLE_APPLICATION_CREDENTIALS to be ",
+  "note3": "set, even when the code targeting the Firestore emulator. It's most likely ",
+  "note4": "a bug in the Go SDK, but this makes things work for now.",
+
+  "type": "service_account",
+  "project_id": "configstore-test-001",
+  "private_key_id": "e804edeec9b11c473be55cbc2ec1bfffe3452988",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuAIBADANBgkqhkiG9w0BAQEFAASCBKIwggSeAgEAAoIBAQCyBnTiDSdCxpVP\nZkTjDSbDDnWjpDn29EFSlba6TA69veeWbAGaG76Qs9u959V5BwSaEx2B6ztLz1fn\n4/fAXWXxBM9zWFNymy1NUXWz1zeRib6ECN29inopRD0GUlZ2C5jRXOPRBb7UPVRG\nc2DZchnCkhOo2WfBQapR0AGPHQo+1NgIW4G9pPAD/DeFQC680SyReMYFb8InBFah\nfxMeuDU2EfBfPdQe4HnkQ4z3MZeLDZtQ2ryqXTMmCZ15VLV7zoXndUPwq5aK5oKB\n3nE5BWz5gdahfeNwVDWIFVhZMEaF68D2lAzpDO929JB2q/f9ggjMpYKTIRd9Q6mZ\nF6HQiE7VAgMBAAECgf9brUzZHEJGS6hDEJITsDIbQNb+mRPrQ4hgKbkajGW1pety\nYIHIBYGdWFdQ9JJ6QPhIX+T81/vb48A2gASV4Nhzxdu5tUKZQlA8q4vG5o3h5OK3\ncS6/l7r72qg9GSnCoIuR8BlhtWkQOIUDGBJH6E+xDd4R6zitzPho09/5qHrI36HU\nUAvHi86WVRXLhMRLXPr8wYy54bxPLzWb4XZ6xx3C80ltstX2nTAHsV9xltW2pwT5\nACkN4GquNUkmw73s+0v60jFWo8OUkF9fiaMtejURn3uNXLrzS1/flF5B5b2PK3wC\njpK54zEC4JOm7FN0gClDsEltAf3KClYVEjM+xlECgYEA1yIjIs2EwBszgdUL4kGl\nlQ2PJ8Oxhl/OXD3urLxCxZ1UWTvRx/wUxsDGrinJCw6EElupMuq1I0DwZ6fYdwWV\nHiR56PgzE+X8ZDC8ZCsZooZrrWybXaFMKClf4SEN7L95YvKZ6MygKpahbQkxPwQd\na16f7zW4Weud19vmR3TL8LkCgYEA09fDdHFnOGN/O22oCtJNCl/aVcu/R2G+Mc8p\nV8SztmXMtSYKHkTgHqGdvyTdfVW5oPzsBUXlSWRe28uP3p4+zH0rkQhUtf/ePDbE\n0mGFa4hz6roz2vdwR/Jg2Zlbo6ZBvH47rcGO6VIc62GBPO651JTToq1sdh1mJFpW\nq6ASqP0CgYA0n64Wkk05rK2xwYpxovs89Z8h6/Wd2AujdqbObBKtQini1gYftCLk\n5zzyV1hNMxTNZMyDnvQGFpl30Y/atWvffq6vdR8Ra/2MCHvcyMoxfk4SkvGCOrVl\nUZGZgTtlwQSRVqSdVIiNQmFkSY5ZSsljfTcEDZD1tfPbXHf83K4SSQKBgHf9kY8m\nIMI20T1XGkSu48ZJjsDj/D8xZOqPnapCF0zsEmxU1IxalNukzVYUSoSQhulh+Unv\nUjUk7fnvLll5Jrbq+z9WCa1g9X8Dwq4rYMgM7SN6Pp77YpTN+/+kttxV8owSsDj2\nFr2frhPBEdPyoD2B4vIU6wdoFY/nv4nMzGT9An8JzThyrwjJK1iQizqD3pmDviiM\nhlekuLAPqfuvnzO8AWHqh4R3nmeugBUvI8WR6ER7+id8X1dj5GIi2Syb4Am0gxSJ\nVRm21qCz7W10tBGqVp1cVEmchNwc1VgPaMkJHw7LED8mEoMKVi7/Fsdp1+eJIKKx\nJ44LVg2gt7gqnRTa\n-----END PRIVATE KEY-----\n",
+  "client_email": "invalid@configstore-test-001.iam.gserviceaccount.com",
+  "client_id": "116849002081084427113",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/invalid%40configstore-test-001.iam.gserviceaccount.com"
+}
