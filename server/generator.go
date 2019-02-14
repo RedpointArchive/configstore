@@ -22,10 +22,13 @@ func convertToType(
 		return builder.FieldTypeDouble()
 	case typeInt64:
 		return builder.FieldTypeInt64()
+	case typeUInt64:
+		return builder.FieldTypeUInt64()
 	case typeString:
 		return builder.FieldTypeString()
 	case typeTimestamp:
 		return builder.FieldTypeImportedMessage(timestampMessage)
+	case typeBool:
 	case typeBoolean:
 		return builder.FieldTypeBool()
 	case typeBytes:
@@ -33,7 +36,9 @@ func convertToType(
 	case typeKey:
 		return builder.FieldTypeMessage(keyMessage)
 	}
-	return builder.FieldTypeString() // todo, probably fatal instead
+	fmt.Printf("fatal: no such field type '%s'", string(t))
+	os.Exit(1)
+	return builder.FieldTypeString() // never reached
 }
 
 type watchTypeEnumValues struct {

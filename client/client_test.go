@@ -20,6 +20,7 @@ import (
 
 var ctx context.Context
 var client UserServiceClient
+var intTestClient IntegerTestServiceClient
 
 func TestMain(m *testing.M) {
 	conn, err := grpc.Dial("127.0.0.1:13389", grpc.WithInsecure())
@@ -32,7 +33,27 @@ func TestMain(m *testing.M) {
 
 	ctx = context.Background()
 	client = NewUserServiceClient(conn)
+	intTestClient = NewIntegerTestServiceClient(conn)
 	os.Exit(m.Run())
+}
+
+func TestUInt64Storage(t *testing.T) {
+	resp, err := intTestClient.Create(ctx, &CreateIntegerTestRequest{
+		Entity: &IntegerTest{
+			Key:         CreateTopLevel_IntegerTest_IncompleteKey(&PartitionId{}),
+			UnsignedInt: uint64(18446744073709551615),
+		},
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
+	assert.Equal(t, resp.Entity.UnsignedInt, uint64(18446744073709551615))
+
+	resp2, err := intTestClient.Get(ctx, &GetIntegerTestRequest{
+		Key: resp.Entity.Key,
+	})
+	assert.NilError(t, err)
+	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
+	assert.Equal(t, resp2.Entity.UnsignedInt, uint64(18446744073709551615))
 }
 
 func TestCreate(t *testing.T) {

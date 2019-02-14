@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
 
@@ -97,6 +98,9 @@ func convertKeyToDocumentRef(
 				Doc(pathElement.GetFieldByName("name").(string))
 		}
 	}
+	if ref == nil {
+		return nil, fmt.Errorf("inbound key did not contain any path components")
+	}
 
 	return ref, nil
 }
@@ -166,9 +170,23 @@ func convertSnapshotToDynamicMessage(
 		if fd == nil {
 			// extra data not specified in the schema any more
 			// we can safely ignore this
+			continue
 		}
 
-		err := out.TrySetFieldByName(name, value)
+		var err error
+		if fd.GetType() == dpb.FieldDescriptorProto_TYPE_UINT64 {
+			// these are stored as int64 in firestore, as firestore
+			// does not support uint64 natively
+			switch value.(type) {
+			case int64:
+				err = out.TrySetFieldByName(name, uint64(value.(int64)))
+			default:
+				err = fmt.Errorf("unexpected firestore value for uint64 field")
+			}
+		} else {
+			err = out.TrySetFieldByName(name, value)
+		}
+
 		if err != nil {
 			fmt.Printf("warning: encountered error while retrieving data from field '%s' on entity of kind '%s' with ID '%s' from Firestore: %v\n", name, snapshot.Ref.Parent.ID, snapshot.Ref.ID, err)
 		}
@@ -208,7 +226,15 @@ func convertDynamicMessageIntoRefAndDataMap(
 			continue
 		}
 		field := message.GetField(fieldDescriptor)
-		m[fieldDescriptor.GetName()] = field
+
+		switch field.(type) {
+		case uint64:
+			// We store uint64 as int64 inside Firestore, as Firestore
+			// does not support uint64 natively
+			m[fieldDescriptor.GetName()] = int64(field.(uint64))
+		default:
+			m[fieldDescriptor.GetName()] = field
+		}
 	}
 
 	return key, m, nil

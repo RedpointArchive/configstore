@@ -21,6 +21,7 @@ func convertType(t configstoreSchemaKindFieldType) ValueType {
 		return ValueType_TypeString
 	case typeTimestamp:
 		return ValueType_TypeTimestamp
+	case typeBool:
 	case typeBoolean:
 		return ValueType_TypeBoolean
 	case typeBytes:

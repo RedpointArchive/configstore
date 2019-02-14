@@ -38,6 +38,23 @@
         }
       ]
     },
+    "IntegerTest": {
+      "editor": {
+        "singular": "IntegerTest",
+        "plural": "Integer Tests"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "unsignedInt",
+          "type": "uint64",
+          "comment": "Testing a uint64",
+          "editor": {
+            "displayName": "Uint64"
+          }
+        }
+      ]
+    },
     "Project": {
       "editor": {
         "singular": "Project",
