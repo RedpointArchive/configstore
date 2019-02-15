@@ -368,7 +368,11 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 	// Now add our automatically synchronising store code
 	extendedCode := standardCode
 	extendedCode = fmt.Sprintf("%s\n%s", standardCode, extendedOnceCode)
-	extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"hash/fnv\"", 1)
+	if strings.Contains(extendedCode, "github.com/golang/protobuf/ptypes/timestamp") {
+		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"hash/fnv\"", 1)
+	} else {
+		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"hash/fnv\"\n    timestamp \"github.com/golang/protobuf/ptypes/timestamp\"", 1)
+	}
 	for kindName := range schema.Kinds {
 		indexStores := ""
 		indexFuncDecls := ""
