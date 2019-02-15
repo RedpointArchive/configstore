@@ -13,6 +13,12 @@ import (
 
 const (
 	extendedOnceCode = `
+func Fnv64a(val string) uint64 {
+	hash := fnv.New64a()
+	hash.Write(([]byte)(val))
+	return hash.Sum64()
+}
+
 func CreateTopLevelKey(partitionId *PartitionId, pathElement *PathElement) *Key {
 	return &Key{
 		PartitionId: partitionId,
@@ -79,7 +85,19 @@ func CreateDescendantKey(parent *Key, pathElement *PathElement) *Key {
 	return newKey
 }
 
+func SerializeTimestamp(ts *timestamp.Timestamp) string {
+	if ts == nil {
+		return ""
+	}
+
+	return ts.String()
+}
+
 func SerializeKey(key *Key) string {
+	if key == nil {
+		return ""
+	}
+
 	var elements []string
 	for _, pathElement := range key.Path {
 		if _, ok := pathElement.IdType.(*PathElement_Id); ok {
@@ -140,6 +158,7 @@ type <ENTITY>ImplStore struct {
 	sync.RWMutex
 	client <ENTITY>ServiceClient
 	store map[string]*<ENTITY>
+	<INDEXSTORES>
 }
 
 type <ENTITY>Store interface {
@@ -149,12 +168,16 @@ type <ENTITY>Store interface {
 	GetAndCheck(key *Key) (*<ENTITY>, bool)
 	Get(key *Key) *<ENTITY>
 	GetKeys() []*Key
+	<INDEXFUNCDECLS>
 }
+
+<INDEXFUNCDEFS>
 
 func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTITY>Store, error) {
 	ref := &<ENTITY>ImplStore{
 		client: client,
 		store:  make(map[string]*<ENTITY>),
+		<INDEXSTORESINIT>
 	}
 	watcher, err := ref.client.Watch(ctx, &Watch<ENTITY>Request{})
 	if err != nil {
@@ -162,7 +185,7 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 	}
 	go func() {
 		for {
-			change, err := watcher.Recv()
+			resp, err := watcher.Recv()
 			if err == io.EOF {
 				break
 			}
@@ -170,14 +193,19 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 				// TODO: Pass this to somewhere
 				fmt.Printf("%v", err)
 			}
-			if change.Type == WatchEventType_Created ||
-				change.Type == WatchEventType_Updated {
+			if resp.Type == WatchEventType_Created ||
+			resp.Type == WatchEventType_Updated {
 				ref.Lock()
-				ref.store[SerializeKey(change.Entity.Key)] = change.Entity
+				s := SerializeKey(resp.Entity.Key)
+				<INDEXSTORESREMOVE>
+				<INDEXSTORESUPDATE>
+				ref.store[s] = resp.Entity
 				ref.Unlock()
-			} else if change.Type == WatchEventType_Deleted {
+			} else if resp.Type == WatchEventType_Deleted {
 				ref.Lock()
-				delete(ref.store, SerializeKey(change.Entity.Key))
+				s := SerializeKey(resp.Entity.Key)
+				<INDEXSTORESREMOVE>
+				delete(ref.store, s)
 				ref.Unlock()
 			}
 		}
@@ -227,49 +255,65 @@ func (c *<ENTITY>ImplStore) GetAndCheck(key *Key) (*<ENTITY>, bool) {
 	return val, ok
 }
 
-func (c *<ENTITY>ImplStore) Create(ctx context.Context, entity *<ENTITY>) (*<ENTITY>, error) {
-	resp, err := c.client.Create(ctx, &Create<ENTITY>Request{
+func (ref *<ENTITY>ImplStore) Create(ctx context.Context, entity *<ENTITY>) (*<ENTITY>, error) {
+	resp, err := ref.client.Create(ctx, &Create<ENTITY>Request{
 		Entity: entity,
 	})
 	if err != nil {
 		return nil, err
 	}
-	c.Lock()
-	c.store[SerializeKey(resp.Entity.Key)] = resp.Entity
-	c.Unlock()
+	s := SerializeKey(resp.Entity.Key)
+	ref.Lock()
+	<INDEXSTORESUPDATE>
+	ref.store[s] = resp.Entity
+	ref.Unlock()
 	return resp.Entity, nil
 }
 
-func (c *<ENTITY>ImplStore) Update(ctx context.Context, entity *<ENTITY>) (*<ENTITY>, error) {
-	resp, err := c.client.Update(ctx, &Update<ENTITY>Request{
+func (ref *<ENTITY>ImplStore) Update(ctx context.Context, entity *<ENTITY>) (*<ENTITY>, error) {
+	resp, err := ref.client.Update(ctx, &Update<ENTITY>Request{
 		Entity: entity,
 	})
 	if err != nil {
 		return nil, err
 	}
-	c.Lock()
-	c.store[SerializeKey(resp.Entity.Key)] = resp.Entity
-	c.Unlock()
+	s := SerializeKey(resp.Entity.Key)
+	ref.Lock()
+	<INDEXSTORESREMOVE>
+	<INDEXSTORESUPDATE>
+	ref.store[s] = resp.Entity
+	ref.Unlock()
 	return resp.Entity, nil
 }
 
-func (c *<ENTITY>ImplStore) Delete(ctx context.Context, key *Key) (*<ENTITY>, error) {
-	resp, err := c.client.Delete(ctx, &Delete<ENTITY>Request{
+func (ref *<ENTITY>ImplStore) Delete(ctx context.Context, key *Key) (*<ENTITY>, error) {
+	resp, err := ref.client.Delete(ctx, &Delete<ENTITY>Request{
 		Key: key,
 	})
 	if err != nil {
 		return nil, err
 	}
-	c.Lock()
-	delete(c.store, SerializeKey(resp.Entity.Key))
-	c.Unlock()
+	s := SerializeKey(resp.Entity.Key)
+	ref.Lock()
+	<INDEXSTORESREMOVE>
+	delete(ref.store, s)
+	ref.Unlock()
 	return resp.Entity, nil
 }
 
 `
 )
 
-func generateGoCode(fileDesc *desc.FileDescriptor, schema *configstoreSchema) (string, error) {
+func lookupFieldByName(kind *SchemaKind, name string) *SchemaField {
+	for _, field := range kind.Fields {
+		if field.Name == name {
+			return field
+		}
+	}
+	return nil
+}
+
+func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, error) {
 	g := generator.New()
 
 	packageName := schema.Name
@@ -324,12 +368,254 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *configstoreSchema) (s
 	// Now add our automatically synchronising store code
 	extendedCode := standardCode
 	extendedCode = fmt.Sprintf("%s\n%s", standardCode, extendedOnceCode)
-	extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"", 1)
+	extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"hash/fnv\"", 1)
 	for kindName := range schema.Kinds {
+		indexStores := ""
+		indexFuncDecls := ""
+		indexFuncDefs := ""
+		indexStoresInit := ""
+		indexStoresRemove := ""
+		indexStoresUpdate := ""
+
+		for _, index := range schema.Kinds[kindName].Indexes {
+			if index.Type == SchemaIndexType_memory {
+				indexKeyType := ""
+				indexOriginalType := ""
+				indexSerializeToType := "key"
+
+				switch index.Value.(type) {
+				case *SchemaIndex_Field:
+					field := lookupFieldByName(schema.Kinds[kindName], index.GetField())
+					if field == nil {
+						continue
+					}
+
+					switch field.Type {
+					case ValueType_double:
+						indexKeyType = "float64"
+						indexOriginalType = "float64"
+						break
+					case ValueType_int64:
+						indexKeyType = "int64"
+						indexOriginalType = "int64"
+						break
+					case ValueType_uint64:
+						indexKeyType = "uint64"
+						indexOriginalType = "uint64"
+						break
+					case ValueType_timestamp:
+						indexKeyType = "string"
+						indexOriginalType = "*timestamp.Timestamp"
+						indexSerializeToType = "SerializeTimestamp(key)"
+						break
+					case ValueType_bytes:
+						indexKeyType = "string"
+						indexOriginalType = "[]byte"
+						indexSerializeToType = "string(key)"
+						break
+					case ValueType_key:
+						indexKeyType = "string"
+						indexOriginalType = "*Key"
+						indexSerializeToType = "SerializeKey(key)"
+						break
+					case ValueType_boolean:
+						indexKeyType = "bool"
+						indexOriginalType = "bool"
+						break
+					case ValueType_string:
+						indexKeyType = "string"
+						indexOriginalType = "string"
+						break
+					default:
+						return "", fmt.Errorf("unexpected field type for index")
+					}
+
+					indexStoresUpdate = fmt.Sprintf(
+						`%s
+		{
+			key := newEntity.%s
+			idx := %s
+			ref.indexstore_%s[idx] = newEntity
+		}
+	`,
+						indexStoresUpdate,
+						generator.CamelCase(field.Name),
+						indexSerializeToType,
+						index.Name,
+					)
+					indexStoresRemove = fmt.Sprintf(
+						`%s
+		{
+			key := oldEntity.%s
+			idx := %s
+			delete(ref.indexstore_%s, idx)
+		}
+	`,
+						indexStoresRemove,
+						generator.CamelCase(field.Name),
+						indexSerializeToType,
+						index.Name,
+					)
+					indexFuncDefs = fmt.Sprintf(
+						`%s
+	func (c *<ENTITY>ImplStore) GetBy%s(key %s) *<ENTITY> {
+		c.RLock()
+		defer c.RUnlock()
+		return c.indexstore_%s[%s]
+	}
+	
+	func (c *<ENTITY>ImplStore) GetAndCheckBy%s(key %s) (*<ENTITY>, bool) {
+		c.RLock()
+		defer c.RUnlock()
+		val, ok := c.indexstore_%s[%s]
+		return val, ok
+	}`,
+						indexFuncDefs,
+						index.Name,
+						indexOriginalType,
+						index.Name,
+						indexSerializeToType,
+						index.Name,
+						indexOriginalType,
+						index.Name,
+						indexSerializeToType,
+					)
+					break
+				case *SchemaIndex_Computed:
+					computed := index.GetComputed()
+					switch computed.Algorithm.(type) {
+					case *SchemaComputedIndex_Fnv64A:
+						field := lookupFieldByName(schema.Kinds[kindName], computed.GetFnv64A().Field)
+						if field == nil {
+							continue
+						}
+
+						switch field.Type {
+						case ValueType_double:
+						case ValueType_int64:
+						case ValueType_uint64:
+						case ValueType_timestamp:
+						case ValueType_bytes:
+						case ValueType_key:
+						case ValueType_boolean:
+							return "", fmt.Errorf("unsupported field type for fnv64a index")
+						case ValueType_string:
+							indexKeyType = "uint64"
+							indexOriginalType = "uint64"
+							indexSerializeToType = "Fnv64a(key)"
+							break
+						default:
+							return "", fmt.Errorf("unexpected field type for index")
+						}
+
+						indexStoresUpdate = fmt.Sprintf(
+							`%s
+			{
+				key := newEntity.%s
+				idx := %s
+				ref.indexstore_%s[idx] = newEntity
+			}
+		`,
+							indexStoresUpdate,
+							generator.CamelCase(field.Name),
+							indexSerializeToType,
+							index.Name,
+						)
+						indexStoresRemove = fmt.Sprintf(
+							`%s
+			{
+				key := oldEntity.%s
+				idx := %s
+				delete(ref.indexstore_%s, idx)
+			}
+		`,
+							indexStoresRemove,
+							generator.CamelCase(field.Name),
+							indexSerializeToType,
+							index.Name,
+						)
+						indexFuncDefs = fmt.Sprintf(
+							`%s
+		func (c *<ENTITY>ImplStore) GetBy%s(key %s) *<ENTITY> {
+			c.RLock()
+			defer c.RUnlock()
+			return c.indexstore_%s[key]
+		}
+		
+		func (c *<ENTITY>ImplStore) GetAndCheckBy%s(key %s) (*<ENTITY>, bool) {
+			c.RLock()
+			defer c.RUnlock()
+			val, ok := c.indexstore_%s[key]
+			return val, ok
+		}`,
+							indexFuncDefs,
+							index.Name,
+							indexOriginalType,
+							index.Name,
+							index.Name,
+							indexOriginalType,
+							index.Name,
+						)
+						break
+					default:
+						return "", fmt.Errorf("unexpected computed type for index")
+					}
+				default:
+					return "", fmt.Errorf("unexpected index type for index")
+				}
+
+				indexStores = fmt.Sprintf(
+					"%s\n  indexstore_%s map[%s]*<ENTITY>",
+					indexStores,
+					index.Name,
+					indexKeyType,
+				)
+				indexFuncDecls = fmt.Sprintf(
+					"%s\n  GetBy%s(key %s) *<ENTITY>\n  GetAndCheckBy%s(key %s) (*<ENTITY>, bool)",
+					indexFuncDecls,
+					index.Name,
+					indexOriginalType,
+					index.Name,
+					indexOriginalType,
+				)
+				indexStoresInit = fmt.Sprintf(
+					"%s\n  indexstore_%s: make(map[%s]*<ENTITY>),",
+					indexStoresInit,
+					index.Name,
+					indexKeyType,
+				)
+			}
+		}
+
+		if indexStoresUpdate != "" {
+			indexStoresUpdate = fmt.Sprintf("newEntity := resp.Entity\n%s", indexStoresUpdate)
+		}
+		if indexStoresRemove != "" {
+			indexStoresRemove = fmt.Sprintf(`
+	oldEntity, ok := ref.store[s]
+	if ok {
+		%s
+	}`, indexStoresRemove)
+		}
+
+		m := map[string]string{
+			"<INDEXSTORES>":       indexStores,
+			"<INDEXFUNCDECLS>":    indexFuncDecls,
+			"<INDEXFUNCDEFS>":     indexFuncDefs,
+			"<INDEXSTORESINIT>":   indexStoresInit,
+			"<INDEXSTORESUPDATE>": indexStoresUpdate,
+			"<INDEXSTORESREMOVE>": indexStoresRemove,
+		}
+
+		v := extendedTemplateCode
+		for k, vv := range m {
+			v = strings.Replace(v, k, vv, -1)
+		}
+
 		extendedCode = fmt.Sprintf(
 			"%s\n%s",
 			extendedCode,
-			strings.Replace(extendedTemplateCode, "<ENTITY>", kindName, -1),
+			strings.Replace(v, "<ENTITY>", kindName, -1),
 		)
 	}
 

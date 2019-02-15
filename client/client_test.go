@@ -21,6 +21,7 @@ var ctx context.Context
 var client UserServiceClient
 var intTestClient IntegerTestServiceClient
 var nilKeyTestClient NilKeyTestServiceClient
+var indexTestClient IndexTestServiceClient
 
 func TestMain(m *testing.M) {
 	conn, err := grpc.Dial("127.0.0.1:13389", grpc.WithInsecure())
@@ -35,6 +36,7 @@ func TestMain(m *testing.M) {
 	client = NewUserServiceClient(conn)
 	intTestClient = NewIntegerTestServiceClient(conn)
 	nilKeyTestClient = NewNilKeyTestServiceClient(conn)
+	indexTestClient = NewIndexTestServiceClient(conn)
 	os.Exit(m.Run())
 }
 
@@ -93,6 +95,33 @@ func TestKeyStorage(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
 	assert.Equal(t, resp2.Entity.NilKeyTest.Path[0].GetName(), resp.Entity.NilKeyTest.Path[0].GetName())
+}
+
+func TestIndexFetch(t *testing.T) {
+	testID := xid.New()
+
+	store, err := NewIndexTestStore(ctx, indexTestClient)
+	assert.NilError(t, err)
+
+	resp, err := store.Create(context.Background(), &IndexTest{
+		Key:            CreateTopLevel_IndexTest_IncompleteKey(&PartitionId{}),
+		StringField:    testID.String(),
+		Int64Field:     int64(1),
+		Uint64Field:    uint64(1),
+		BooleanField:   true,
+		DoubleField:    float64(0.2),
+		TimestampField: nil,
+		BytesField:     nil,
+		KeyField:       nil,
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, resp.Key.Path[0].GetName() != "")
+
+	o2 := store.GetByString(testID.String())
+	assert.Assert(t, resp == o2)
+
+	o2 = store.GetByStringFnv(Fnv64a(testID.String()))
+	assert.Assert(t, resp == o2)
 }
 
 func TestCreate(t *testing.T) {

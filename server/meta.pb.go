@@ -25,36 +25,39 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type ValueType int32
 
 const (
-	ValueType_TypeDouble    ValueType = 0
-	ValueType_TypeInt64     ValueType = 1
-	ValueType_TypeString    ValueType = 2
-	ValueType_TypeTimestamp ValueType = 3
-	ValueType_TypeBoolean   ValueType = 4
-	ValueType_TypeBytes     ValueType = 5
-	ValueType_TypeKey       ValueType = 6
-	ValueType_TypeUInt64    ValueType = 7
+	ValueType_unknown   ValueType = 0
+	ValueType_double    ValueType = 1
+	ValueType_int64     ValueType = 2
+	ValueType_string    ValueType = 3
+	ValueType_timestamp ValueType = 4
+	ValueType_boolean   ValueType = 5
+	ValueType_bytes     ValueType = 6
+	ValueType_key       ValueType = 7
+	ValueType_uint64    ValueType = 8
 )
 
 var ValueType_name = map[int32]string{
-	0: "TypeDouble",
-	1: "TypeInt64",
-	2: "TypeString",
-	3: "TypeTimestamp",
-	4: "TypeBoolean",
-	5: "TypeBytes",
-	6: "TypeKey",
-	7: "TypeUInt64",
+	0: "unknown",
+	1: "double",
+	2: "int64",
+	3: "string",
+	4: "timestamp",
+	5: "boolean",
+	6: "bytes",
+	7: "key",
+	8: "uint64",
 }
 
 var ValueType_value = map[string]int32{
-	"TypeDouble":    0,
-	"TypeInt64":     1,
-	"TypeString":    2,
-	"TypeTimestamp": 3,
-	"TypeBoolean":   4,
-	"TypeBytes":     5,
-	"TypeKey":       6,
-	"TypeUInt64":    7,
+	"unknown":   0,
+	"double":    1,
+	"int64":     2,
+	"string":    3,
+	"timestamp": 4,
+	"boolean":   5,
+	"bytes":     6,
+	"key":       7,
+	"uint64":    8,
 }
 
 func (x ValueType) String() string {
@@ -65,32 +68,57 @@ func (ValueType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{0}
 }
 
-type FieldEditorInfoType int32
+type SchemaFieldEditorInfoType int32
 
 const (
-	FieldEditorInfoType_Default  FieldEditorInfoType = 0
-	FieldEditorInfoType_Password FieldEditorInfoType = 1
-	FieldEditorInfoType_Lookup   FieldEditorInfoType = 2
+	SchemaFieldEditorInfoType_default  SchemaFieldEditorInfoType = 0
+	SchemaFieldEditorInfoType_password SchemaFieldEditorInfoType = 1
+	SchemaFieldEditorInfoType_lookup   SchemaFieldEditorInfoType = 2
 )
 
-var FieldEditorInfoType_name = map[int32]string{
-	0: "Default",
-	1: "Password",
-	2: "Lookup",
+var SchemaFieldEditorInfoType_name = map[int32]string{
+	0: "default",
+	1: "password",
+	2: "lookup",
 }
 
-var FieldEditorInfoType_value = map[string]int32{
-	"Default":  0,
-	"Password": 1,
-	"Lookup":   2,
+var SchemaFieldEditorInfoType_value = map[string]int32{
+	"default":  0,
+	"password": 1,
+	"lookup":   2,
 }
 
-func (x FieldEditorInfoType) String() string {
-	return proto.EnumName(FieldEditorInfoType_name, int32(x))
+func (x SchemaFieldEditorInfoType) String() string {
+	return proto.EnumName(SchemaFieldEditorInfoType_name, int32(x))
 }
 
-func (FieldEditorInfoType) EnumDescriptor() ([]byte, []int) {
+func (SchemaFieldEditorInfoType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{1}
+}
+
+type SchemaIndexType int32
+
+const (
+	SchemaIndexType_unspecified SchemaIndexType = 0
+	SchemaIndexType_memory      SchemaIndexType = 1
+)
+
+var SchemaIndexType_name = map[int32]string{
+	0: "unspecified",
+	1: "memory",
+}
+
+var SchemaIndexType_value = map[string]int32{
+	"unspecified": 0,
+	"memory":      1,
+}
+
+func (x SchemaIndexType) String() string {
+	return proto.EnumName(SchemaIndexType_name, int32(x))
+}
+
+func (SchemaIndexType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{2}
 }
 
 type PartitionId struct {
@@ -319,7 +347,7 @@ func (m *Value) GetType() ValueType {
 	if m != nil {
 		return m.Type
 	}
-	return ValueType_TypeDouble
+	return ValueType_unknown
 }
 
 func (m *Value) GetDoubleValue() float64 {
@@ -378,141 +406,141 @@ func (m *Value) GetUint64Value() uint64 {
 	return 0
 }
 
-type Field struct {
-	Id                   int32            `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string           `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Type                 ValueType        `protobuf:"varint,3,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
-	Comment              string           `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
-	Editor               *FieldEditorInfo `protobuf:"bytes,5,opt,name=editor,proto3" json:"editor,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+type SchemaField struct {
+	Id                   int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Type                 ValueType              `protobuf:"varint,3,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
+	Comment              string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Editor               *SchemaFieldEditorInfo `protobuf:"bytes,5,opt,name=editor,proto3" json:"editor,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
-func (m *Field) Reset()         { *m = Field{} }
-func (m *Field) String() string { return proto.CompactTextString(m) }
-func (*Field) ProtoMessage()    {}
-func (*Field) Descriptor() ([]byte, []int) {
+func (m *SchemaField) Reset()         { *m = SchemaField{} }
+func (m *SchemaField) String() string { return proto.CompactTextString(m) }
+func (*SchemaField) ProtoMessage()    {}
+func (*SchemaField) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{4}
 }
 
-func (m *Field) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Field.Unmarshal(m, b)
+func (m *SchemaField) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaField.Unmarshal(m, b)
 }
-func (m *Field) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Field.Marshal(b, m, deterministic)
+func (m *SchemaField) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaField.Marshal(b, m, deterministic)
 }
-func (m *Field) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Field.Merge(m, src)
+func (m *SchemaField) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaField.Merge(m, src)
 }
-func (m *Field) XXX_Size() int {
-	return xxx_messageInfo_Field.Size(m)
+func (m *SchemaField) XXX_Size() int {
+	return xxx_messageInfo_SchemaField.Size(m)
 }
-func (m *Field) XXX_DiscardUnknown() {
-	xxx_messageInfo_Field.DiscardUnknown(m)
+func (m *SchemaField) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaField.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Field proto.InternalMessageInfo
+var xxx_messageInfo_SchemaField proto.InternalMessageInfo
 
-func (m *Field) GetId() int32 {
+func (m *SchemaField) GetId() int32 {
 	if m != nil {
 		return m.Id
 	}
 	return 0
 }
 
-func (m *Field) GetName() string {
+func (m *SchemaField) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *Field) GetType() ValueType {
+func (m *SchemaField) GetType() ValueType {
 	if m != nil {
 		return m.Type
 	}
-	return ValueType_TypeDouble
+	return ValueType_unknown
 }
 
-func (m *Field) GetComment() string {
+func (m *SchemaField) GetComment() string {
 	if m != nil {
 		return m.Comment
 	}
 	return ""
 }
 
-func (m *Field) GetEditor() *FieldEditorInfo {
+func (m *SchemaField) GetEditor() *SchemaFieldEditorInfo {
 	if m != nil {
 		return m.Editor
 	}
 	return nil
 }
 
-type FieldEditorInfo struct {
-	DisplayName          string              `protobuf:"bytes,1,opt,name=displayName,proto3" json:"displayName,omitempty"`
-	Type                 FieldEditorInfoType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.FieldEditorInfoType" json:"type,omitempty"`
-	Readonly             bool                `protobuf:"varint,3,opt,name=readonly,proto3" json:"readonly,omitempty"`
-	ForeignType          string              `protobuf:"bytes,4,opt,name=foreignType,proto3" json:"foreignType,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+type SchemaFieldEditorInfo struct {
+	DisplayName          string                    `protobuf:"bytes,1,opt,name=displayName,proto3" json:"displayName,omitempty"`
+	Type                 SchemaFieldEditorInfoType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.SchemaFieldEditorInfoType" json:"type,omitempty"`
+	Readonly             bool                      `protobuf:"varint,3,opt,name=readonly,proto3" json:"readonly,omitempty"`
+	ForeignType          string                    `protobuf:"bytes,4,opt,name=foreignType,proto3" json:"foreignType,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
 }
 
-func (m *FieldEditorInfo) Reset()         { *m = FieldEditorInfo{} }
-func (m *FieldEditorInfo) String() string { return proto.CompactTextString(m) }
-func (*FieldEditorInfo) ProtoMessage()    {}
-func (*FieldEditorInfo) Descriptor() ([]byte, []int) {
+func (m *SchemaFieldEditorInfo) Reset()         { *m = SchemaFieldEditorInfo{} }
+func (m *SchemaFieldEditorInfo) String() string { return proto.CompactTextString(m) }
+func (*SchemaFieldEditorInfo) ProtoMessage()    {}
+func (*SchemaFieldEditorInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{5}
 }
 
-func (m *FieldEditorInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_FieldEditorInfo.Unmarshal(m, b)
+func (m *SchemaFieldEditorInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorInfo.Unmarshal(m, b)
 }
-func (m *FieldEditorInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_FieldEditorInfo.Marshal(b, m, deterministic)
+func (m *SchemaFieldEditorInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorInfo.Marshal(b, m, deterministic)
 }
-func (m *FieldEditorInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FieldEditorInfo.Merge(m, src)
+func (m *SchemaFieldEditorInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorInfo.Merge(m, src)
 }
-func (m *FieldEditorInfo) XXX_Size() int {
-	return xxx_messageInfo_FieldEditorInfo.Size(m)
+func (m *SchemaFieldEditorInfo) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorInfo.Size(m)
 }
-func (m *FieldEditorInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_FieldEditorInfo.DiscardUnknown(m)
+func (m *SchemaFieldEditorInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorInfo.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FieldEditorInfo proto.InternalMessageInfo
+var xxx_messageInfo_SchemaFieldEditorInfo proto.InternalMessageInfo
 
-func (m *FieldEditorInfo) GetDisplayName() string {
+func (m *SchemaFieldEditorInfo) GetDisplayName() string {
 	if m != nil {
 		return m.DisplayName
 	}
 	return ""
 }
 
-func (m *FieldEditorInfo) GetType() FieldEditorInfoType {
+func (m *SchemaFieldEditorInfo) GetType() SchemaFieldEditorInfoType {
 	if m != nil {
 		return m.Type
 	}
-	return FieldEditorInfoType_Default
+	return SchemaFieldEditorInfoType_default
 }
 
-func (m *FieldEditorInfo) GetReadonly() bool {
+func (m *SchemaFieldEditorInfo) GetReadonly() bool {
 	if m != nil {
 		return m.Readonly
 	}
 	return false
 }
 
-func (m *FieldEditorInfo) GetForeignType() string {
+func (m *SchemaFieldEditorInfo) GetForeignType() string {
 	if m != nil {
 		return m.ForeignType
 	}
 	return ""
 }
 
-type KindEditor struct {
+type SchemaKindEditor struct {
 	Singular             string   `protobuf:"bytes,1,opt,name=singular,proto3" json:"singular,omitempty"`
 	Plural               string   `protobuf:"bytes,2,opt,name=plural,proto3" json:"plural,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -520,113 +548,321 @@ type KindEditor struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *KindEditor) Reset()         { *m = KindEditor{} }
-func (m *KindEditor) String() string { return proto.CompactTextString(m) }
-func (*KindEditor) ProtoMessage()    {}
-func (*KindEditor) Descriptor() ([]byte, []int) {
+func (m *SchemaKindEditor) Reset()         { *m = SchemaKindEditor{} }
+func (m *SchemaKindEditor) String() string { return proto.CompactTextString(m) }
+func (*SchemaKindEditor) ProtoMessage()    {}
+func (*SchemaKindEditor) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{6}
 }
 
-func (m *KindEditor) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_KindEditor.Unmarshal(m, b)
+func (m *SchemaKindEditor) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaKindEditor.Unmarshal(m, b)
 }
-func (m *KindEditor) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_KindEditor.Marshal(b, m, deterministic)
+func (m *SchemaKindEditor) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaKindEditor.Marshal(b, m, deterministic)
 }
-func (m *KindEditor) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KindEditor.Merge(m, src)
+func (m *SchemaKindEditor) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaKindEditor.Merge(m, src)
 }
-func (m *KindEditor) XXX_Size() int {
-	return xxx_messageInfo_KindEditor.Size(m)
+func (m *SchemaKindEditor) XXX_Size() int {
+	return xxx_messageInfo_SchemaKindEditor.Size(m)
 }
-func (m *KindEditor) XXX_DiscardUnknown() {
-	xxx_messageInfo_KindEditor.DiscardUnknown(m)
+func (m *SchemaKindEditor) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaKindEditor.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_KindEditor proto.InternalMessageInfo
+var xxx_messageInfo_SchemaKindEditor proto.InternalMessageInfo
 
-func (m *KindEditor) GetSingular() string {
+func (m *SchemaKindEditor) GetSingular() string {
 	if m != nil {
 		return m.Singular
 	}
 	return ""
 }
 
-func (m *KindEditor) GetPlural() string {
+func (m *SchemaKindEditor) GetPlural() string {
 	if m != nil {
 		return m.Plural
 	}
 	return ""
 }
 
-type Kind struct {
-	Name                 string      `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Fields               []*Field    `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
-	Editor               *KindEditor `protobuf:"bytes,3,opt,name=editor,proto3" json:"editor,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+type SchemaKind struct {
+	Fields               []*SchemaField    `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
+	Editor               *SchemaKindEditor `protobuf:"bytes,3,opt,name=editor,proto3" json:"editor,omitempty"`
+	Indexes              []*SchemaIndex    `protobuf:"bytes,4,rep,name=indexes,proto3" json:"indexes,omitempty"`
+	Ancestors            []string          `protobuf:"bytes,5,rep,name=ancestors,proto3" json:"ancestors,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *Kind) Reset()         { *m = Kind{} }
-func (m *Kind) String() string { return proto.CompactTextString(m) }
-func (*Kind) ProtoMessage()    {}
-func (*Kind) Descriptor() ([]byte, []int) {
+func (m *SchemaKind) Reset()         { *m = SchemaKind{} }
+func (m *SchemaKind) String() string { return proto.CompactTextString(m) }
+func (*SchemaKind) ProtoMessage()    {}
+func (*SchemaKind) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{7}
 }
 
-func (m *Kind) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Kind.Unmarshal(m, b)
+func (m *SchemaKind) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaKind.Unmarshal(m, b)
 }
-func (m *Kind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Kind.Marshal(b, m, deterministic)
+func (m *SchemaKind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaKind.Marshal(b, m, deterministic)
 }
-func (m *Kind) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Kind.Merge(m, src)
+func (m *SchemaKind) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaKind.Merge(m, src)
 }
-func (m *Kind) XXX_Size() int {
-	return xxx_messageInfo_Kind.Size(m)
+func (m *SchemaKind) XXX_Size() int {
+	return xxx_messageInfo_SchemaKind.Size(m)
 }
-func (m *Kind) XXX_DiscardUnknown() {
-	xxx_messageInfo_Kind.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Kind proto.InternalMessageInfo
-
-func (m *Kind) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
+func (m *SchemaKind) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaKind.DiscardUnknown(m)
 }
 
-func (m *Kind) GetFields() []*Field {
+var xxx_messageInfo_SchemaKind proto.InternalMessageInfo
+
+func (m *SchemaKind) GetFields() []*SchemaField {
 	if m != nil {
 		return m.Fields
 	}
 	return nil
 }
 
-func (m *Kind) GetEditor() *KindEditor {
+func (m *SchemaKind) GetEditor() *SchemaKindEditor {
 	if m != nil {
 		return m.Editor
 	}
 	return nil
 }
 
-type Schema struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Kinds                []*Kind  `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty"`
+func (m *SchemaKind) GetIndexes() []*SchemaIndex {
+	if m != nil {
+		return m.Indexes
+	}
+	return nil
+}
+
+func (m *SchemaKind) GetAncestors() []string {
+	if m != nil {
+		return m.Ancestors
+	}
+	return nil
+}
+
+type SchemaIndex struct {
+	Name string          `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Type SchemaIndexType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.SchemaIndexType" json:"type,omitempty"`
+	// Types that are valid to be assigned to Value:
+	//	*SchemaIndex_Computed
+	//	*SchemaIndex_Field
+	Value                isSchemaIndex_Value `protobuf_oneof:"value"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *SchemaIndex) Reset()         { *m = SchemaIndex{} }
+func (m *SchemaIndex) String() string { return proto.CompactTextString(m) }
+func (*SchemaIndex) ProtoMessage()    {}
+func (*SchemaIndex) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{8}
+}
+
+func (m *SchemaIndex) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaIndex.Unmarshal(m, b)
+}
+func (m *SchemaIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaIndex.Marshal(b, m, deterministic)
+}
+func (m *SchemaIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaIndex.Merge(m, src)
+}
+func (m *SchemaIndex) XXX_Size() int {
+	return xxx_messageInfo_SchemaIndex.Size(m)
+}
+func (m *SchemaIndex) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaIndex.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaIndex proto.InternalMessageInfo
+
+func (m *SchemaIndex) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *SchemaIndex) GetType() SchemaIndexType {
+	if m != nil {
+		return m.Type
+	}
+	return SchemaIndexType_unspecified
+}
+
+type isSchemaIndex_Value interface {
+	isSchemaIndex_Value()
+}
+
+type SchemaIndex_Computed struct {
+	Computed *SchemaComputedIndex `protobuf:"bytes,3,opt,name=computed,proto3,oneof"`
+}
+
+type SchemaIndex_Field struct {
+	Field string `protobuf:"bytes,4,opt,name=field,proto3,oneof"`
+}
+
+func (*SchemaIndex_Computed) isSchemaIndex_Value() {}
+
+func (*SchemaIndex_Field) isSchemaIndex_Value() {}
+
+func (m *SchemaIndex) GetValue() isSchemaIndex_Value {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
+
+func (m *SchemaIndex) GetComputed() *SchemaComputedIndex {
+	if x, ok := m.GetValue().(*SchemaIndex_Computed); ok {
+		return x.Computed
+	}
+	return nil
+}
+
+func (m *SchemaIndex) GetField() string {
+	if x, ok := m.GetValue().(*SchemaIndex_Field); ok {
+		return x.Field
+	}
+	return ""
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SchemaIndex) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SchemaIndex_Computed)(nil),
+		(*SchemaIndex_Field)(nil),
+	}
+}
+
+type SchemaComputedIndex struct {
+	// Types that are valid to be assigned to Algorithm:
+	//	*SchemaComputedIndex_Fnv64A
+	Algorithm            isSchemaComputedIndex_Algorithm `protobuf_oneof:"algorithm"`
+	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
+	XXX_unrecognized     []byte                          `json:"-"`
+	XXX_sizecache        int32                           `json:"-"`
+}
+
+func (m *SchemaComputedIndex) Reset()         { *m = SchemaComputedIndex{} }
+func (m *SchemaComputedIndex) String() string { return proto.CompactTextString(m) }
+func (*SchemaComputedIndex) ProtoMessage()    {}
+func (*SchemaComputedIndex) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{9}
+}
+
+func (m *SchemaComputedIndex) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaComputedIndex.Unmarshal(m, b)
+}
+func (m *SchemaComputedIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaComputedIndex.Marshal(b, m, deterministic)
+}
+func (m *SchemaComputedIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaComputedIndex.Merge(m, src)
+}
+func (m *SchemaComputedIndex) XXX_Size() int {
+	return xxx_messageInfo_SchemaComputedIndex.Size(m)
+}
+func (m *SchemaComputedIndex) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaComputedIndex.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaComputedIndex proto.InternalMessageInfo
+
+type isSchemaComputedIndex_Algorithm interface {
+	isSchemaComputedIndex_Algorithm()
+}
+
+type SchemaComputedIndex_Fnv64A struct {
+	Fnv64A *SchemaComputedIndexFnv64A `protobuf:"bytes,1,opt,name=fnv64a,proto3,oneof"`
+}
+
+func (*SchemaComputedIndex_Fnv64A) isSchemaComputedIndex_Algorithm() {}
+
+func (m *SchemaComputedIndex) GetAlgorithm() isSchemaComputedIndex_Algorithm {
+	if m != nil {
+		return m.Algorithm
+	}
+	return nil
+}
+
+func (m *SchemaComputedIndex) GetFnv64A() *SchemaComputedIndexFnv64A {
+	if x, ok := m.GetAlgorithm().(*SchemaComputedIndex_Fnv64A); ok {
+		return x.Fnv64A
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SchemaComputedIndex) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SchemaComputedIndex_Fnv64A)(nil),
+	}
+}
+
+type SchemaComputedIndexFnv64A struct {
+	Field                string   `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SchemaComputedIndexFnv64A) Reset()         { *m = SchemaComputedIndexFnv64A{} }
+func (m *SchemaComputedIndexFnv64A) String() string { return proto.CompactTextString(m) }
+func (*SchemaComputedIndexFnv64A) ProtoMessage()    {}
+func (*SchemaComputedIndexFnv64A) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{10}
+}
+
+func (m *SchemaComputedIndexFnv64A) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaComputedIndexFnv64A.Unmarshal(m, b)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaComputedIndexFnv64A.Marshal(b, m, deterministic)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaComputedIndexFnv64A.Merge(m, src)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_Size() int {
+	return xxx_messageInfo_SchemaComputedIndexFnv64A.Size(m)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaComputedIndexFnv64A.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaComputedIndexFnv64A proto.InternalMessageInfo
+
+func (m *SchemaComputedIndexFnv64A) GetField() string {
+	if m != nil {
+		return m.Field
+	}
+	return ""
+}
+
+type Schema struct {
+	Name                 string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Kinds                map[string]*SchemaKind `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *Schema) Reset()         { *m = Schema{} }
 func (m *Schema) String() string { return proto.CompactTextString(m) }
 func (*Schema) ProtoMessage()    {}
 func (*Schema) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{8}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{11}
 }
 
 func (m *Schema) XXX_Unmarshal(b []byte) error {
@@ -654,7 +890,7 @@ func (m *Schema) GetName() string {
 	return ""
 }
 
-func (m *Schema) GetKinds() []*Kind {
+func (m *Schema) GetKinds() map[string]*SchemaKind {
 	if m != nil {
 		return m.Kinds
 	}
@@ -671,7 +907,7 @@ func (m *GetSchemaRequest) Reset()         { *m = GetSchemaRequest{} }
 func (m *GetSchemaRequest) String() string { return proto.CompactTextString(m) }
 func (*GetSchemaRequest) ProtoMessage()    {}
 func (*GetSchemaRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{9}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{12}
 }
 
 func (m *GetSchemaRequest) XXX_Unmarshal(b []byte) error {
@@ -703,7 +939,7 @@ func (m *GetSchemaResponse) Reset()         { *m = GetSchemaResponse{} }
 func (m *GetSchemaResponse) String() string { return proto.CompactTextString(m) }
 func (*GetSchemaResponse) ProtoMessage()    {}
 func (*GetSchemaResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{10}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{13}
 }
 
 func (m *GetSchemaResponse) XXX_Unmarshal(b []byte) error {
@@ -744,7 +980,7 @@ func (m *MetaListEntitiesRequest) Reset()         { *m = MetaListEntitiesRequest
 func (m *MetaListEntitiesRequest) String() string { return proto.CompactTextString(m) }
 func (*MetaListEntitiesRequest) ProtoMessage()    {}
 func (*MetaListEntitiesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{11}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{14}
 }
 
 func (m *MetaListEntitiesRequest) XXX_Unmarshal(b []byte) error {
@@ -799,7 +1035,7 @@ func (m *MetaListEntitiesResponse) Reset()         { *m = MetaListEntitiesRespon
 func (m *MetaListEntitiesResponse) String() string { return proto.CompactTextString(m) }
 func (*MetaListEntitiesResponse) ProtoMessage()    {}
 func (*MetaListEntitiesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{12}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{15}
 }
 
 func (m *MetaListEntitiesResponse) XXX_Unmarshal(b []byte) error {
@@ -853,7 +1089,7 @@ func (m *MetaEntity) Reset()         { *m = MetaEntity{} }
 func (m *MetaEntity) String() string { return proto.CompactTextString(m) }
 func (*MetaEntity) ProtoMessage()    {}
 func (*MetaEntity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{13}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{16}
 }
 
 func (m *MetaEntity) XXX_Unmarshal(b []byte) error {
@@ -890,16 +1126,21 @@ func (m *MetaEntity) GetValues() []*Value {
 
 func init() {
 	proto.RegisterEnum("meta.ValueType", ValueType_name, ValueType_value)
-	proto.RegisterEnum("meta.FieldEditorInfoType", FieldEditorInfoType_name, FieldEditorInfoType_value)
+	proto.RegisterEnum("meta.SchemaFieldEditorInfoType", SchemaFieldEditorInfoType_name, SchemaFieldEditorInfoType_value)
+	proto.RegisterEnum("meta.SchemaIndexType", SchemaIndexType_name, SchemaIndexType_value)
 	proto.RegisterType((*PartitionId)(nil), "meta.PartitionId")
 	proto.RegisterType((*PathElement)(nil), "meta.PathElement")
 	proto.RegisterType((*Key)(nil), "meta.Key")
 	proto.RegisterType((*Value)(nil), "meta.Value")
-	proto.RegisterType((*Field)(nil), "meta.Field")
-	proto.RegisterType((*FieldEditorInfo)(nil), "meta.FieldEditorInfo")
-	proto.RegisterType((*KindEditor)(nil), "meta.KindEditor")
-	proto.RegisterType((*Kind)(nil), "meta.Kind")
+	proto.RegisterType((*SchemaField)(nil), "meta.SchemaField")
+	proto.RegisterType((*SchemaFieldEditorInfo)(nil), "meta.SchemaFieldEditorInfo")
+	proto.RegisterType((*SchemaKindEditor)(nil), "meta.SchemaKindEditor")
+	proto.RegisterType((*SchemaKind)(nil), "meta.SchemaKind")
+	proto.RegisterType((*SchemaIndex)(nil), "meta.SchemaIndex")
+	proto.RegisterType((*SchemaComputedIndex)(nil), "meta.SchemaComputedIndex")
+	proto.RegisterType((*SchemaComputedIndexFnv64A)(nil), "meta.SchemaComputedIndexFnv64a")
 	proto.RegisterType((*Schema)(nil), "meta.Schema")
+	proto.RegisterMapType((map[string]*SchemaKind)(nil), "meta.Schema.KindsEntry")
 	proto.RegisterType((*GetSchemaRequest)(nil), "meta.GetSchemaRequest")
 	proto.RegisterType((*GetSchemaResponse)(nil), "meta.GetSchemaResponse")
 	proto.RegisterType((*MetaListEntitiesRequest)(nil), "meta.MetaListEntitiesRequest")
@@ -910,63 +1151,75 @@ func init() {
 func init() { proto.RegisterFile("meta.proto", fileDescriptor_3b5ea8fe65782bcc) }
 
 var fileDescriptor_3b5ea8fe65782bcc = []byte{
-	// 887 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x55, 0xdd, 0x6e, 0xdc, 0x44,
-	0x14, 0x8e, 0x77, 0xbd, 0x8e, 0xf7, 0xec, 0x26, 0x71, 0x86, 0x92, 0x2e, 0x01, 0xaa, 0x95, 0xa1,
-	0x68, 0x55, 0x68, 0x2f, 0x52, 0x84, 0x84, 0x54, 0x21, 0x14, 0x1a, 0x68, 0x94, 0x12, 0x55, 0x93,
-	0xc2, 0xfd, 0x24, 0x3e, 0x9b, 0x8c, 0x62, 0x7b, 0x8c, 0x67, 0x5c, 0xf0, 0x0d, 0x0f, 0xc0, 0x1b,
-	0x70, 0x07, 0x0f, 0xc5, 0xfb, 0xa0, 0x33, 0x33, 0xeb, 0x75, 0x7e, 0xe0, 0x6a, 0xe7, 0x7c, 0xe7,
-	0xf8, 0x3b, 0xdf, 0x7c, 0x67, 0x66, 0x16, 0xa0, 0x40, 0x23, 0x9e, 0x55, 0xb5, 0x32, 0x8a, 0x85,
-	0xb4, 0x4e, 0x3f, 0x87, 0xc9, 0x1b, 0x51, 0x1b, 0x69, 0xa4, 0x2a, 0x8f, 0x33, 0xf6, 0x11, 0x8c,
-	0x4b, 0x51, 0xa0, 0xae, 0xc4, 0x05, 0xce, 0x82, 0x79, 0xb0, 0x18, 0xf3, 0x35, 0x90, 0x9e, 0x51,
-	0xb1, 0xb9, 0x3a, 0xca, 0xb1, 0xc0, 0xd2, 0x30, 0x06, 0xe1, 0xb5, 0x2c, 0x33, 0x5f, 0x67, 0xd7,
-	0x2c, 0x81, 0x81, 0xcc, 0x66, 0x83, 0x79, 0xb0, 0x18, 0xbe, 0xda, 0xe0, 0x03, 0x99, 0xb1, 0x07,
-	0x10, 0x12, 0xc3, 0x6c, 0x48, 0x55, 0xaf, 0x36, 0xb8, 0x8d, 0x0e, 0x63, 0x88, 0x64, 0xf6, 0xb6,
-	0xad, 0x30, 0x15, 0x30, 0x3c, 0xc1, 0x96, 0x3d, 0x87, 0x49, 0xb5, 0x16, 0x62, 0x39, 0x27, 0x07,
-	0xbb, 0xcf, 0xac, 0xe0, 0x9e, 0x42, 0xde, 0xaf, 0x62, 0x8f, 0x21, 0xac, 0x84, 0xb9, 0x9a, 0x0d,
-	0xe6, 0xc3, 0x7e, 0x75, 0x27, 0x91, 0xdb, 0x74, 0xfa, 0xcf, 0x00, 0x46, 0x3f, 0x8b, 0xbc, 0x41,
-	0xb6, 0x6d, 0xe5, 0x11, 0xf9, 0xc8, 0x8a, 0xfb, 0x04, 0x42, 0xd3, 0x56, 0x68, 0x05, 0x6f, 0x1f,
-	0xec, 0x38, 0x02, 0x5b, 0x4a, 0xda, 0xb8, 0x4d, 0xb2, 0x39, 0x4c, 0x32, 0xd5, 0x9c, 0xe7, 0x68,
-	0x13, 0x76, 0x23, 0x01, 0xef, 0x43, 0xec, 0x11, 0x80, 0x2c, 0xcd, 0x57, 0x5f, 0xba, 0x82, 0x90,
-	0x76, 0xcf, 0x7b, 0x08, 0x31, 0x68, 0x53, 0xcb, 0xf2, 0xd2, 0x15, 0x8c, 0xac, 0x61, 0x7d, 0x88,
-	0x7d, 0x06, 0xdb, 0x46, 0x16, 0xa8, 0x8d, 0x28, 0x2a, 0x57, 0x14, 0xcd, 0x83, 0xc5, 0x94, 0xdf,
-	0x42, 0x59, 0x0a, 0xd3, 0x73, 0xa5, 0x72, 0x14, 0xa5, 0xab, 0xda, 0x9c, 0x07, 0x8b, 0x98, 0xdf,
-	0xc0, 0x48, 0xcd, 0x79, 0x6b, 0x50, 0xbb, 0x8a, 0xd8, 0xf2, 0xf4, 0x10, 0xf6, 0x18, 0xe2, 0x6b,
-	0x6c, 0x5d, 0x76, 0x6c, 0x7d, 0x1e, 0xbb, 0x8d, 0x9f, 0x60, 0xcb, 0xbb, 0x14, 0x89, 0x6e, 0x7a,
-	0xbb, 0x82, 0x79, 0xb0, 0x08, 0x79, 0x1f, 0x4a, 0xff, 0x0c, 0x60, 0xf4, 0xbd, 0xc4, 0x3c, 0xbb,
-	0xe3, 0x2b, 0xf3, 0x43, 0x1f, 0xb8, 0xa3, 0x41, 0xeb, 0xce, 0xeb, 0xe1, 0xff, 0x79, 0x3d, 0x83,
-	0xcd, 0x0b, 0x55, 0xd0, 0xec, 0xac, 0x8d, 0x63, 0xbe, 0x0a, 0xd9, 0x53, 0x88, 0x30, 0x93, 0x46,
-	0xd5, 0xd6, 0xbe, 0xc9, 0xc1, 0xfb, 0x8e, 0xc0, 0xf6, 0x3f, 0xb2, 0x89, 0xe3, 0x72, 0xa9, 0xb8,
-	0x2f, 0x4a, 0xff, 0x0a, 0x60, 0xe7, 0x56, 0xce, 0x0e, 0x52, 0xea, 0x2a, 0x17, 0xed, 0x29, 0x89,
-	0x73, 0xe7, 0xb6, 0x0f, 0xb1, 0xa7, 0x37, 0xce, 0xc3, 0x07, 0xf7, 0xb6, 0xe8, 0xa9, 0xdd, 0x87,
-	0xb8, 0x46, 0x91, 0xa9, 0x32, 0x6f, 0xed, 0xb6, 0x62, 0xde, 0xc5, 0xd4, 0x6c, 0xa9, 0x6a, 0x94,
-	0x97, 0x25, 0x7d, 0xe0, 0x77, 0xd3, 0x87, 0xd2, 0x6f, 0x01, 0x4e, 0x64, 0xe9, 0x99, 0x89, 0x4b,
-	0xcb, 0xf2, 0xb2, 0xc9, 0x45, 0xed, 0x95, 0x75, 0x31, 0xdb, 0x83, 0xa8, 0xca, 0x9b, 0x5a, 0xe4,
-	0xde, 0x50, 0x1f, 0xa5, 0x12, 0x42, 0x62, 0xe8, 0xec, 0x0e, 0x6e, 0xd8, 0x1d, 0x2d, 0x49, 0xb8,
-	0xf6, 0xb7, 0x63, 0xd2, 0xdb, 0x0c, 0xf7, 0x29, 0xb6, 0xe8, 0x4c, 0x1d, 0x5a, 0x53, 0x13, 0x7f,
-	0x10, 0x3a, 0x59, 0x9d, 0x9f, 0xdf, 0x40, 0x74, 0x76, 0x71, 0x85, 0x85, 0xb8, 0xb7, 0xd9, 0x1c,
-	0x46, 0x74, 0xfd, 0x57, 0xbd, 0x60, 0x4d, 0xc3, 0x5d, 0x22, 0x65, 0x90, 0xfc, 0x80, 0xc6, 0x51,
-	0x70, 0xfc, 0xa5, 0x41, 0x6d, 0xd2, 0xaf, 0x61, 0xb7, 0x87, 0xe9, 0x4a, 0x95, 0x1a, 0xd9, 0xa7,
-	0x10, 0x69, 0x8b, 0xf8, 0x37, 0x60, 0xea, 0xb8, 0x7c, 0x95, 0xcf, 0xa5, 0x02, 0x1e, 0xfe, 0x88,
-	0x46, 0xbc, 0x96, 0xda, 0x1c, 0x95, 0xf4, 0x1e, 0xa0, 0xf6, 0xac, 0xec, 0x01, 0x8c, 0xb4, 0x11,
-	0xb5, 0xb1, 0xdf, 0x4f, 0xb9, 0x0b, 0x08, 0xcd, 0x65, 0x21, 0x8d, 0x75, 0x70, 0x8b, 0xbb, 0x80,
-	0x4c, 0x27, 0x79, 0xa7, 0xdd, 0x03, 0xc5, 0xbb, 0x38, 0xfd, 0x1d, 0x66, 0x77, 0x5b, 0x78, 0x91,
-	0xe4, 0x01, 0xfe, 0xb6, 0x6a, 0x61, 0xd7, 0x34, 0xf0, 0x42, 0xd5, 0xc8, 0x51, 0x37, 0xb9, 0xd1,
-	0xb6, 0x4f, 0xcc, 0xfb, 0x10, 0xfb, 0x02, 0x62, 0xf4, 0x4c, 0xb3, 0xa1, 0x35, 0xca, 0xfb, 0x4d,
-	0x7d, 0x6c, 0x8f, 0x96, 0x77, 0x15, 0xe9, 0x29, 0xc0, 0x1a, 0x67, 0x1f, 0xc2, 0xf0, 0x1a, 0x5b,
-	0xef, 0x49, 0xef, 0xbe, 0x12, 0x4a, 0xb3, 0x7e, 0x47, 0x17, 0xe9, 0xd6, 0xac, 0xed, 0xe5, 0xe2,
-	0x3e, 0xf5, 0xe4, 0x8f, 0x00, 0xc6, 0xdd, 0x75, 0x63, 0xdb, 0x00, 0xf4, 0xfb, 0xd2, 0xbe, 0x62,
-	0xc9, 0x06, 0xdb, 0x82, 0x31, 0xc5, 0xc7, 0x74, 0xbb, 0x93, 0x60, 0x95, 0x3e, 0xb3, 0x4f, 0x54,
-	0x32, 0x60, 0xbb, 0xb0, 0x45, 0xf1, 0xdb, 0xd5, 0x6b, 0x94, 0x0c, 0xd9, 0x0e, 0x4c, 0x08, 0x3a,
-	0x74, 0x4f, 0x4f, 0x12, 0xae, 0x28, 0x0e, 0xe9, 0xa5, 0x49, 0x46, 0x6c, 0x02, 0x9b, 0x14, 0x9e,
-	0x60, 0x9b, 0x44, 0x2b, 0xbe, 0x9f, 0x1c, 0xff, 0xe6, 0x93, 0x17, 0xf0, 0xde, 0x3d, 0xd7, 0x8a,
-	0xbe, 0x79, 0x89, 0x4b, 0xd1, 0xe4, 0x26, 0xd9, 0x60, 0x53, 0x88, 0xdf, 0x08, 0xad, 0x7f, 0x55,
-	0x75, 0x96, 0x04, 0x0c, 0x20, 0x7a, 0xad, 0xd4, 0x75, 0x53, 0x25, 0x83, 0x83, 0xbf, 0x03, 0xd8,
-	0xfb, 0x4e, 0x95, 0x4b, 0x79, 0xa9, 0x8d, 0xaa, 0x91, 0x6c, 0x3a, 0xc3, 0xfa, 0x9d, 0xbc, 0x40,
-	0xf6, 0x02, 0xc6, 0xdd, 0x99, 0x62, 0x7b, 0xce, 0x87, 0xdb, 0x07, 0x6f, 0xff, 0xe1, 0x1d, 0xdc,
-	0xcf, 0xf5, 0x18, 0xe2, 0xd5, 0xcc, 0xd9, 0xc7, 0xeb, 0xd9, 0xdc, 0x73, 0xcc, 0xf6, 0x1f, 0xfd,
-	0x57, 0xda, 0x51, 0x9d, 0x47, 0xf6, 0x6f, 0xf6, 0xf9, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x87,
-	0x52, 0xfc, 0x96, 0x74, 0x07, 0x00, 0x00,
+	// 1088 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x56, 0x4d, 0x73, 0xdc, 0x44,
+	0x13, 0x5e, 0xed, 0x87, 0x56, 0xdb, 0x72, 0x62, 0x65, 0xde, 0xc4, 0xde, 0x38, 0x2f, 0xc9, 0x96,
+	0x42, 0x52, 0x8e, 0x03, 0xae, 0xc2, 0x4e, 0x05, 0x42, 0x71, 0x72, 0xca, 0xc6, 0xc6, 0xe0, 0xa2,
+	0xc6, 0x14, 0x37, 0x0e, 0xe3, 0xd5, 0xac, 0x3d, 0x65, 0x69, 0x46, 0x68, 0x46, 0x76, 0x74, 0xe1,
+	0x6f, 0x70, 0xe6, 0x00, 0x27, 0x4e, 0xfc, 0x17, 0xfe, 0x0f, 0x35, 0x1f, 0xab, 0x1d, 0x7f, 0xe5,
+	0xa6, 0xe9, 0x7e, 0xa6, 0xfb, 0xe9, 0xa7, 0x7b, 0x7b, 0x16, 0xa0, 0xa0, 0x8a, 0x6c, 0x96, 0x95,
+	0x50, 0x02, 0xf5, 0xf5, 0x77, 0xfa, 0x1a, 0xe2, 0x1f, 0x49, 0xa5, 0x98, 0x62, 0x82, 0x1f, 0x64,
+	0xe8, 0xff, 0x30, 0xe2, 0xa4, 0xa0, 0xb2, 0x24, 0x53, 0x3a, 0x0e, 0x26, 0xc1, 0xfa, 0x08, 0x2f,
+	0x0c, 0xe9, 0xb1, 0x06, 0xab, 0xb3, 0xdd, 0x9c, 0x16, 0x94, 0x2b, 0x84, 0xa0, 0x7f, 0xce, 0x78,
+	0xe6, 0x70, 0xe6, 0x1b, 0x25, 0xd0, 0x65, 0xd9, 0xb8, 0x3b, 0x09, 0xd6, 0x7b, 0xfb, 0x1d, 0xdc,
+	0x65, 0x19, 0x7a, 0x08, 0x7d, 0x1d, 0x61, 0xdc, 0xd3, 0xa8, 0xfd, 0x0e, 0x36, 0xa7, 0x9d, 0x08,
+	0x42, 0x96, 0xfd, 0xd4, 0x94, 0x34, 0x25, 0xd0, 0x3b, 0xa4, 0x0d, 0xda, 0x86, 0xb8, 0x5c, 0x10,
+	0x31, 0x31, 0xe3, 0xad, 0x07, 0x9b, 0x86, 0xb0, 0xc7, 0x10, 0xfb, 0x28, 0xf4, 0x02, 0xfa, 0x25,
+	0x51, 0x67, 0xe3, 0xee, 0xa4, 0xe7, 0xa3, 0x5b, 0x8a, 0xd8, 0xb8, 0xd3, 0x7f, 0xbb, 0x30, 0xf8,
+	0x99, 0xe4, 0x35, 0x45, 0xf7, 0x0d, 0x3d, 0x1d, 0x7c, 0x60, 0xc8, 0x3d, 0x87, 0xbe, 0x6a, 0x4a,
+	0x6a, 0x08, 0xdf, 0xdf, 0x5a, 0xb6, 0x01, 0x0c, 0x54, 0x73, 0xc3, 0xc6, 0x89, 0x26, 0x10, 0x67,
+	0xa2, 0x3e, 0xc9, 0xa9, 0x71, 0x98, 0x42, 0x02, 0xec, 0x9b, 0xd0, 0x53, 0x00, 0xc6, 0xd5, 0xdb,
+	0x37, 0x16, 0xd0, 0xd7, 0xd5, 0x63, 0xcf, 0xa2, 0x23, 0x48, 0x55, 0x31, 0x7e, 0x6a, 0x01, 0x03,
+	0x23, 0x98, 0x6f, 0x42, 0x2f, 0xe1, 0xbe, 0x62, 0x05, 0x95, 0x8a, 0x14, 0xa5, 0x05, 0x85, 0x93,
+	0x60, 0x7d, 0x09, 0x5f, 0xb3, 0xa2, 0x14, 0x96, 0x4e, 0x84, 0xc8, 0x29, 0xe1, 0x16, 0x35, 0x9c,
+	0x04, 0xeb, 0x11, 0xbe, 0x62, 0xd3, 0x6c, 0x4e, 0x1a, 0x45, 0xa5, 0x45, 0x44, 0x26, 0x8e, 0x67,
+	0x41, 0x2f, 0x20, 0x3a, 0xa7, 0x8d, 0xf5, 0x8e, 0x8c, 0xce, 0x23, 0x5b, 0xf8, 0x21, 0x6d, 0x70,
+	0xeb, 0xd2, 0xa4, 0x6b, 0xaf, 0x2a, 0x98, 0x04, 0xeb, 0x7d, 0xec, 0x9b, 0xd2, 0x3f, 0x03, 0x88,
+	0x8f, 0xa7, 0x67, 0xb4, 0x20, 0x7b, 0x8c, 0xe6, 0xd9, 0x0d, 0x75, 0x91, 0x6b, 0x7d, 0xd7, 0x0e,
+	0x88, 0xfe, 0x6e, 0x15, 0xef, 0x7d, 0x4c, 0xf1, 0x31, 0x0c, 0xa7, 0xa2, 0xd0, 0x1d, 0x34, 0x62,
+	0x8e, 0xf0, 0xfc, 0x88, 0xb6, 0x21, 0xa4, 0x19, 0x53, 0xa2, 0x32, 0x22, 0xc6, 0x5b, 0x4f, 0x6c,
+	0x00, 0x8f, 0xc5, 0xae, 0x71, 0x1f, 0xf0, 0x99, 0xc0, 0x0e, 0x9a, 0xfe, 0x1d, 0xc0, 0xa3, 0x5b,
+	0x11, 0xa6, 0xb5, 0x4c, 0x96, 0x39, 0x69, 0x8e, 0x34, 0x51, 0x3b, 0xc9, 0xbe, 0x09, 0x6d, 0x5f,
+	0x99, 0x90, 0x67, 0x1f, 0x49, 0xe7, 0xf1, 0x5f, 0x83, 0xa8, 0xa2, 0x24, 0x13, 0x3c, 0x6f, 0x4c,
+	0xa1, 0x11, 0x6e, 0xcf, 0x3a, 0xe5, 0x4c, 0x54, 0x94, 0x9d, 0x72, 0x7d, 0xc1, 0xd5, 0xe7, 0x9b,
+	0xd2, 0x3d, 0x48, 0x6c, 0x82, 0x43, 0xc6, 0x5d, 0x7c, 0x1d, 0x51, 0x32, 0x7e, 0x5a, 0xe7, 0xa4,
+	0x72, 0x2c, 0xdb, 0x33, 0x5a, 0x81, 0xb0, 0xcc, 0xeb, 0x8a, 0xe4, 0x4e, 0x68, 0x77, 0x4a, 0xff,
+	0x09, 0x00, 0x16, 0x81, 0xd0, 0x2b, 0x08, 0x67, 0x9a, 0xb1, 0xbc, 0xfa, 0x73, 0xf1, 0x6a, 0xc1,
+	0x0e, 0x80, 0x36, 0x5b, 0x95, 0x7b, 0x46, 0xe5, 0x15, 0x1f, 0xba, 0x60, 0x35, 0x17, 0x18, 0xbd,
+	0x86, 0x21, 0xe3, 0x19, 0xfd, 0x40, 0xe5, 0xb8, 0x7f, 0x33, 0xf6, 0x81, 0x76, 0xe1, 0x39, 0x42,
+	0xef, 0x18, 0xc2, 0xa7, 0x54, 0x2a, 0x51, 0xc9, 0xf1, 0x60, 0xd2, 0xd3, 0x3b, 0xa6, 0x35, 0xa4,
+	0x7f, 0xb5, 0x33, 0x65, 0xae, 0xb5, 0x33, 0x14, 0x78, 0x33, 0xf4, 0xea, 0x4a, 0x4f, 0x1e, 0xdd,
+	0xc8, 0xe5, 0x75, 0xe2, 0x4b, 0x88, 0xa6, 0xa2, 0x28, 0x6b, 0x45, 0x33, 0x57, 0xcb, 0x63, 0x1f,
+	0xfe, 0xde, 0xf9, 0xcc, 0xb5, 0xfd, 0x0e, 0x6e, 0xc1, 0x68, 0x05, 0x06, 0x46, 0x0c, 0xdb, 0xa0,
+	0xfd, 0x0e, 0xb6, 0xc7, 0x9d, 0x21, 0x0c, 0x2e, 0xcc, 0xf0, 0xff, 0x02, 0xff, 0xbb, 0x25, 0x06,
+	0x7a, 0x07, 0xe1, 0x8c, 0x5f, 0xbc, 0x7d, 0x43, 0xdc, 0x0a, 0x7b, 0x76, 0x67, 0xba, 0x3d, 0x03,
+	0xdb, 0xef, 0x60, 0x77, 0x61, 0x27, 0x86, 0x11, 0xc9, 0x4f, 0x45, 0xc5, 0xd4, 0x59, 0x91, 0x7e,
+	0x01, 0x8f, 0xef, 0xbc, 0x83, 0x1e, 0xce, 0xc9, 0x59, 0x55, 0xec, 0x21, 0xfd, 0x3d, 0x80, 0xd0,
+	0xde, 0xb9, 0x55, 0xb5, 0xcf, 0x61, 0xa0, 0x57, 0xf4, 0xbc, 0xfd, 0xab, 0x3e, 0xb1, 0x4d, 0xdd,
+	0x54, 0xb9, 0xcb, 0x55, 0xd5, 0x60, 0x8b, 0x5a, 0xfb, 0x0e, 0x60, 0x61, 0x44, 0x09, 0xf4, 0xce,
+	0x69, 0xe3, 0xe2, 0xe9, 0x4f, 0xf4, 0xd2, 0x09, 0x61, 0xba, 0x10, 0x6f, 0x25, 0xd7, 0x47, 0x04,
+	0x5b, 0xf7, 0xd7, 0xdd, 0xaf, 0x82, 0x14, 0x41, 0xf2, 0x2d, 0x55, 0xd6, 0x87, 0xe9, 0xaf, 0x35,
+	0x95, 0x2a, 0x7d, 0x07, 0x0f, 0x3c, 0x9b, 0x2c, 0x05, 0x97, 0x14, 0x7d, 0x0a, 0xa1, 0x34, 0x16,
+	0xa7, 0xde, 0x92, 0x1f, 0x15, 0x3b, 0x5f, 0x4a, 0x60, 0xf5, 0x07, 0xaa, 0xc8, 0xf7, 0x4c, 0xaa,
+	0x5d, 0xae, 0x1f, 0x03, 0x2a, 0x5d, 0x54, 0xad, 0x8c, 0x54, 0xa4, 0x52, 0xe6, 0xfe, 0x12, 0xb6,
+	0x07, 0x6d, 0xcd, 0x59, 0xc1, 0x94, 0xe1, 0x7a, 0x0f, 0xdb, 0x83, 0xfe, 0x4d, 0xe9, 0x52, 0x8f,
+	0xda, 0xd7, 0x09, 0xb7, 0xe7, 0xf4, 0x37, 0x18, 0xdf, 0x4c, 0xe1, 0x48, 0x6a, 0x71, 0xe9, 0x87,
+	0x79, 0x0a, 0xf3, 0xad, 0x7f, 0xd5, 0x85, 0xa8, 0x28, 0xa6, 0xb2, 0xce, 0x95, 0x34, 0x79, 0x22,
+	0xec, 0x9b, 0xd0, 0x67, 0x10, 0x51, 0x17, 0x69, 0xdc, 0x33, 0x1d, 0x70, 0x92, 0xe9, 0x3c, 0x26,
+	0x47, 0x83, 0x5b, 0x44, 0x7a, 0x04, 0xb0, 0xb0, 0xa3, 0x27, 0x0b, 0xf5, 0xaf, 0x2c, 0x6b, 0xd3,
+	0x88, 0xe7, 0x10, 0x1a, 0xa5, 0xe7, 0x8d, 0x8d, 0xbd, 0x9d, 0x8a, 0x9d, 0x6b, 0xe3, 0x12, 0x46,
+	0xed, 0x92, 0x45, 0x31, 0x0c, 0x6b, 0x7e, 0xce, 0xc5, 0x25, 0x4f, 0x3a, 0x08, 0x20, 0xb4, 0x4f,
+	0x59, 0x12, 0xa0, 0x11, 0x0c, 0xcc, 0x7a, 0x4f, 0xba, 0xda, 0x6c, 0xdf, 0xa7, 0xa4, 0x87, 0xee,
+	0xc1, 0xa8, 0x7d, 0x86, 0x92, 0xbe, 0xbe, 0xee, 0xde, 0x9b, 0x64, 0xa0, 0xaf, 0x98, 0xa7, 0x25,
+	0x09, 0xd1, 0xd0, 0xb0, 0x4c, 0x86, 0xfa, 0xae, 0x7d, 0x26, 0x92, 0x68, 0x63, 0x67, 0x3e, 0xc7,
+	0xb7, 0x6c, 0x4b, 0x1d, 0x29, 0xa3, 0x33, 0x52, 0xe7, 0x2a, 0xe9, 0xa0, 0x25, 0x88, 0x4a, 0x22,
+	0xe5, 0xa5, 0xa8, 0xb2, 0x24, 0xd0, 0x31, 0x72, 0x21, 0xce, 0xeb, 0x32, 0xe9, 0x6e, 0x6c, 0xc2,
+	0xf2, 0xb5, 0x5f, 0x37, 0x5a, 0x86, 0xb8, 0xe6, 0xb2, 0xa4, 0x53, 0x36, 0x63, 0x34, 0xb3, 0x65,
+	0x14, 0xb4, 0x10, 0x55, 0x93, 0x04, 0x5b, 0x7f, 0x04, 0xb0, 0xf2, 0x5e, 0xf0, 0x19, 0x3b, 0xd5,
+	0x3b, 0x85, 0x6a, 0x21, 0x8f, 0x69, 0x75, 0xc1, 0xa6, 0x14, 0x7d, 0x03, 0xa3, 0x76, 0xea, 0x90,
+	0x5b, 0x6b, 0xd7, 0x47, 0x73, 0x6d, 0xf5, 0x86, 0xdd, 0x75, 0xfe, 0x00, 0xa2, 0xf9, 0x54, 0xa0,
+	0x4f, 0x16, 0xdd, 0xbb, 0x65, 0x10, 0xd7, 0x9e, 0xde, 0xe5, 0xb6, 0xa1, 0x4e, 0x42, 0xf3, 0x2f,
+	0x6c, 0xfb, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xfa, 0x2b, 0x50, 0x3b, 0x93, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.

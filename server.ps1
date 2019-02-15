@@ -30,27 +30,31 @@ try {
     Move-Item -Path .\meta\meta.pb.go -Destination .\meta.pb.go -Force
 
     Write-Output "Generate TypeScript gRPC client..."
-    Push-Location .\typescript
+    Push-Location ..\server-ui
     try {
-        yarn
-        if ($LastExitCode -ne 0) {
-            exit $LastExitCode
+        if (!$SkipDeps) {
+            yarn
+            if ($LastExitCode -ne 0) {
+                exit $LastExitCode
+            }
         }
-        if (!(Test-Path src\api)) {
-            New-Item -ItemType Directory -Path src\api | Out-Null
+        if (Test-Path .\node_modules\.bin\protoc-gen-ts.cmd) {
+            if (!(Test-Path src\api)) {
+                New-Item -ItemType Directory -Path src\api | Out-Null
+            }
+            ..\server\protoc.exe `
+                --plugin="protoc-gen-ts=.\node_modules\.bin\protoc-gen-ts.cmd" `
+                --js_out="import_style=commonjs,binary:src/api" `
+                --ts_out="service=true:src/api" `
+                -I ..\server `
+                meta.proto
+            if ($LastExitCode -ne 0) {
+                exit $LastExitCode
+            }
+            $Content = Get-Content -Raw -Path .\src\api\meta_pb.js
+            $Content = $Content.Replace("// GENERATED CODE", "/* eslint-disable */`n// GENERATED CODE")
+            Set-Content -Path .\src\api\meta_pb.js -Value $Content
         }
-        ..\protoc.exe `
-            --plugin="protoc-gen-ts=.\node_modules\.bin\protoc-gen-ts.cmd" `
-            --js_out="import_style=commonjs,binary:src/api" `
-            --ts_out="service=true:src/api" `
-            -I .. `
-            meta.proto
-        if ($LastExitCode -ne 0) {
-            exit $LastExitCode
-        }
-        $Content = Get-Content -Raw -Path .\src\api\meta_pb.js
-        $Content = $Content.Replace("// GENERATED CODE", "/* eslint-disable */`n// GENERATED CODE")
-        Set-Content -Path .\src\api\meta_pb.js -Value $Content
     } finally {
         Pop-Location
     }

@@ -99,7 +99,6 @@
           "id": 2,
           "name": "user",
           "type": "key",
-          "foreignType": "User",
           "comment": "The user that has access to the project",
           "editor": {
             "displayName": "User"
@@ -109,11 +108,109 @@
           "id": 3,
           "name": "project",
           "type": "key",
-          "foreignType": "Project",
           "comment": "The project the user has access to",
           "editor": {
             "displayName": "Project"
           }
+        }
+      ]
+    },
+    "IndexTest": {
+      "editor": {
+        "singular": "IndexTest",
+        "plural": "IndexTests"
+      },
+      "indexes": [
+        {
+          "name": "String",
+          "type": "memory",
+          "field": "stringField"
+        },
+        {
+          "name": "Int64",
+          "type": "memory",
+          "field": "int64Field"
+        },
+        {
+          "name": "UInt64",
+          "type": "memory",
+          "field": "uint64Field"
+        },
+        {
+          "name": "Boolean",
+          "type": "memory",
+          "field": "booleanField"
+        },
+        {
+          "name": "Double",
+          "type": "memory",
+          "field": "doubleField"
+        },
+        {
+          "name": "Timestamp",
+          "type": "memory",
+          "field": "timestampField"
+        },
+        {
+          "name": "Bytes",
+          "type": "memory",
+          "field": "bytesField"
+        },
+        {
+          "name": "Key",
+          "type": "memory",
+          "field": "keyField"
+        },
+        {
+          "name": "StringFnv",
+          "type": "memory",
+          "computed": {
+            "fnv64a": {
+              "field": "stringField"
+            }
+          }
+        }
+      ],
+      "fields": [
+        {
+          "id": 2,
+          "name": "stringField",
+          "type": "string"
+        },
+        {
+          "id": 3,
+          "name": "int64Field",
+          "type": "int64"
+        },
+        {
+          "id": 4,
+          "name": "uint64Field",
+          "type": "uint64"
+        },
+        {
+          "id": 5,
+          "name": "booleanField",
+          "type": "boolean"
+        },
+        {
+          "id": 6,
+          "name": "doubleField",
+          "type": "double"
+        },
+        {
+          "id": 7,
+          "name": "timestampField",
+          "type": "timestamp"
+        },
+        {
+          "id": 8,
+          "name": "bytesField",
+          "type": "bytes"
+        },
+        {
+          "id": 9,
+          "name": "keyField",
+          "type": "key"
         }
       ]
     }

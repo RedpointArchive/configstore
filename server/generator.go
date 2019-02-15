@@ -1,39 +1,37 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
+	"github.com/golang/protobuf/jsonpb"
 	_ "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/builder"
 )
 
 func convertToType(
-	t configstoreSchemaKindFieldType,
+	t ValueType,
 	keyMessage *builder.MessageBuilder,
 	timestampMessage *desc.MessageDescriptor,
 ) *builder.FieldType {
 	switch t {
-	case typeDouble:
+	case ValueType_double:
 		return builder.FieldTypeDouble()
-	case typeInt64:
+	case ValueType_int64:
 		return builder.FieldTypeInt64()
-	case typeUInt64:
+	case ValueType_uint64:
 		return builder.FieldTypeUInt64()
-	case typeString:
+	case ValueType_string:
 		return builder.FieldTypeString()
-	case typeTimestamp:
+	case ValueType_timestamp:
 		return builder.FieldTypeImportedMessage(timestampMessage)
-	case typeBool:
-	case typeBoolean:
+	case ValueType_boolean:
 		return builder.FieldTypeBool()
-	case typeBytes:
+	case ValueType_bytes:
 		return builder.FieldTypeBytes()
-	case typeKey:
+	case ValueType_key:
 		return builder.FieldTypeMessage(keyMessage)
 	}
 	fmt.Printf("fatal: no such field type '%s'", string(t))
@@ -59,8 +57,8 @@ type generatorResult struct {
 	Services                 []*builder.ServiceBuilder
 	FileBuilder              *builder.FileBuilder
 	FileDesc                 *desc.FileDescriptor
-	Schema                   *configstoreSchema
-	KindMap                  map[*builder.ServiceBuilder]*configstoreSchemaKind
+	Schema                   *Schema
+	KindMap                  map[*builder.ServiceBuilder]*SchemaKind
 	KindNameMap              map[*builder.ServiceBuilder]string
 	MessageMap               map[string]*desc.MessageDescriptor
 	WatchTypeEnumValues      *watchTypeEnumValues
@@ -90,13 +88,8 @@ func generate(path string) (*generatorResult, error) {
 	}
 	defer schemaFile.Close()
 
-	schemaByteValue, err := ioutil.ReadAll(schemaFile)
-	if err != nil {
-		return nil, err
-	}
-
-	var schema configstoreSchema
-	err = json.Unmarshal(schemaByteValue, &schema)
+	var schema Schema
+	err = jsonpb.Unmarshal(schemaFile, &schema)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +97,7 @@ func generate(path string) (*generatorResult, error) {
 	var messages []*builder.MessageBuilder
 	var services []*builder.ServiceBuilder
 	var enums []*builder.EnumBuilder
-	kindMap := make(map[*builder.ServiceBuilder]*configstoreSchemaKind)
+	kindMap := make(map[*builder.ServiceBuilder]*SchemaKind)
 	kindNameMap := make(map[*builder.ServiceBuilder]string)
 	messageMap := make(map[string]*desc.MessageDescriptor)
 
@@ -210,7 +203,7 @@ func generate(path string) (*generatorResult, error) {
 				SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The key of the %s", name)}),
 		)
 		for _, field := range kind.Fields {
-			if field.ID == 1 {
+			if field.Id == 1 {
 				log.Fatalln("unexpected ID 1 in kind field; IDs must start at 2")
 			}
 			message.AddField(
@@ -218,7 +211,7 @@ func generate(path string) (*generatorResult, error) {
 					field.Name,
 					convertToType(field.Type, keyMessage, timestampMessage),
 				).
-					SetNumber(field.ID).
+					SetNumber(field.Id).
 					SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" %s", field.Comment)}),
 			)
 		}
@@ -311,7 +304,7 @@ func generate(path string) (*generatorResult, error) {
 			).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" Delete a single %s", name)}))
 		services = append(services, service)
 
-		kindMap[service] = &kind
+		kindMap[service] = kind
 		kindNameMap[service] = name
 	}
 

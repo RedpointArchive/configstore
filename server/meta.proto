@@ -20,14 +20,15 @@ message Key {
 }
 
 enum ValueType {
-    TypeDouble = 0;
-    TypeInt64 = 1;
-    TypeString = 2;
-    TypeTimestamp = 3;
-    TypeBoolean = 4;
-    TypeBytes = 5;
-    TypeKey = 6;
-    TypeUInt64 = 7;
+    unknown = 0;
+    double = 1;
+    int64 = 2;
+    string = 3;
+    timestamp = 4;
+    boolean = 5;
+    bytes = 6;
+    key = 7;
+    uint64 = 8;
 }
 
 message Value {
@@ -43,41 +44,66 @@ message Value {
     uint64 uint64Value = 10;
 }
 
-message Field {
+message SchemaField {
     int32 id = 1;
     string name = 2;
     ValueType type = 3;
     string comment = 4;
-    FieldEditorInfo editor = 5;
+    SchemaFieldEditorInfo editor = 5;
 }
 
-enum FieldEditorInfoType {
-    Default = 0;
-    Password = 1;
-    Lookup = 2;
+enum SchemaFieldEditorInfoType {
+    default = 0;
+    password = 1;
+    lookup = 2;
 }
 
-message FieldEditorInfo {
+message SchemaFieldEditorInfo {
     string displayName = 1;
-    FieldEditorInfoType type = 2;
+    SchemaFieldEditorInfoType type = 2;
     bool readonly = 3;
     string foreignType = 4;
 }
 
-message KindEditor {
+message SchemaKindEditor {
     string singular = 1;
     string plural = 2;
 }
 
-message Kind {
+message SchemaKind {
+    repeated SchemaField fields = 2;
+    SchemaKindEditor editor = 3;
+    repeated SchemaIndex indexes = 4;
+    repeated string ancestors = 5; // TODO: unused
+}
+
+message SchemaIndex {
     string name = 1;
-    repeated Field fields = 2;
-    KindEditor editor = 3;
+    SchemaIndexType type = 2;
+    oneof value {
+        SchemaComputedIndex computed = 3;
+        string field = 4;
+    }
+}
+
+enum SchemaIndexType {
+    unspecified = 0;
+    memory = 1;
+}
+
+message SchemaComputedIndex {
+    oneof algorithm {
+        SchemaComputedIndexFnv64a fnv64a = 1;
+    }
+}
+
+message SchemaComputedIndexFnv64a {
+    string field = 1;
 }
 
 message Schema {
     string name = 1;
-    repeated Kind kinds = 2;
+    map<string, SchemaKind> kinds = 2;
 }
 
 message GetSchemaRequest {

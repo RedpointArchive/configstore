@@ -8,80 +8,12 @@ import (
 )
 
 type configstoreMetaServiceServer struct {
-	schema *configstoreSchema
-}
-
-func convertType(t configstoreSchemaKindFieldType) ValueType {
-	switch t {
-	case typeDouble:
-		return ValueType_TypeDouble
-	case typeInt64:
-		return ValueType_TypeInt64
-	case typeString:
-		return ValueType_TypeString
-	case typeTimestamp:
-		return ValueType_TypeTimestamp
-	case typeBool:
-	case typeBoolean:
-		return ValueType_TypeBoolean
-	case typeBytes:
-		return ValueType_TypeBytes
-	case typeKey:
-		return ValueType_TypeKey
-	}
-
-	return ValueType_TypeDouble
-}
-
-func convertEditorType(t configstoreSchemaKindFieldEditorType) FieldEditorInfoType {
-	switch t {
-	case editorTypeDefault:
-		return FieldEditorInfoType_Default
-	case editorTypePassword:
-		return FieldEditorInfoType_Password
-	case editorTypeLookup:
-		return FieldEditorInfoType_Lookup
-	}
-
-	return FieldEditorInfoType_Default
+	schema *Schema
 }
 
 func (s *configstoreMetaServiceServer) GetSchema(ctx context.Context, req *GetSchemaRequest) (*GetSchemaResponse, error) {
-	kinds := make([]*Kind, 0)
-	for kindName, kind := range s.schema.Kinds {
-		fields := make([]*Field, 0)
-		for _, field := range kind.Fields {
-			fields = append(fields, &Field{
-				Id:      field.ID,
-				Name:    field.Name,
-				Type:    convertType(field.Type),
-				Comment: field.Comment,
-				Editor: &FieldEditorInfo{
-					DisplayName: field.Editor.DisplayName,
-					Type:        convertEditorType(field.Editor.Type),
-					Readonly:    field.Editor.Readonly,
-					ForeignType: field.Editor.ForeignType,
-				},
-			})
-		}
-
-		kinds = append(kinds, &Kind{
-			Name:   kindName,
-			Fields: fields,
-			Editor: &KindEditor{
-				Singular: kind.Editor.Singular,
-				Plural:   kind.Editor.Plural,
-			},
-		})
-	}
-
-	schema := &Schema{
-		Name:  s.schema.Name,
-		Kinds: kinds,
-	}
-
 	return &GetSchemaResponse{
-		Schema: schema,
+		Schema: s.schema,
 	}, nil
 }
 
@@ -93,10 +25,10 @@ func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaLi
 		}
 	}
 
-	var kindInfo *configstoreSchemaKind
+	var kindInfo *SchemaKind
 	for kindName, kind := range s.schema.Kinds {
 		if kindName == req.KindName {
-			kindInfo = &kind
+			kindInfo = kind
 			break
 		}
 	}
@@ -134,52 +66,52 @@ func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaLi
 			for _, field := range kindInfo.Fields {
 				if field.Name == key {
 					f := &Value{
-						Id: field.ID,
+						Id: field.Id,
 					}
 					switch field.Type {
-					case typeDouble:
+					case ValueType_double:
 						switch v := value.(type) {
 						case float64:
 							f.DoubleValue = v
 						default:
 							f.DoubleValue = 0
 						}
-					case typeInt64:
+					case ValueType_int64:
 						switch v := value.(type) {
 						case int64:
 							f.Int64Value = v
 						default:
 							f.Int64Value = 0
 						}
-					case typeString:
+					case ValueType_string:
 						switch v := value.(type) {
 						case string:
 							f.StringValue = v
 						default:
 							f.StringValue = ""
 						}
-					case typeTimestamp:
+					case ValueType_timestamp:
 						switch v := value.(type) {
 						case []byte:
 							f.TimestampValue = v
 						default:
 							f.TimestampValue = nil
 						}
-					case typeBoolean:
+					case ValueType_boolean:
 						switch v := value.(type) {
 						case bool:
 							f.BooleanValue = v
 						default:
 							f.BooleanValue = false
 						}
-					case typeBytes:
+					case ValueType_bytes:
 						switch v := value.(type) {
 						case []byte:
 							f.BytesValue = v
 						default:
 							f.BytesValue = nil
 						}
-					case typeKey:
+					case ValueType_key:
 						switch v := value.(type) {
 						case *firestore.DocumentRef:
 							f.KeyValue, err = convertDocumentRefToMetaKey(v)
