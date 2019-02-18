@@ -251,11 +251,38 @@ func main() {
 									return nil, fmt.Errorf("entity must not be nil")
 								}
 
+								// Get the existing version so we can make sure we're not updating
+								// read-only fields.
+								keyRaw, err := entity.(*dynamic.Message).TryGetFieldByName("key")
+								if err != nil {
+									return nil, err
+								}
+
+								keyCon, ok := keyRaw.(*dynamic.Message)
+								if !ok {
+									return nil, fmt.Errorf("key of unexpected type")
+								}
+
+								ref, err := convertKeyToDocumentRef(
+									client,
+									keyCon,
+								)
+								if err != nil {
+									return nil, err
+								}
+
+								snapshot, err := ref.Get(ctx)
+								if err != nil {
+									return nil, err
+								}
+
 								ref, data, err := convertDynamicMessageIntoRefAndDataMap(
 									client,
 									messageFactory,
 									genResult.MessageMap[kindName],
 									entity.(*dynamic.Message),
+									snapshot,
+									genResult.Schema.Kinds[kindName],
 								)
 								if err != nil {
 									return nil, err
@@ -302,6 +329,8 @@ func main() {
 									messageFactory,
 									genResult.MessageMap[kindName],
 									entity.(*dynamic.Message),
+									nil,
+									genResult.Schema.Kinds[kindName],
 								)
 								if err != nil {
 									return nil, err

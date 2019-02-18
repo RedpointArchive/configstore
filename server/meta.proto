@@ -50,6 +50,7 @@ message SchemaField {
     ValueType type = 3;
     string comment = 4;
     SchemaFieldEditorInfo editor = 5;
+    bool readonly = 6;
 }
 
 enum SchemaFieldEditorInfoType {
@@ -61,7 +62,7 @@ enum SchemaFieldEditorInfoType {
 message SchemaFieldEditorInfo {
     string displayName = 1;
     SchemaFieldEditorInfoType type = 2;
-    bool readonly = 3;
+    bool editorReadonly = 3;
     string foreignType = 4;
 }
 
@@ -94,11 +95,17 @@ enum SchemaIndexType {
 message SchemaComputedIndex {
     oneof algorithm {
         SchemaComputedIndexFnv64a fnv64a = 1;
+        SchemaComputedIndexFnv64aPair fnv64a_pair = 2;
     }
 }
 
 message SchemaComputedIndexFnv64a {
     string field = 1;
+}
+
+message SchemaComputedIndexFnv64aPair {
+    string field1 = 1;
+    string field2 = 2;
 }
 
 message Schema {

@@ -91,7 +91,7 @@ func generate(path string) (*generatorResult, error) {
 	var schema Schema
 	err = jsonpb.Unmarshal(schemaFile, &schema)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to deserialize schema.json: %v", err)
 	}
 
 	var messages []*builder.MessageBuilder

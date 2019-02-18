@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
@@ -229,6 +230,8 @@ func convertDynamicMessageIntoRefAndDataMap(
 	messageFactory *dynamic.MessageFactory,
 	messageDescriptor *desc.MessageDescriptor,
 	message *dynamic.Message,
+	currentSnapshot *firestore.DocumentSnapshot,
+	schemaKind *SchemaKind,
 ) (*firestore.DocumentRef, map[string]interface{}, error) {
 	keyRaw, err := message.TryGetFieldByName("key")
 	if err != nil {
@@ -291,6 +294,17 @@ func convertDynamicMessageIntoRefAndDataMap(
 		default:
 			m[fieldDescriptor.GetName()] = field
 			break
+		}
+	}
+
+	if currentSnapshot != nil {
+		for _, field := range schemaKind.Fields {
+			if field.Readonly {
+				// Verify that the property hasn't changed.
+				if reflect.DeepEqual(m[field.Name], currentSnapshot.Data()[field.Name]) {
+					return nil, nil, fmt.Errorf("readonly field '%s' contains mutated value", field.Name)
+				}
+			}
 		}
 	}
 

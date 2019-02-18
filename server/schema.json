@@ -30,10 +30,10 @@
           "id": 4,
           "name": "dateLastLoginUtc",
           "type": "timestamp",
+          "readonly": true,
           "comment": "The time that the user last logged in",
           "editor": {
-            "displayName": "Last login",
-            "readonly": true
+            "displayName": "Last login"
           }
         }
       ]

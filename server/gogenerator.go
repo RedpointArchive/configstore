@@ -19,6 +19,20 @@ func Fnv64a(val string) uint64 {
 	return hash.Sum64()
 }
 
+func Fnv64aPair(a uint64, b uint64) uint64 {
+	hash := fnv.New64a()
+	if a > b {
+		tmp := a
+		a = b
+		b = tmp
+	}
+	key := make([]byte, 16)
+	binary.LittleEndian.PutUint64(key, a)
+	binary.LittleEndian.PutUint64(key[8:], b)
+	hash.Write(key)
+	return hash.Sum64()
+}
+
 func CreateTopLevelKey(partitionId *PartitionId, pathElement *PathElement) *Key {
 	return &Key{
 		PartitionId: partitionId,
@@ -369,9 +383,9 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 	extendedCode := standardCode
 	extendedCode = fmt.Sprintf("%s\n%s", standardCode, extendedOnceCode)
 	if strings.Contains(extendedCode, "github.com/golang/protobuf/ptypes/timestamp") {
-		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"hash/fnv\"", 1)
+		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"encoding/binary\"\n    \"hash/fnv\"", 1)
 	} else {
-		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"hash/fnv\"\n    timestamp \"github.com/golang/protobuf/ptypes/timestamp\"", 1)
+		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"encoding/binary\"\n    \"hash/fnv\"\n    timestamp \"github.com/golang/protobuf/ptypes/timestamp\"", 1)
 	}
 	for kindName := range schema.Kinds {
 		indexStores := ""
@@ -535,6 +549,77 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 		`,
 							indexStoresRemove,
 							generator.CamelCase(field.Name),
+							indexSerializeToType,
+							index.Name,
+						)
+						indexFuncDefs = fmt.Sprintf(
+							`%s
+		func (c *<ENTITY>ImplStore) GetBy%s(key %s) *<ENTITY> {
+			c.RLock()
+			defer c.RUnlock()
+			return c.indexstore_%s[key]
+		}
+		
+		func (c *<ENTITY>ImplStore) GetAndCheckBy%s(key %s) (*<ENTITY>, bool) {
+			c.RLock()
+			defer c.RUnlock()
+			val, ok := c.indexstore_%s[key]
+			return val, ok
+		}`,
+							indexFuncDefs,
+							index.Name,
+							indexOriginalType,
+							index.Name,
+							index.Name,
+							indexOriginalType,
+							index.Name,
+						)
+						break
+					case *SchemaComputedIndex_Fnv64APair:
+						field1 := lookupFieldByName(schema.Kinds[kindName], computed.GetFnv64APair().Field1)
+						if field1 == nil {
+							continue
+						}
+						field2 := lookupFieldByName(schema.Kinds[kindName], computed.GetFnv64APair().Field2)
+						if field2 == nil {
+							continue
+						}
+
+						if field1.Type == ValueType_uint64 && field2.Type == ValueType_uint64 {
+							indexKeyType = "uint64"
+							indexOriginalType = "uint64"
+							indexSerializeToType = "Fnv64aPair(field1, field2)"
+						} else {
+							return "", fmt.Errorf("unsupported field type for fnv64a pair index")
+						}
+
+						indexStoresUpdate = fmt.Sprintf(
+							`%s
+			{
+				field1 := newEntity.%s
+				field2 := newEntity.%s
+				idx := %s
+				ref.indexstore_%s[idx] = newEntity
+			}
+		`,
+							indexStoresUpdate,
+							generator.CamelCase(field1.Name),
+							generator.CamelCase(field2.Name),
+							indexSerializeToType,
+							index.Name,
+						)
+						indexStoresRemove = fmt.Sprintf(
+							`%s
+			{
+				field1 := oldEntity.%s
+				field2 := oldEntity.%s
+				idx := %s
+				delete(ref.indexstore_%s, idx)
+			}
+		`,
+							indexStoresRemove,
+							generator.CamelCase(field1.Name),
+							generator.CamelCase(field2.Name),
 							indexSerializeToType,
 							index.Name,
 						)
