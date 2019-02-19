@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	"cloud.google.com/go/firestore"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
+
+	"github.com/gorilla/mux"
 
 	firebase "firebase.google.com/go"
 )
@@ -487,12 +490,34 @@ func main() {
 		}()
 
 		// Start HTTP server.
-		http.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
+		r := mux.NewRouter()
+		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// We don't use http.ServeFile here, because it tries to take the current URL into
+			// account when locating the file to serve. Since this is the 404 Not Found handler,
+			// the current URL could be anything. We just always want to serve the contents
+			// of index-react.html if this function is handling a request.
+			f, err := os.Open("/server-ui/index.html")
+			if err != nil {
+				http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			defer f.Close()
+
+			d, err := f.Stat()
+			if err != nil {
+				http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			http.ServeContent(w, r, d.Name(), d.ModTime(), f)
+		})
+		r.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoFile)
 		})
-		http.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
+		r.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoGoCode)
 		})
+		http.Handle("/", r)
 		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
 		wrappedGrpc := grpcweb.WrapServer(grpcServer)
 		http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
