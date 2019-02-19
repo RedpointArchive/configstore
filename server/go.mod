@@ -4,6 +4,7 @@ require (
 	cloud.google.com/go v0.36.0
 	firebase.google.com/go v3.6.0+incompatible
 	github.com/golang/protobuf v1.2.0
+	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.0
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/improbable-eng/grpc-web v0.0.0-20190208103255-801c4995c859

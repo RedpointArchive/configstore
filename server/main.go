@@ -16,6 +16,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
 	firebase "firebase.google.com/go"
@@ -489,7 +490,7 @@ func main() {
 		}()
 
 		// Start HTTP server.
-		r := mux.NewRouter()
+		router := mux.NewRouter()
 		/*r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// We don't use http.ServeFile here, because it tries to take the current URL into
 			// account when locating the file to serve. Since this is the 404 Not Found handler,
@@ -510,16 +511,24 @@ func main() {
 
 			http.ServeContent(w, r, d.Name(), d.ModTime(), f)
 		})*/
-		r.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
+
+		router.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoFile)
 		})
-		r.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
+		router.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoGoCode)
 		})
-		r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("/server-ui/"))))
-		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
+		router.PathPrefix("/static").Handler(http.FileServer(http.Dir("/server-ui/static/")))
+		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fn := func(w http.ResponseWriter, r *http.Request) {
+				http.ServeFile(w, r, "/server-ui/index.html")
+			}
+
+			return http.HandlerFunc(fn)
+		})
+
 		wrappedGrpc := grpcweb.WrapServer(grpcServer)
-		http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		root := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			resp.Header().Set("Access-Control-Allow-Origin", "*")
 			resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 			resp.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, x-grpc-web")
@@ -530,9 +539,24 @@ func main() {
 				wrappedGrpc.ServeHTTP(resp, req)
 				return
 			}
-			r.ServeHTTP(resp, req)
-		}))
+			router.ServeHTTP(resp, req)
+		})
+
+		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
+		srv := &http.Server{
+			Handler: handlers.LoggingHandler(os.Stdout, root),
+			Addr:    fmt.Sprintf("0.0.0.0:%d", config.HTTPPort),
+		}
+
+		err := srv.ListenAndServe()
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			log.Print("HTTP server shutdown gracefully.")
+		}
 	} else if mode == runModeGenerate {
 		fmt.Println(clientProtoGoCode)
 	}
 }
+
+func IndexHandler(entrypoint string)
