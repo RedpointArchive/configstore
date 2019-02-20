@@ -7,12 +7,12 @@ import {
   MetaListEntitiesRequest
 } from "../api/meta_pb";
 import { g, serializeKey } from "../core";
-import { grpc } from "@improbable-eng/grpc-web";
-import { ConfigstoreMetaService } from "../api/meta_pb_service";
-import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
+import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
+import { grpcHost } from "../svcHost"
+import { useAsync } from "react-async";
 
 export interface KindListRouteMatch {
   kind: string;
@@ -27,52 +27,67 @@ interface SetHolder {
   v: Set<string>;
 }
 
+const listKinds = async (props: any) => {
+  const svc = new ConfigstoreMetaServicePromiseClient(
+    grpcHost,
+    null,
+    null
+  );
+  const req = new MetaListEntitiesRequest();
+  req.setKindname(props.kind);
+  req.setStart("");
+  req.setLimit(0);
+  return await svc.metaList(req, {});
+}
+
 export const KindListRoute = (props: KindListRouteProps) => {
-  const [data, setData] = useState<MetaListEntitiesResponse | null>(null);
+  const { data, error, isLoading } = useAsync<MetaListEntitiesResponse>({
+    promiseFn: listKinds,
+    kind: props.match.params.kind,
+  } as any);
   const [selected, setSelected] = useState<SetHolder>({ v: new Set<string>() });
 
-  useEffect(() => {
-    setData(null);
-    selected.v.clear();
-    setSelected({ v: selected.v });
-    const req = new MetaListEntitiesRequest();
-    req.setKindname(props.match.params.kind);
-    req.setStart("");
-    req.setLimit(0);
-    grpc.unary(ConfigstoreMetaService.MetaList, {
-      request: req,
-      host: "http://localhost:13390",
-      onEnd: (res: UnaryOutput<MetaListEntitiesResponse>) => {
-        const { status, statusMessage, headers, message, trailers } = res;
-        if (status === grpc.Code.OK && message) {
-          setData(message);
-        }
-      }
-    });
-  }, [props.match.params.kind]);
-
   const kindSchema = g(props.schema.getSchema())
-    .getKindsList()
-    .filter(kind => kind.getName() == props.match.params.kind)[0];
+    .getKindsMap().get(props.match.params.kind);
+    if (kindSchema === undefined) {
+      return (<>No such kind.</>);
+    }
 
   const kindDisplay =
     selected.v.size == 1
       ? g(kindSchema.getEditor()).getSingular()
       : g(kindSchema.getEditor()).getPlural();
 
-  let dataset = [
-    <tr key="loading">
-      <td
-        colSpan={3 + kindSchema.getFieldsList().length}
-        style={{
-          textAlign: "center"
-        }}
-      >
-        <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
-      </td>
-    </tr>
-  ];
-  if (data !== null && data.getEntitiesList().length == 0) {
+  let dataset: React.ReactNode[] = [];
+  if (isLoading) {
+    dataset = [
+      <tr key="loading">
+        <td
+          colSpan={3 + kindSchema.getFieldsList().length}
+          style={{
+            textAlign: "center"
+          }}
+        >
+          <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
+        </td>
+      </tr>
+    ]
+  }
+  else if (error) {
+    dataset = [
+      <tr key="loading">
+        <td
+          colSpan={3 + kindSchema.getFieldsList().length}
+          style={{
+            textAlign: "center"
+          }}
+        >
+          {JSON.stringify(error)}
+        </td>
+      </tr>
+    ];
+  }
+  else if (data !== undefined && data.getEntitiesList().length == 0) {
     dataset = [
       <tr key="loading">
         <td
@@ -85,7 +100,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
         </td>
       </tr>
     ];
-  } else if (data !== null) {
+  } else if (data !== undefined) {
     dataset = [];
     for (const entity of data.getEntitiesList()) {
       dataset.push(
@@ -171,7 +186,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 <input
                   type="checkbox"
                   checked={
-                    data !== null
+                    data !== undefined
                       ? data
                           .getEntitiesList()
                           .filter(
@@ -183,7 +198,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
                       : false
                   }
                   onChange={e => {
-                    if (data !== null) {
+                    if (data !== undefined) {
                       if (e.target.checked) {
                         selected.v.clear();
                         for (const entity of data.getEntitiesList()) {

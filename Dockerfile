@@ -57,15 +57,26 @@ RUN apt-get update && apt-get install yarn
 
 RUN yarn global add ts-protoc-gen google-protobuf
 
+RUN mkdir /protoc-gen && \
+  cd /protoc-gen && \
+  wget https://github.com/grpc/grpc-web/releases/download/1.0.3/protoc-gen-grpc-web-1.0.3-linux-x86_64 && \
+  mv protoc-gen-grpc-web-1.0.3-linux-x86_64 /usr/local/bin/protoc-gen-grpc-web && \
+  chmod a+x /usr/local/bin/protoc-gen-grpc-web
+
 COPY --from=protoc_install /protoc /protoc
 COPY /server/meta.proto /meta.proto
+COPY /server-ui/api-fixups.js /api-fixups.js
 WORKDIR /
-RUN mkdir -p /src/api
+RUN mkdir -p /src/api /src/api_grpc
 RUN /protoc/bin/protoc \
   --plugin="protoc-gen-ts=$(yarn global bin)/protoc-gen-ts" \
-  --js_out="import_style=commonjs,binary:src/api" \
-  --ts_out="service=true:src/api" \
+  --js_out="import_style=commonjs:src/api" \
+  --grpc-web_out="import_style=commonjs+dts:mode=grpcwebtext:src/api_grpc" \
+  --ts_out="service=false:src/api" \
   meta.proto
+RUN mv src/api_grpc/*grpc_web* src/api/
+RUN rm -Rf src/api_grpc
+RUN node api-fixups.js
 
 # build server
 FROM ubuntu:18.04 AS build_server

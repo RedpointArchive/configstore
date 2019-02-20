@@ -8,9 +8,9 @@ export function serializeKey(key: Key): string {
   return `ns=${g(key.getPartitionid()).getNamespace()}|${key
     .getPathList()
     .map(pe => {
-      if (pe.getIdtypeCase() == PathElement.IdtypeCase.ID) {
+      if (pe.getId() !== undefined) {
         return `id=${pe.getId()}`;
-      } else if (pe.getIdtypeCase() == PathElement.IdtypeCase.NAME) {
+      } else if (pe.getName() !== undefined) {
         return `name=${pe.getName()}`;
       } else {
         return `unset`;

@@ -7,6 +7,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
 
 	"cloud.google.com/go/firestore"
 
@@ -45,6 +48,7 @@ var client *firestore.Client
 func main() {
 	mode := runModeServe
 	generateFlag := flag.Bool("generate", false, "emit Go client code instead of serving traffic")
+	reverseProxyDevServerFlag := flag.Bool("enable-reverse-proxy-react-dev-server", false, "instead of serving React files from /server-ui/, reverse proxy to http://configstore-dashboard:3000/")
 	flag.Parse()
 	if *generateFlag {
 		mode = runModeGenerate
@@ -518,24 +522,39 @@ func main() {
 		router.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoGoCode)
 		})
-		router.PathPrefix("/static").Handler(http.FileServer(http.Dir("/server-ui/static/")))
-		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fn := func(w http.ResponseWriter, r *http.Request) {
+
+		if *reverseProxyDevServerFlag {
+			fmt.Println("Enabling reverse proxy to React dev server at http://configstore-dashboard:3000/...")
+			url, _ := url.Parse("http://configstore-dashboard:3000/")
+			rp := httputil.NewSingleHostReverseProxy(url)
+			router.PathPrefix("/static").Handler(rp)
+			router.PathPrefix("/sockjs-node").Handler(rp)
+			router.PathPrefix("/").Handler(rp)
+		} else {
+			router.PathPrefix("/static").Handler(http.FileServer(http.Dir("/server-ui/")))
+			router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.ServeFile(w, r, "/server-ui/index.html")
-			}
+			})
+		}
 
-			return http.HandlerFunc(fn)
-		})
-
-		wrappedGrpc := grpcweb.WrapServer(grpcServer)
+		wrappedGrpc := grpcweb.WrapServer(
+			grpcServer,
+			grpcweb.WithAllowedRequestHeaders([]string{"*"}),
+			grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+			grpcweb.WithOriginFunc(func(origin string) bool {
+				return true
+			}),
+			grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+				return true
+			}),
+			grpcweb.WithWebsockets(true),
+		)
 		root := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			resp.Header().Set("Access-Control-Allow-Origin", "*")
-			resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-			resp.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, x-grpc-web")
-			if req.Method == "OPTIONS" {
-				return
-			}
-			if wrappedGrpc.IsGrpcWebRequest(req) {
+			if wrappedGrpc.IsGrpcWebRequest(req) ||
+				wrappedGrpc.IsAcceptableGrpcCorsRequest(req) ||
+				wrappedGrpc.IsGrpcWebSocketRequest(req) {
+				// HACK because this header doesn't seem to get set properly.
+				resp.Header().Set("Content-Type", "application/grpc-web-text")
 				wrappedGrpc.ServeHTTP(resp, req)
 				return
 			}
@@ -548,7 +567,7 @@ func main() {
 			Addr:    fmt.Sprintf("0.0.0.0:%d", config.HTTPPort),
 		}
 
-		err := srv.ListenAndServe()
+		err = srv.ListenAndServe()
 		if err != nil {
 			log.Fatal(err)
 		} else {
@@ -558,5 +577,3 @@ func main() {
 		fmt.Println(clientProtoGoCode)
 	}
 }
-
-func IndexHandler(entrypoint string)

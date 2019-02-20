@@ -4,7 +4,6 @@ import {
   GetSchemaResponse,
   MetaListEntitiesResponse,
   ValueType
-  //  MetaListEntitiesRequest
 } from "../api/meta_pb";
 import { g } from "../core";
 import { Link } from "react-router-dom";
@@ -55,9 +54,11 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
   }, [props.match.params.kind]);
   */
 
-  const kindSchema = g(props.schema.getSchema())
-    .getKindsList()
-    .filter(kind => kind.getName() == props.match.params.kind)[0];
+ const kindSchema = g(props.schema.getSchema())
+ .getKindsMap().get(props.match.params.kind);
+ if (kindSchema === undefined) {
+   return (<>No such kind.</>);
+ }
 
   /*
   const kindDisplay =
@@ -162,9 +163,9 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
         </div>
         {kindSchema.getFieldsList().map(field => {
           switch (field.getType()) {
-            case ValueType.TYPEDOUBLE:
-            case ValueType.TYPEINT64:
-            case ValueType.TYPEUINT64:
+            case ValueType.DOUBLE:
+            case ValueType.INT64:
+            case ValueType.UINT64:
               return (
                 <div className="form-group">
                   <label>{g(field.getEditor()).getDisplayname()}</label>
@@ -172,34 +173,34 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                     className="form-control"
                     type="number"
                     value={0}
-                    readOnly={g(field.getEditor()).getReadonly()}
+                    readOnly={field.getReadonly()}
                   />
                   <small className="form-text text-muted">
                     {field.getComment()}
                   </small>
                 </div>
               );
-            case ValueType.TYPESTRING:
+            case ValueType.STRING:
               return (
                 <div className="form-group">
                   <label>{g(field.getEditor()).getDisplayname()}</label>
                   <input
                     className="form-control"
                     value={""}
-                    readOnly={g(field.getEditor()).getReadonly()}
+                    readOnly={field.getReadonly()}
                   />
                   <small className="form-text text-muted">
                     {field.getComment()}
                   </small>
                 </div>
               );
-            case ValueType.TYPEBOOLEAN:
+            case ValueType.BOOLEAN:
               return (
                 <div className="form-check">
                   <input
                     type="checkbox"
                     className="form-check-input"
-                    readOnly={g(field.getEditor()).getReadonly()}
+                    readOnly={field.getReadonly()}
                   />
                   <label className="form-check-label">
                     {g(field.getEditor()).getDisplayname()}
@@ -209,7 +210,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                   </small>
                 </div>
               );
-            case ValueType.TYPETIMESTAMP:
+            case ValueType.TIMESTAMP:
               return (
                 <div className="form-group">
                   <label>{g(field.getEditor()).getDisplayname()}</label>
@@ -217,7 +218,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                     className="form-control"
                     type="datetime-local"
                     value={""}
-                    readOnly={g(field.getEditor()).getReadonly()}
+                    readOnly={field.getReadonly()}
                   />
                   <small className="form-text text-muted">
                     {field.getComment()}

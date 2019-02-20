@@ -152,7 +152,7 @@ export namespace Value {
   }
 }
 
-export class Field extends jspb.Message {
+export class SchemaField extends jspb.Message {
   getId(): number;
   setId(value: number): void;
 
@@ -167,62 +167,66 @@ export class Field extends jspb.Message {
 
   hasEditor(): boolean;
   clearEditor(): void;
-  getEditor(): FieldEditorInfo | undefined;
-  setEditor(value?: FieldEditorInfo): void;
+  getEditor(): SchemaFieldEditorInfo | undefined;
+  setEditor(value?: SchemaFieldEditorInfo): void;
+
+  getReadonly(): boolean;
+  setReadonly(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Field.AsObject;
-  static toObject(includeInstance: boolean, msg: Field): Field.AsObject;
+  toObject(includeInstance?: boolean): SchemaField.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaField): SchemaField.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Field, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Field;
-  static deserializeBinaryFromReader(message: Field, reader: jspb.BinaryReader): Field;
+  static serializeBinaryToWriter(message: SchemaField, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaField;
+  static deserializeBinaryFromReader(message: SchemaField, reader: jspb.BinaryReader): SchemaField;
 }
 
-export namespace Field {
+export namespace SchemaField {
   export type AsObject = {
     id: number,
     name: string,
     type: ValueType,
     comment: string,
-    editor?: FieldEditorInfo.AsObject,
+    editor?: SchemaFieldEditorInfo.AsObject,
+    readonly: boolean,
   }
 }
 
-export class FieldEditorInfo extends jspb.Message {
+export class SchemaFieldEditorInfo extends jspb.Message {
   getDisplayname(): string;
   setDisplayname(value: string): void;
 
-  getType(): FieldEditorInfoType;
-  setType(value: FieldEditorInfoType): void;
+  getType(): SchemaFieldEditorInfoType;
+  setType(value: SchemaFieldEditorInfoType): void;
 
-  getReadonly(): boolean;
-  setReadonly(value: boolean): void;
+  getEditorreadonly(): boolean;
+  setEditorreadonly(value: boolean): void;
 
   getForeigntype(): string;
   setForeigntype(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): FieldEditorInfo.AsObject;
-  static toObject(includeInstance: boolean, msg: FieldEditorInfo): FieldEditorInfo.AsObject;
+  toObject(includeInstance?: boolean): SchemaFieldEditorInfo.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaFieldEditorInfo): SchemaFieldEditorInfo.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: FieldEditorInfo, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): FieldEditorInfo;
-  static deserializeBinaryFromReader(message: FieldEditorInfo, reader: jspb.BinaryReader): FieldEditorInfo;
+  static serializeBinaryToWriter(message: SchemaFieldEditorInfo, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorInfo;
+  static deserializeBinaryFromReader(message: SchemaFieldEditorInfo, reader: jspb.BinaryReader): SchemaFieldEditorInfo;
 }
 
-export namespace FieldEditorInfo {
+export namespace SchemaFieldEditorInfo {
   export type AsObject = {
     displayname: string,
-    type: FieldEditorInfoType,
-    readonly: boolean,
+    type: SchemaFieldEditorInfoType,
+    editorreadonly: boolean,
     foreigntype: string,
   }
 }
 
-export class KindEditor extends jspb.Message {
+export class SchemaKindEditor extends jspb.Message {
   getSingular(): string;
   setSingular(value: string): void;
 
@@ -230,51 +234,181 @@ export class KindEditor extends jspb.Message {
   setPlural(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): KindEditor.AsObject;
-  static toObject(includeInstance: boolean, msg: KindEditor): KindEditor.AsObject;
+  toObject(includeInstance?: boolean): SchemaKindEditor.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaKindEditor): SchemaKindEditor.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: KindEditor, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): KindEditor;
-  static deserializeBinaryFromReader(message: KindEditor, reader: jspb.BinaryReader): KindEditor;
+  static serializeBinaryToWriter(message: SchemaKindEditor, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaKindEditor;
+  static deserializeBinaryFromReader(message: SchemaKindEditor, reader: jspb.BinaryReader): SchemaKindEditor;
 }
 
-export namespace KindEditor {
+export namespace SchemaKindEditor {
   export type AsObject = {
     singular: string,
     plural: string,
   }
 }
 
-export class Kind extends jspb.Message {
-  getName(): string;
-  setName(value: string): void;
-
+export class SchemaKind extends jspb.Message {
   clearFieldsList(): void;
-  getFieldsList(): Array<Field>;
-  setFieldsList(value: Array<Field>): void;
-  addFields(value?: Field, index?: number): Field;
+  getFieldsList(): Array<SchemaField>;
+  setFieldsList(value: Array<SchemaField>): void;
+  addFields(value?: SchemaField, index?: number): SchemaField;
 
   hasEditor(): boolean;
   clearEditor(): void;
-  getEditor(): KindEditor | undefined;
-  setEditor(value?: KindEditor): void;
+  getEditor(): SchemaKindEditor | undefined;
+  setEditor(value?: SchemaKindEditor): void;
+
+  clearIndexesList(): void;
+  getIndexesList(): Array<SchemaIndex>;
+  setIndexesList(value: Array<SchemaIndex>): void;
+  addIndexes(value?: SchemaIndex, index?: number): SchemaIndex;
+
+  clearAncestorsList(): void;
+  getAncestorsList(): Array<string>;
+  setAncestorsList(value: Array<string>): void;
+  addAncestors(value: string, index?: number): string;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Kind.AsObject;
-  static toObject(includeInstance: boolean, msg: Kind): Kind.AsObject;
+  toObject(includeInstance?: boolean): SchemaKind.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaKind): SchemaKind.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Kind, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Kind;
-  static deserializeBinaryFromReader(message: Kind, reader: jspb.BinaryReader): Kind;
+  static serializeBinaryToWriter(message: SchemaKind, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaKind;
+  static deserializeBinaryFromReader(message: SchemaKind, reader: jspb.BinaryReader): SchemaKind;
 }
 
-export namespace Kind {
+export namespace SchemaKind {
+  export type AsObject = {
+    fieldsList: Array<SchemaField.AsObject>,
+    editor?: SchemaKindEditor.AsObject,
+    indexesList: Array<SchemaIndex.AsObject>,
+    ancestorsList: Array<string>,
+  }
+}
+
+export class SchemaIndex extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  getType(): SchemaIndexType;
+  setType(value: SchemaIndexType): void;
+
+  hasComputed(): boolean;
+  clearComputed(): void;
+  getComputed(): SchemaComputedIndex | undefined;
+  setComputed(value?: SchemaComputedIndex): void;
+
+  hasField(): boolean;
+  clearField(): void;
+  getField(): string;
+  setField(value: string): void;
+
+  getValueCase(): SchemaIndex.ValueCase;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaIndex.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaIndex): SchemaIndex.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SchemaIndex, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaIndex;
+  static deserializeBinaryFromReader(message: SchemaIndex, reader: jspb.BinaryReader): SchemaIndex;
+}
+
+export namespace SchemaIndex {
   export type AsObject = {
     name: string,
-    fieldsList: Array<Field.AsObject>,
-    editor?: KindEditor.AsObject,
+    type: SchemaIndexType,
+    computed?: SchemaComputedIndex.AsObject,
+    field: string,
+  }
+
+  export enum ValueCase {
+    VALUE_NOT_SET = 0,
+    COMPUTED = 3,
+    FIELD = 4,
+  }
+}
+
+export class SchemaComputedIndex extends jspb.Message {
+  hasFnv64a(): boolean;
+  clearFnv64a(): void;
+  getFnv64a(): SchemaComputedIndexFnv64a | undefined;
+  setFnv64a(value?: SchemaComputedIndexFnv64a): void;
+
+  hasFnv64aPair(): boolean;
+  clearFnv64aPair(): void;
+  getFnv64aPair(): SchemaComputedIndexFnv64aPair | undefined;
+  setFnv64aPair(value?: SchemaComputedIndexFnv64aPair): void;
+
+  getAlgorithmCase(): SchemaComputedIndex.AlgorithmCase;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaComputedIndex.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaComputedIndex): SchemaComputedIndex.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SchemaComputedIndex, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaComputedIndex;
+  static deserializeBinaryFromReader(message: SchemaComputedIndex, reader: jspb.BinaryReader): SchemaComputedIndex;
+}
+
+export namespace SchemaComputedIndex {
+  export type AsObject = {
+    fnv64a?: SchemaComputedIndexFnv64a.AsObject,
+    fnv64aPair?: SchemaComputedIndexFnv64aPair.AsObject,
+  }
+
+  export enum AlgorithmCase {
+    ALGORITHM_NOT_SET = 0,
+    FNV64A = 1,
+    FNV64A_PAIR = 2,
+  }
+}
+
+export class SchemaComputedIndexFnv64a extends jspb.Message {
+  getField(): string;
+  setField(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaComputedIndexFnv64a.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaComputedIndexFnv64a): SchemaComputedIndexFnv64a.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SchemaComputedIndexFnv64a, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaComputedIndexFnv64a;
+  static deserializeBinaryFromReader(message: SchemaComputedIndexFnv64a, reader: jspb.BinaryReader): SchemaComputedIndexFnv64a;
+}
+
+export namespace SchemaComputedIndexFnv64a {
+  export type AsObject = {
+    field: string,
+  }
+}
+
+export class SchemaComputedIndexFnv64aPair extends jspb.Message {
+  getField1(): string;
+  setField1(value: string): void;
+
+  getField2(): string;
+  setField2(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaComputedIndexFnv64aPair.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaComputedIndexFnv64aPair): SchemaComputedIndexFnv64aPair.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SchemaComputedIndexFnv64aPair, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaComputedIndexFnv64aPair;
+  static deserializeBinaryFromReader(message: SchemaComputedIndexFnv64aPair, reader: jspb.BinaryReader): SchemaComputedIndexFnv64aPair;
+}
+
+export namespace SchemaComputedIndexFnv64aPair {
+  export type AsObject = {
+    field1: string,
+    field2: string,
   }
 }
 
@@ -282,11 +416,8 @@ export class Schema extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
-  clearKindsList(): void;
-  getKindsList(): Array<Kind>;
-  setKindsList(value: Array<Kind>): void;
-  addKinds(value?: Kind, index?: number): Kind;
-
+  getKindsMap(): jspb.Map<string, SchemaKind>;
+  clearKindsMap(): void;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Schema.AsObject;
   static toObject(includeInstance: boolean, msg: Schema): Schema.AsObject;
@@ -300,7 +431,7 @@ export class Schema extends jspb.Message {
 export namespace Schema {
   export type AsObject = {
     name: string,
-    kindsList: Array<Kind.AsObject>,
+    kindsMap: Array<[string, SchemaKind.AsObject]>,
   }
 }
 
@@ -433,19 +564,25 @@ export namespace MetaEntity {
 }
 
 export enum ValueType {
-  TYPEDOUBLE = 0,
-  TYPEINT64 = 1,
-  TYPESTRING = 2,
-  TYPETIMESTAMP = 3,
-  TYPEBOOLEAN = 4,
-  TYPEBYTES = 5,
-  TYPEKEY = 6,
-  TYPEUINT64 = 7,
+  UNKNOWN = 0,
+  DOUBLE = 1,
+  INT64 = 2,
+  STRING = 3,
+  TIMESTAMP = 4,
+  BOOLEAN = 5,
+  BYTES = 6,
+  KEY = 7,
+  UINT64 = 8,
 }
 
-export enum FieldEditorInfoType {
+export enum SchemaFieldEditorInfoType {
   DEFAULT = 0,
   PASSWORD = 1,
   LOOKUP = 2,
+}
+
+export enum SchemaIndexType {
+  UNSPECIFIED = 0,
+  MEMORY = 1,
 }
 
