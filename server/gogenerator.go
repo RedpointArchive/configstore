@@ -203,24 +203,51 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 			if err == io.EOF {
 				break
 			}
-			if err != nil {
-				// TODO: Pass this to somewhere
-				fmt.Printf("%v", err)
-			}
-			if resp.Type == WatchEventType_Created ||
-			resp.Type == WatchEventType_Updated {
-				ref.Lock()
-				s := SerializeKey(resp.Entity.Key)
-				<INDEXSTORESREMOVE>
-				<INDEXSTORESUPDATE>
-				ref.store[s] = resp.Entity
-				ref.Unlock()
-			} else if resp.Type == WatchEventType_Deleted {
-				ref.Lock()
-				s := SerializeKey(resp.Entity.Key)
-				<INDEXSTORESREMOVE>
-				delete(ref.store, s)
-				ref.Unlock()
+			if err == nil || status.Code(err) == codes.OK {
+				if resp == nil {
+					fmt.Printf("warning: change was nil in <ENTITY> store push from Firestore (this might be normal behaviour)\n")
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				if resp.Entity == nil {
+					fmt.Printf("warning: change ENTITY was nil in <ENTITY> store push from Firestore (this seems like LESS NORMAL behaviour...)\n")
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				if resp.Entity.Key == nil {
+					fmt.Printf("error: change ENTITY KEY was nil in <ENTITY> store push from Firestore (this definitely seems WRONG...)\n")
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				if resp.Type == WatchEventType_Created ||
+					resp.Type == WatchEventType_Updated {
+					ref.Lock()
+					s := SerializeKey(resp.Entity.Key)
+					<INDEXSTORESREMOVE>
+					<INDEXSTORESUPDATE>
+					ref.store[s] = resp.Entity
+					ref.Unlock()
+				} else if resp.Type == WatchEventType_Deleted {
+					ref.Lock()
+					s := SerializeKey(resp.Entity.Key)
+					<INDEXSTORESREMOVE>
+					delete(ref.store, s)
+					ref.Unlock()
+				}
+			} else if status.Code(err) == codes.Unavailable {
+				// Retry the Watch request itself
+				watcher, err = ref.client.Watch(ctx, &Watch<ENTITY>Request{})
+				if err != nil {
+					fmt.Printf("error: <ENTITY> store unable to start watching again on client due to '%v'. updates may be delayed.\n")
+					time.Sleep(30 * time.Second)
+					continue
+				} else {
+					// Connection re-established, loop back around again to receive updates.
+				}
+			} else {
+				fmt.Printf("<ENTITY> store: %v\n", err)
+				time.Sleep(1 * time.Second)
+				continue
 			}
 		}
 	}()
@@ -383,9 +410,9 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 	extendedCode := standardCode
 	extendedCode = fmt.Sprintf("%s\n%s", standardCode, extendedOnceCode)
 	if strings.Contains(extendedCode, "github.com/golang/protobuf/ptypes/timestamp") {
-		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"encoding/binary\"\n    \"hash/fnv\"", 1)
+		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"time\"\n    \"encoding/binary\"\n    \"google.golang.org/grpc/status\"\n    \"google.golang.org/grpc/codes\"\n    \"hash/fnv\"", 1)
 	} else {
-		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"encoding/binary\"\n    \"hash/fnv\"\n    timestamp \"github.com/golang/protobuf/ptypes/timestamp\"", 1)
+		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"time\"\n    \"encoding/binary\"\n    \"google.golang.org/grpc/status\"\n    \"google.golang.org/grpc/codes\"\n    \"hash/fnv\"\n    timestamp \"github.com/golang/protobuf/ptypes/timestamp\"", 1)
 	}
 	for kindName := range schema.Kinds {
 		indexStores := ""
