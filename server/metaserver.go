@@ -17,6 +17,15 @@ func (s *configstoreMetaServiceServer) GetSchema(ctx context.Context, req *GetSc
 	}, nil
 }
 
+func (s *configstoreMetaServiceServer) GetDefaultPartitionId(ctx context.Context, req *GetDefaultPartitionIdRequest) (*GetDefaultPartitionIdResponse, error) {
+	firestoreTestCollection := client.Collection("Test")
+	firestoreNamespace := firestoreTestCollection.Path[0:(len(firestoreTestCollection.Path) - len(firestoreTestCollection.ID) - 1)]
+
+	return &GetDefaultPartitionIdResponse{
+		Namespace: firestoreNamespace,
+	}, nil
+}
+
 func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error) {
 	var start interface{}
 	if req.Start != nil {

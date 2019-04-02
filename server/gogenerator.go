@@ -189,10 +189,11 @@ type <ENTITY>Store interface {
 
 func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTITY>Store, error) {
 	ref := &<ENTITY>ImplStore{
-		client: client,
-		store:  make(map[string]*<ENTITY>),
+		client:   client,
+		store:    make(map[string]*<ENTITY>),
 		<INDEXSTORESINIT>
 	}
+	fmt.Printf("connecting to <ENTITY> store...\n")
 	watcher, err := ref.client.Watch(ctx, &Watch<ENTITY>Request{})
 	if err != nil {
 		return nil, err
@@ -224,6 +225,7 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 			}
 		}
 	}()
+	fmt.Printf("listing <ENTITY> store...\n")
 	req := &List<ENTITY>Request{
 		Start: nil,
 		Limit: 0,
@@ -235,6 +237,7 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 		}
 		for _, entity := range resp.Entities {
 			ref.Lock()
+			fmt.Printf("storing entity with key '%s'...\n", SerializeKey(entity.Key))
 			ref.store[SerializeKey(entity.Key)] = entity
 			ref.Unlock()
 		}
@@ -243,6 +246,7 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 		}
 		req.Start = resp.Next
 	}
+	fmt.Printf("returning new <ENTITY> store...\n")
 	return ref, nil
 }
 
@@ -265,6 +269,7 @@ func (c *<ENTITY>ImplStore) Get(key *Key) *<ENTITY> {
 func (c *<ENTITY>ImplStore) GetAndCheck(key *Key) (*<ENTITY>, bool) {
 	c.RLock()
 	defer c.RUnlock()
+	fmt.Printf("trying to retrieve entity with key '%s'...\n", SerializeKey(key))
 	val, ok := c.store[SerializeKey(key)]
 	return val, ok
 }

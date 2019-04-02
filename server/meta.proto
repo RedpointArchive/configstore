@@ -137,7 +137,15 @@ message MetaEntity {
     repeated Value values = 2;
 }
 
+message GetDefaultPartitionIdRequest {
+}
+
+message GetDefaultPartitionIdResponse {
+    string namespace = 1;
+}
+
 service ConfigstoreMetaService {
     rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse);
     rpc MetaList(MetaListEntitiesRequest) returns (MetaListEntitiesResponse);
+    rpc GetDefaultPartitionId(GetDefaultPartitionIdRequest) returns (GetDefaultPartitionIdResponse);
 }
