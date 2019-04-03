@@ -239,7 +239,7 @@ func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTIT
 				// Retry the Watch request itself
 				watcher, err = ref.client.Watch(ctx, &Watch<ENTITY>Request{})
 				if err != nil {
-					fmt.Printf("error: <ENTITY> store unable to start watching again on client due to '%v'. updates may be delayed.\n")
+					fmt.Printf("error: <ENTITY> store unable to start watching again on client due to '%v'. updates may be delayed.\n", err)
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
