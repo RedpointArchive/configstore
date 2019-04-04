@@ -563,6 +563,42 @@ export namespace MetaEntity {
   }
 }
 
+export class GetDefaultPartitionIdRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetDefaultPartitionIdRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetDefaultPartitionIdRequest): GetDefaultPartitionIdRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetDefaultPartitionIdRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetDefaultPartitionIdRequest;
+  static deserializeBinaryFromReader(message: GetDefaultPartitionIdRequest, reader: jspb.BinaryReader): GetDefaultPartitionIdRequest;
+}
+
+export namespace GetDefaultPartitionIdRequest {
+  export type AsObject = {
+  }
+}
+
+export class GetDefaultPartitionIdResponse extends jspb.Message {
+  getNamespace(): string;
+  setNamespace(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetDefaultPartitionIdResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetDefaultPartitionIdResponse): GetDefaultPartitionIdResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetDefaultPartitionIdResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetDefaultPartitionIdResponse;
+  static deserializeBinaryFromReader(message: GetDefaultPartitionIdResponse, reader: jspb.BinaryReader): GetDefaultPartitionIdResponse;
+}
+
+export namespace GetDefaultPartitionIdResponse {
+  export type AsObject = {
+    namespace: string,
+  }
+}
+
 export enum ValueType {
   UNKNOWN = 0,
   DOUBLE = 1,

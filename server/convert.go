@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"time"
 
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
@@ -100,7 +101,7 @@ func convertKeyToDocumentRef(
 		}
 	}
 	if ref == nil {
-		return nil, fmt.Errorf("inbound key did not contain any path components")
+		return nil, fmt.Errorf("inbound key did not contain any path components: namespace '%s'", namespace)
 	}
 
 	return ref, nil
@@ -175,23 +176,23 @@ func convertSnapshotToDynamicMessage(
 		}
 
 		var err error
-		if fd.GetType() == dpb.FieldDescriptorProto_TYPE_UINT64 {
-			// these are stored as int64 in firestore, as firestore
-			// does not support uint64 natively
-			switch value.(type) {
-			case int64:
-				err = out.TrySetFieldByName(name, uint64(value.(int64)))
-				break
-			default:
-				err = fmt.Errorf("unexpected firestore value for uint64 field")
-				break
-			}
-		} else if fd.GetType() == dpb.FieldDescriptorProto_TYPE_MESSAGE {
-			switch fd.GetMessageType().GetName() {
-			case "Key":
-				if value == nil {
-					err = out.TrySetFieldByName(name, nil)
-				} else {
+		if value == nil {
+			out.TryClearFieldByName(name)
+		} else {
+			if fd.GetType() == dpb.FieldDescriptorProto_TYPE_UINT64 {
+				// these are stored as int64 in firestore, as firestore
+				// does not support uint64 natively
+				switch value.(type) {
+				case int64:
+					err = out.TrySetFieldByName(name, uint64(value.(int64)))
+					break
+				default:
+					err = fmt.Errorf("unexpected firestore value for uint64 field")
+					break
+				}
+			} else if fd.GetType() == dpb.FieldDescriptorProto_TYPE_MESSAGE {
+				switch fd.GetMessageType().GetName() {
+				case "Key":
 					switch value.(type) {
 					case *firestore.DocumentRef:
 						key, err := convertDocumentRefToKey(
@@ -207,14 +208,27 @@ func convertSnapshotToDynamicMessage(
 						err = fmt.Errorf("expected key in Firestore for key type, but got something else")
 						break
 					}
+					break
+				case "Timestamp":
+					switch value.(type) {
+					case time.Time:
+						timestampMessage := messageFactory.NewDynamicMessage(common.Timestamp)
+						timestampMessage.SetFieldByName("seconds", int64(value.(time.Time).Unix()))
+						timestampMessage.SetFieldByName("nanos", int32(value.(time.Time).Nanosecond()))
+						err = out.TrySetFieldByName(name, timestampMessage)
+						break
+					default:
+						err = fmt.Errorf("expected timestamp in Firestore for timestamp type, but got something else")
+						break
+					}
+					break
+				default:
+					err = out.TrySetFieldByName(name, value)
+					break
 				}
-				break
-			default:
+			} else {
 				err = out.TrySetFieldByName(name, value)
-				break
 			}
-		} else {
-			err = out.TrySetFieldByName(name, value)
 		}
 
 		if err != nil {
@@ -269,16 +283,16 @@ func convertDynamicMessageIntoRefAndDataMap(
 			dm := field.(*dynamic.Message)
 			switch dm.GetMessageDescriptor().GetName() {
 			case "Key":
-				partitionIdFd := dm.GetMessageDescriptor().FindFieldByName("partitionId")
+				partitionIDFd := dm.GetMessageDescriptor().FindFieldByName("partitionId")
 				pathFd := dm.GetMessageDescriptor().FindFieldByName("path")
 
-				if dm.HasField(partitionIdFd) && dm.HasField(pathFd) {
+				if dm.HasField(partitionIDFd) && dm.HasField(pathFd) {
 					nkey, err := convertKeyToDocumentRef(
 						client,
 						dm,
 					)
 					if err != nil {
-						return nil, nil, err
+						return nil, nil, fmt.Errorf("error on field '%s': %v", fieldDescriptor.GetName(), err)
 					}
 					m[fieldDescriptor.GetName()] = nkey
 				} else {
