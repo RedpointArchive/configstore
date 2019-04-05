@@ -34,7 +34,7 @@ const listKinds = async (props: any) => {
     null
   );
   const req = new MetaListEntitiesRequest();
-  req.setKindname(props.kind);
+  req.setKindname(props.kind); 
   req.setStart("");
   req.setLimit(0);
   return await svc.metaList(req, {});
@@ -43,6 +43,7 @@ const listKinds = async (props: any) => {
 export const KindListRoute = (props: KindListRouteProps) => {
   const { data, error, isLoading } = useAsync<MetaListEntitiesResponse>({
     promiseFn: listKinds,
+    watch: props.match.params.kind, 
     kind: props.match.params.kind,
   } as any);
   const [selected, setSelected] = useState<SetHolder>({ v: new Set<string>() });

@@ -3,10 +3,14 @@ import { RouteComponentProps } from "react-router";
 import {
   GetSchemaResponse,
   MetaListEntitiesResponse,
-  ValueType
+  ValueType,
+  MetaGetEntityRequest
 } from "../api/meta_pb";
-import { g } from "../core";
+import { g, deserializeKey } from "../core";
 import { Link } from "react-router-dom";
+import { useAsync } from "react-async";
+import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
+import { grpcHost } from "../svcHost";
 /*
 import { grpc } from "@improbable-eng/grpc-web";
 import { ConfigstoreMetaService } from "../api/meta_pb_service";
@@ -26,33 +30,23 @@ export interface KindEditRouteProps
   schema: GetSchemaResponse;
 }
 
-export const KindEditRoute = (props: KindEditRouteProps) => {
-  const [data, setData] = useState<MetaListEntitiesResponse | null>(null);
+const getKind = async (props: any) => {
+  const svc = new ConfigstoreMetaServicePromiseClient(
+    grpcHost,
+    null,
+    null
+  );
+  const req = new MetaGetEntityRequest();
+  req.setKindname(props.kind); 
+  req.setKey(deserializeKey(props.key))
+  return await svc.metaGet(req, {});
+}
 
+export const KindEditRoute = (props: KindEditRouteProps) => {
   const isCreate = props.location.pathname.startsWith(
     `/kind/${props.match.params.kind}/create`
   );
   const createVerb = isCreate ? "Create" : "Edit";
-
-  /*
-  useEffect(() => {
-    setData(null);
-    const req = new MetaListEntitiesRequest();
-    req.setKindname(props.match.params.kind);
-    req.setStart("");
-    req.setLimit(0);
-    grpc.unary(ConfigstoreMetaService.MetaList, {
-      request: req,
-      host: "http://localhost:13390",
-      onEnd: (res: UnaryOutput<MetaListEntitiesResponse>) => {
-        const { status, statusMessage, headers, message, trailers } = res;
-        if (status === grpc.Code.OK && message) {
-          setData(message);
-        }
-      }
-    });
-  }, [props.match.params.kind]);
-  */
 
  const kindSchema = g(props.schema.getSchema())
  .getKindsMap().get(props.match.params.kind);
@@ -60,90 +54,16 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
    return (<>No such kind.</>);
  }
 
-  /*
-  const kindDisplay =
-    selected.v.size == 1
-      ? g(kindSchema.getEditor()).getSingular()
-      : g(kindSchema.getEditor()).getPlural();
-  */
+ if (isCreate) {
 
-  /*
-  let dataset = [
-    <tr key="loading">
-      <td
-        colSpan={3 + kindSchema.getFieldsList().length}
-        style={{
-          textAlign: "center"
-        }}
-      >
-        <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
-      </td>
-    </tr>
-  ];
-  if (data !== null && data.getEntitiesList().length == 0) {
-    dataset = [
-      <tr key="loading">
-        <td
-          colSpan={3 + kindSchema.getFieldsList().length}
-          style={{
-            textAlign: "center"
-          }}
-        >
-          There are no entities of this kind.
-        </td>
-      </tr>
-    ];
-  } else if (data !== null) {
-    dataset = [];
-    for (const entity of data.getEntitiesList()) {
-      dataset.push(
-        <tr key={entity.getId()}>
-          <td className="w-checkbox">
-            <input
-              type="checkbox"
-              checked={selected.v.has(entity.getId())}
-              onChange={e => {
-                if (e.target.checked) {
-                  selected.v.add(entity.getId());
-                } else {
-                  selected.v.delete(entity.getId());
-                }
-                setSelected({ v: selected.v });
-              }}
-            />
-          </td>
-          <td>
-            <Link
-              to={`/kind/${props.match.params.kind}/edit/${entity.getId()}`}
-            >
-              {entity.getId()}
-            </Link>
-          </td>
-          {kindSchema.getFieldsList().map(field => {
-            const fieldData = entity
-              .getValuesList()
-              .filter(fieldData => fieldData.getId() == field.getId())[0];
-            if (fieldData == undefined) {
-              return (
-                <td key={field.getId()}>
-                  <em className="text-muted">-</em>
-                </td>
-              );
-            }
-            return <td key={field.getId()}>{fieldData.getStringvalue()}</td>;
-          })}
-          <td className="w-checkbox">
-            <Link
-              to={`/kind/${props.match.params.kind}/edit/${entity.getId()}`}
-            >
-              <FontAwesomeIcon icon={faPencilAlt} />
-            </Link>
-          </td>
-        </tr>
-      );
-    }
+ } else {
+    const { data, error, isLoading } = useAsync<MetaListEntitiesResponse>({
+      promiseFn: getKind,
+      watch: props.match.params.kind, 
+      kind: props.match.params.kind,
+      key: props.match.params.id,
+    } as any);
   }
-  */
 
   return (
     <>

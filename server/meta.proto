@@ -144,8 +144,47 @@ message GetDefaultPartitionIdResponse {
     string namespace = 1;
 }
 
+message MetaGetEntityRequest {
+    Key key = 1;
+    string kindName = 2;
+}
+
+message MetaGetEntityResponse {
+    MetaEntity entity = 1;
+}
+
+message MetaUpdateEntityRequest {
+    MetaEntity entity = 1;
+}
+
+message MetaUpdateEntityResponse {
+    MetaEntity entity = 1;
+}
+
+message MetaCreateEntityRequest {
+    MetaEntity entity = 1;
+    string kindName = 2;
+}
+
+message MetaCreateEntityResponse {
+    MetaEntity entity = 1;
+}
+
+message MetaDeleteEntityRequest {
+    Key key = 1;
+    string kindName = 2;
+}
+
+message MetaDeleteEntityResponse {
+    MetaEntity entity = 1;
+}
+
 service ConfigstoreMetaService {
     rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse);
     rpc MetaList(MetaListEntitiesRequest) returns (MetaListEntitiesResponse);
+    rpc MetaGet(MetaGetEntityRequest) returns (MetaGetEntityResponse);
+    rpc MetaUpdate(MetaUpdateEntityRequest) returns (MetaUpdateEntityResponse);
+    rpc MetaCreate(MetaCreateEntityRequest) returns (MetaCreateEntityResponse);
+    rpc MetaDelete(MetaDeleteEntityRequest) returns (MetaDeleteEntityResponse);
     rpc GetDefaultPartitionId(GetDefaultPartitionIdRequest) returns (GetDefaultPartitionIdResponse);
 }

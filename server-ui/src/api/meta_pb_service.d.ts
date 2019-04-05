@@ -22,6 +22,42 @@ type ConfigstoreMetaServiceMetaList = {
   readonly responseType: typeof meta_pb.MetaListEntitiesResponse;
 };
 
+type ConfigstoreMetaServiceMetaGet = {
+  readonly methodName: string;
+  readonly service: typeof ConfigstoreMetaService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof meta_pb.MetaGetEntityRequest;
+  readonly responseType: typeof meta_pb.MetaGetEntityResponse;
+};
+
+type ConfigstoreMetaServiceMetaUpdate = {
+  readonly methodName: string;
+  readonly service: typeof ConfigstoreMetaService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof meta_pb.MetaUpdateEntityRequest;
+  readonly responseType: typeof meta_pb.MetaUpdateEntityResponse;
+};
+
+type ConfigstoreMetaServiceMetaCreate = {
+  readonly methodName: string;
+  readonly service: typeof ConfigstoreMetaService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof meta_pb.MetaCreateEntityRequest;
+  readonly responseType: typeof meta_pb.MetaCreateEntityResponse;
+};
+
+type ConfigstoreMetaServiceMetaDelete = {
+  readonly methodName: string;
+  readonly service: typeof ConfigstoreMetaService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof meta_pb.MetaDeleteEntityRequest;
+  readonly responseType: typeof meta_pb.MetaDeleteEntityResponse;
+};
+
 type ConfigstoreMetaServiceGetDefaultPartitionId = {
   readonly methodName: string;
   readonly service: typeof ConfigstoreMetaService;
@@ -35,6 +71,10 @@ export class ConfigstoreMetaService {
   static readonly serviceName: string;
   static readonly GetSchema: ConfigstoreMetaServiceGetSchema;
   static readonly MetaList: ConfigstoreMetaServiceMetaList;
+  static readonly MetaGet: ConfigstoreMetaServiceMetaGet;
+  static readonly MetaUpdate: ConfigstoreMetaServiceMetaUpdate;
+  static readonly MetaCreate: ConfigstoreMetaServiceMetaCreate;
+  static readonly MetaDelete: ConfigstoreMetaServiceMetaDelete;
   static readonly GetDefaultPartitionId: ConfigstoreMetaServiceGetDefaultPartitionId;
 }
 
@@ -87,6 +127,42 @@ export class ConfigstoreMetaServiceClient {
   metaList(
     requestMessage: meta_pb.MetaListEntitiesRequest,
     callback: (error: ServiceError|null, responseMessage: meta_pb.MetaListEntitiesResponse|null) => void
+  ): UnaryResponse;
+  metaGet(
+    requestMessage: meta_pb.MetaGetEntityRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaGetEntityResponse|null) => void
+  ): UnaryResponse;
+  metaGet(
+    requestMessage: meta_pb.MetaGetEntityRequest,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaGetEntityResponse|null) => void
+  ): UnaryResponse;
+  metaUpdate(
+    requestMessage: meta_pb.MetaUpdateEntityRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaUpdateEntityResponse|null) => void
+  ): UnaryResponse;
+  metaUpdate(
+    requestMessage: meta_pb.MetaUpdateEntityRequest,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaUpdateEntityResponse|null) => void
+  ): UnaryResponse;
+  metaCreate(
+    requestMessage: meta_pb.MetaCreateEntityRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaCreateEntityResponse|null) => void
+  ): UnaryResponse;
+  metaCreate(
+    requestMessage: meta_pb.MetaCreateEntityRequest,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaCreateEntityResponse|null) => void
+  ): UnaryResponse;
+  metaDelete(
+    requestMessage: meta_pb.MetaDeleteEntityRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaDeleteEntityResponse|null) => void
+  ): UnaryResponse;
+  metaDelete(
+    requestMessage: meta_pb.MetaDeleteEntityRequest,
+    callback: (error: ServiceError|null, responseMessage: meta_pb.MetaDeleteEntityResponse|null) => void
   ): UnaryResponse;
   getDefaultPartitionId(
     requestMessage: meta_pb.GetDefaultPartitionIdRequest,

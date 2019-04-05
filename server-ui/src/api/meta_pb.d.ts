@@ -599,6 +599,194 @@ export namespace GetDefaultPartitionIdResponse {
   }
 }
 
+export class MetaGetEntityRequest extends jspb.Message {
+  hasKey(): boolean;
+  clearKey(): void;
+  getKey(): Key | undefined;
+  setKey(value?: Key): void;
+
+  getKindname(): string;
+  setKindname(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaGetEntityRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaGetEntityRequest): MetaGetEntityRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaGetEntityRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaGetEntityRequest;
+  static deserializeBinaryFromReader(message: MetaGetEntityRequest, reader: jspb.BinaryReader): MetaGetEntityRequest;
+}
+
+export namespace MetaGetEntityRequest {
+  export type AsObject = {
+    key?: Key.AsObject,
+    kindname: string,
+  }
+}
+
+export class MetaGetEntityResponse extends jspb.Message {
+  hasEntity(): boolean;
+  clearEntity(): void;
+  getEntity(): MetaEntity | undefined;
+  setEntity(value?: MetaEntity): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaGetEntityResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaGetEntityResponse): MetaGetEntityResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaGetEntityResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaGetEntityResponse;
+  static deserializeBinaryFromReader(message: MetaGetEntityResponse, reader: jspb.BinaryReader): MetaGetEntityResponse;
+}
+
+export namespace MetaGetEntityResponse {
+  export type AsObject = {
+    entity?: MetaEntity.AsObject,
+  }
+}
+
+export class MetaUpdateEntityRequest extends jspb.Message {
+  hasEntity(): boolean;
+  clearEntity(): void;
+  getEntity(): MetaEntity | undefined;
+  setEntity(value?: MetaEntity): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaUpdateEntityRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaUpdateEntityRequest): MetaUpdateEntityRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaUpdateEntityRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaUpdateEntityRequest;
+  static deserializeBinaryFromReader(message: MetaUpdateEntityRequest, reader: jspb.BinaryReader): MetaUpdateEntityRequest;
+}
+
+export namespace MetaUpdateEntityRequest {
+  export type AsObject = {
+    entity?: MetaEntity.AsObject,
+  }
+}
+
+export class MetaUpdateEntityResponse extends jspb.Message {
+  hasEntity(): boolean;
+  clearEntity(): void;
+  getEntity(): MetaEntity | undefined;
+  setEntity(value?: MetaEntity): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaUpdateEntityResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaUpdateEntityResponse): MetaUpdateEntityResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaUpdateEntityResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaUpdateEntityResponse;
+  static deserializeBinaryFromReader(message: MetaUpdateEntityResponse, reader: jspb.BinaryReader): MetaUpdateEntityResponse;
+}
+
+export namespace MetaUpdateEntityResponse {
+  export type AsObject = {
+    entity?: MetaEntity.AsObject,
+  }
+}
+
+export class MetaCreateEntityRequest extends jspb.Message {
+  hasEntity(): boolean;
+  clearEntity(): void;
+  getEntity(): MetaEntity | undefined;
+  setEntity(value?: MetaEntity): void;
+
+  getKindname(): string;
+  setKindname(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaCreateEntityRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaCreateEntityRequest): MetaCreateEntityRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaCreateEntityRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaCreateEntityRequest;
+  static deserializeBinaryFromReader(message: MetaCreateEntityRequest, reader: jspb.BinaryReader): MetaCreateEntityRequest;
+}
+
+export namespace MetaCreateEntityRequest {
+  export type AsObject = {
+    entity?: MetaEntity.AsObject,
+    kindname: string,
+  }
+}
+
+export class MetaCreateEntityResponse extends jspb.Message {
+  hasEntity(): boolean;
+  clearEntity(): void;
+  getEntity(): MetaEntity | undefined;
+  setEntity(value?: MetaEntity): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaCreateEntityResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaCreateEntityResponse): MetaCreateEntityResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaCreateEntityResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaCreateEntityResponse;
+  static deserializeBinaryFromReader(message: MetaCreateEntityResponse, reader: jspb.BinaryReader): MetaCreateEntityResponse;
+}
+
+export namespace MetaCreateEntityResponse {
+  export type AsObject = {
+    entity?: MetaEntity.AsObject,
+  }
+}
+
+export class MetaDeleteEntityRequest extends jspb.Message {
+  hasKey(): boolean;
+  clearKey(): void;
+  getKey(): Key | undefined;
+  setKey(value?: Key): void;
+
+  getKindname(): string;
+  setKindname(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaDeleteEntityRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaDeleteEntityRequest): MetaDeleteEntityRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaDeleteEntityRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaDeleteEntityRequest;
+  static deserializeBinaryFromReader(message: MetaDeleteEntityRequest, reader: jspb.BinaryReader): MetaDeleteEntityRequest;
+}
+
+export namespace MetaDeleteEntityRequest {
+  export type AsObject = {
+    key?: Key.AsObject,
+    kindname: string,
+  }
+}
+
+export class MetaDeleteEntityResponse extends jspb.Message {
+  hasEntity(): boolean;
+  clearEntity(): void;
+  getEntity(): MetaEntity | undefined;
+  setEntity(value?: MetaEntity): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaDeleteEntityResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaDeleteEntityResponse): MetaDeleteEntityResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MetaDeleteEntityResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaDeleteEntityResponse;
+  static deserializeBinaryFromReader(message: MetaDeleteEntityResponse, reader: jspb.BinaryReader): MetaDeleteEntityResponse;
+}
+
+export namespace MetaDeleteEntityResponse {
+  export type AsObject = {
+    entity?: MetaEntity.AsObject,
+  }
+}
+
 export enum ValueType {
   UNKNOWN = 0,
   DOUBLE = 1,
