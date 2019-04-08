@@ -1,7 +1,4 @@
-// package: meta
-// file: meta.proto
-
-import * as jspb from "google-protobuf";
+import * as jspb from "google-protobuf"
 
 export class PartitionId extends jspb.Message {
   getNamespace(): string;
@@ -10,8 +7,6 @@ export class PartitionId extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): PartitionId.AsObject;
   static toObject(includeInstance: boolean, msg: PartitionId): PartitionId.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: PartitionId, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): PartitionId;
   static deserializeBinaryFromReader(message: PartitionId, reader: jspb.BinaryReader): PartitionId;
@@ -27,22 +22,19 @@ export class PathElement extends jspb.Message {
   getKind(): string;
   setKind(value: string): void;
 
-  hasId(): boolean;
-  clearId(): void;
   getId(): number;
   setId(value: number): void;
+  hasId(): boolean;
 
-  hasName(): boolean;
-  clearName(): void;
   getName(): string;
   setName(value: string): void;
+  hasName(): boolean;
 
   getIdtypeCase(): PathElement.IdtypeCase;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): PathElement.AsObject;
   static toObject(includeInstance: boolean, msg: PathElement): PathElement.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: PathElement, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): PathElement;
   static deserializeBinaryFromReader(message: PathElement, reader: jspb.BinaryReader): PathElement;
@@ -55,7 +47,7 @@ export namespace PathElement {
     name: string,
   }
 
-  export enum IdtypeCase {
+  export enum IdtypeCase { 
     IDTYPE_NOT_SET = 0,
     ID = 2,
     NAME = 3,
@@ -63,21 +55,19 @@ export namespace PathElement {
 }
 
 export class Key extends jspb.Message {
-  hasPartitionid(): boolean;
-  clearPartitionid(): void;
   getPartitionid(): PartitionId | undefined;
   setPartitionid(value?: PartitionId): void;
+  hasPartitionid(): boolean;
+  clearPartitionid(): void;
 
-  clearPathList(): void;
   getPathList(): Array<PathElement>;
   setPathList(value: Array<PathElement>): void;
+  clearPathList(): void;
   addPath(value?: PathElement, index?: number): PathElement;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Key.AsObject;
   static toObject(includeInstance: boolean, msg: Key): Key.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: Key, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): Key;
   static deserializeBinaryFromReader(message: Key, reader: jspb.BinaryReader): Key;
@@ -119,10 +109,10 @@ export class Value extends jspb.Message {
   getBytesvalue_asB64(): string;
   setBytesvalue(value: Uint8Array | string): void;
 
-  hasKeyvalue(): boolean;
-  clearKeyvalue(): void;
   getKeyvalue(): Key | undefined;
   setKeyvalue(value?: Key): void;
+  hasKeyvalue(): boolean;
+  clearKeyvalue(): void;
 
   getUint64value(): number;
   setUint64value(value: number): void;
@@ -130,8 +120,6 @@ export class Value extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Value.AsObject;
   static toObject(includeInstance: boolean, msg: Value): Value.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: Value, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): Value;
   static deserializeBinaryFromReader(message: Value, reader: jspb.BinaryReader): Value;
@@ -165,10 +153,10 @@ export class SchemaField extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
-  hasEditor(): boolean;
-  clearEditor(): void;
   getEditor(): SchemaFieldEditorInfo | undefined;
   setEditor(value?: SchemaFieldEditorInfo): void;
+  hasEditor(): boolean;
+  clearEditor(): void;
 
   getReadonly(): boolean;
   setReadonly(value: boolean): void;
@@ -176,8 +164,6 @@ export class SchemaField extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaField.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaField): SchemaField.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaField, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaField;
   static deserializeBinaryFromReader(message: SchemaField, reader: jspb.BinaryReader): SchemaField;
@@ -210,8 +196,6 @@ export class SchemaFieldEditorInfo extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaFieldEditorInfo.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaFieldEditorInfo): SchemaFieldEditorInfo.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaFieldEditorInfo, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorInfo;
   static deserializeBinaryFromReader(message: SchemaFieldEditorInfo, reader: jspb.BinaryReader): SchemaFieldEditorInfo;
@@ -236,8 +220,6 @@ export class SchemaKindEditor extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaKindEditor.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaKindEditor): SchemaKindEditor.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaKindEditor, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaKindEditor;
   static deserializeBinaryFromReader(message: SchemaKindEditor, reader: jspb.BinaryReader): SchemaKindEditor;
@@ -251,31 +233,29 @@ export namespace SchemaKindEditor {
 }
 
 export class SchemaKind extends jspb.Message {
-  clearFieldsList(): void;
   getFieldsList(): Array<SchemaField>;
   setFieldsList(value: Array<SchemaField>): void;
+  clearFieldsList(): void;
   addFields(value?: SchemaField, index?: number): SchemaField;
 
-  hasEditor(): boolean;
-  clearEditor(): void;
   getEditor(): SchemaKindEditor | undefined;
   setEditor(value?: SchemaKindEditor): void;
+  hasEditor(): boolean;
+  clearEditor(): void;
 
-  clearIndexesList(): void;
   getIndexesList(): Array<SchemaIndex>;
   setIndexesList(value: Array<SchemaIndex>): void;
+  clearIndexesList(): void;
   addIndexes(value?: SchemaIndex, index?: number): SchemaIndex;
 
-  clearAncestorsList(): void;
   getAncestorsList(): Array<string>;
   setAncestorsList(value: Array<string>): void;
-  addAncestors(value: string, index?: number): string;
+  clearAncestorsList(): void;
+  addAncestors(value: string, index?: number): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaKind.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaKind): SchemaKind.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaKind, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaKind;
   static deserializeBinaryFromReader(message: SchemaKind, reader: jspb.BinaryReader): SchemaKind;
@@ -297,22 +277,21 @@ export class SchemaIndex extends jspb.Message {
   getType(): SchemaIndexType;
   setType(value: SchemaIndexType): void;
 
-  hasComputed(): boolean;
-  clearComputed(): void;
   getComputed(): SchemaComputedIndex | undefined;
   setComputed(value?: SchemaComputedIndex): void;
+  hasComputed(): boolean;
+  clearComputed(): void;
+  hasComputed(): boolean;
 
-  hasField(): boolean;
-  clearField(): void;
   getField(): string;
   setField(value: string): void;
+  hasField(): boolean;
 
   getValueCase(): SchemaIndex.ValueCase;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaIndex.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaIndex): SchemaIndex.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaIndex, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaIndex;
   static deserializeBinaryFromReader(message: SchemaIndex, reader: jspb.BinaryReader): SchemaIndex;
@@ -326,7 +305,7 @@ export namespace SchemaIndex {
     field: string,
   }
 
-  export enum ValueCase {
+  export enum ValueCase { 
     VALUE_NOT_SET = 0,
     COMPUTED = 3,
     FIELD = 4,
@@ -334,22 +313,23 @@ export namespace SchemaIndex {
 }
 
 export class SchemaComputedIndex extends jspb.Message {
-  hasFnv64a(): boolean;
-  clearFnv64a(): void;
   getFnv64a(): SchemaComputedIndexFnv64a | undefined;
   setFnv64a(value?: SchemaComputedIndexFnv64a): void;
+  hasFnv64a(): boolean;
+  clearFnv64a(): void;
+  hasFnv64a(): boolean;
 
-  hasFnv64aPair(): boolean;
-  clearFnv64aPair(): void;
   getFnv64aPair(): SchemaComputedIndexFnv64aPair | undefined;
   setFnv64aPair(value?: SchemaComputedIndexFnv64aPair): void;
+  hasFnv64aPair(): boolean;
+  clearFnv64aPair(): void;
+  hasFnv64aPair(): boolean;
 
   getAlgorithmCase(): SchemaComputedIndex.AlgorithmCase;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaComputedIndex.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaComputedIndex): SchemaComputedIndex.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaComputedIndex, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaComputedIndex;
   static deserializeBinaryFromReader(message: SchemaComputedIndex, reader: jspb.BinaryReader): SchemaComputedIndex;
@@ -361,7 +341,7 @@ export namespace SchemaComputedIndex {
     fnv64aPair?: SchemaComputedIndexFnv64aPair.AsObject,
   }
 
-  export enum AlgorithmCase {
+  export enum AlgorithmCase { 
     ALGORITHM_NOT_SET = 0,
     FNV64A = 1,
     FNV64A_PAIR = 2,
@@ -375,8 +355,6 @@ export class SchemaComputedIndexFnv64a extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaComputedIndexFnv64a.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaComputedIndexFnv64a): SchemaComputedIndexFnv64a.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaComputedIndexFnv64a, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaComputedIndexFnv64a;
   static deserializeBinaryFromReader(message: SchemaComputedIndexFnv64a, reader: jspb.BinaryReader): SchemaComputedIndexFnv64a;
@@ -398,8 +376,6 @@ export class SchemaComputedIndexFnv64aPair extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaComputedIndexFnv64aPair.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaComputedIndexFnv64aPair): SchemaComputedIndexFnv64aPair.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: SchemaComputedIndexFnv64aPair, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): SchemaComputedIndexFnv64aPair;
   static deserializeBinaryFromReader(message: SchemaComputedIndexFnv64aPair, reader: jspb.BinaryReader): SchemaComputedIndexFnv64aPair;
@@ -418,11 +394,10 @@ export class Schema extends jspb.Message {
 
   getKindsMap(): jspb.Map<string, SchemaKind>;
   clearKindsMap(): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Schema.AsObject;
   static toObject(includeInstance: boolean, msg: Schema): Schema.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: Schema, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): Schema;
   static deserializeBinaryFromReader(message: Schema, reader: jspb.BinaryReader): Schema;
@@ -439,8 +414,6 @@ export class GetSchemaRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetSchemaRequest.AsObject;
   static toObject(includeInstance: boolean, msg: GetSchemaRequest): GetSchemaRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: GetSchemaRequest, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): GetSchemaRequest;
   static deserializeBinaryFromReader(message: GetSchemaRequest, reader: jspb.BinaryReader): GetSchemaRequest;
@@ -452,16 +425,14 @@ export namespace GetSchemaRequest {
 }
 
 export class GetSchemaResponse extends jspb.Message {
-  hasSchema(): boolean;
-  clearSchema(): void;
   getSchema(): Schema | undefined;
   setSchema(value?: Schema): void;
+  hasSchema(): boolean;
+  clearSchema(): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetSchemaResponse.AsObject;
   static toObject(includeInstance: boolean, msg: GetSchemaResponse): GetSchemaResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: GetSchemaResponse, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): GetSchemaResponse;
   static deserializeBinaryFromReader(message: GetSchemaResponse, reader: jspb.BinaryReader): GetSchemaResponse;
@@ -488,8 +459,6 @@ export class MetaListEntitiesRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaListEntitiesRequest.AsObject;
   static toObject(includeInstance: boolean, msg: MetaListEntitiesRequest): MetaListEntitiesRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaListEntitiesRequest, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaListEntitiesRequest;
   static deserializeBinaryFromReader(message: MetaListEntitiesRequest, reader: jspb.BinaryReader): MetaListEntitiesRequest;
@@ -512,16 +481,14 @@ export class MetaListEntitiesResponse extends jspb.Message {
   getMoreresults(): boolean;
   setMoreresults(value: boolean): void;
 
-  clearEntitiesList(): void;
   getEntitiesList(): Array<MetaEntity>;
   setEntitiesList(value: Array<MetaEntity>): void;
+  clearEntitiesList(): void;
   addEntities(value?: MetaEntity, index?: number): MetaEntity;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaListEntitiesResponse.AsObject;
   static toObject(includeInstance: boolean, msg: MetaListEntitiesResponse): MetaListEntitiesResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaListEntitiesResponse, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaListEntitiesResponse;
   static deserializeBinaryFromReader(message: MetaListEntitiesResponse, reader: jspb.BinaryReader): MetaListEntitiesResponse;
@@ -536,21 +503,19 @@ export namespace MetaListEntitiesResponse {
 }
 
 export class MetaEntity extends jspb.Message {
-  hasKey(): boolean;
-  clearKey(): void;
   getKey(): Key | undefined;
   setKey(value?: Key): void;
+  hasKey(): boolean;
+  clearKey(): void;
 
-  clearValuesList(): void;
   getValuesList(): Array<Value>;
   setValuesList(value: Array<Value>): void;
+  clearValuesList(): void;
   addValues(value?: Value, index?: number): Value;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaEntity.AsObject;
   static toObject(includeInstance: boolean, msg: MetaEntity): MetaEntity.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaEntity, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaEntity;
   static deserializeBinaryFromReader(message: MetaEntity, reader: jspb.BinaryReader): MetaEntity;
@@ -567,8 +532,6 @@ export class GetDefaultPartitionIdRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetDefaultPartitionIdRequest.AsObject;
   static toObject(includeInstance: boolean, msg: GetDefaultPartitionIdRequest): GetDefaultPartitionIdRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: GetDefaultPartitionIdRequest, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): GetDefaultPartitionIdRequest;
   static deserializeBinaryFromReader(message: GetDefaultPartitionIdRequest, reader: jspb.BinaryReader): GetDefaultPartitionIdRequest;
@@ -586,8 +549,6 @@ export class GetDefaultPartitionIdResponse extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetDefaultPartitionIdResponse.AsObject;
   static toObject(includeInstance: boolean, msg: GetDefaultPartitionIdResponse): GetDefaultPartitionIdResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: GetDefaultPartitionIdResponse, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): GetDefaultPartitionIdResponse;
   static deserializeBinaryFromReader(message: GetDefaultPartitionIdResponse, reader: jspb.BinaryReader): GetDefaultPartitionIdResponse;
@@ -600,10 +561,10 @@ export namespace GetDefaultPartitionIdResponse {
 }
 
 export class MetaGetEntityRequest extends jspb.Message {
-  hasKey(): boolean;
-  clearKey(): void;
   getKey(): Key | undefined;
   setKey(value?: Key): void;
+  hasKey(): boolean;
+  clearKey(): void;
 
   getKindname(): string;
   setKindname(value: string): void;
@@ -611,8 +572,6 @@ export class MetaGetEntityRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaGetEntityRequest.AsObject;
   static toObject(includeInstance: boolean, msg: MetaGetEntityRequest): MetaGetEntityRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaGetEntityRequest, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaGetEntityRequest;
   static deserializeBinaryFromReader(message: MetaGetEntityRequest, reader: jspb.BinaryReader): MetaGetEntityRequest;
@@ -626,16 +585,14 @@ export namespace MetaGetEntityRequest {
 }
 
 export class MetaGetEntityResponse extends jspb.Message {
-  hasEntity(): boolean;
-  clearEntity(): void;
   getEntity(): MetaEntity | undefined;
   setEntity(value?: MetaEntity): void;
+  hasEntity(): boolean;
+  clearEntity(): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaGetEntityResponse.AsObject;
   static toObject(includeInstance: boolean, msg: MetaGetEntityResponse): MetaGetEntityResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaGetEntityResponse, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaGetEntityResponse;
   static deserializeBinaryFromReader(message: MetaGetEntityResponse, reader: jspb.BinaryReader): MetaGetEntityResponse;
@@ -648,16 +605,14 @@ export namespace MetaGetEntityResponse {
 }
 
 export class MetaUpdateEntityRequest extends jspb.Message {
-  hasEntity(): boolean;
-  clearEntity(): void;
   getEntity(): MetaEntity | undefined;
   setEntity(value?: MetaEntity): void;
+  hasEntity(): boolean;
+  clearEntity(): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaUpdateEntityRequest.AsObject;
   static toObject(includeInstance: boolean, msg: MetaUpdateEntityRequest): MetaUpdateEntityRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaUpdateEntityRequest, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaUpdateEntityRequest;
   static deserializeBinaryFromReader(message: MetaUpdateEntityRequest, reader: jspb.BinaryReader): MetaUpdateEntityRequest;
@@ -670,16 +625,14 @@ export namespace MetaUpdateEntityRequest {
 }
 
 export class MetaUpdateEntityResponse extends jspb.Message {
-  hasEntity(): boolean;
-  clearEntity(): void;
   getEntity(): MetaEntity | undefined;
   setEntity(value?: MetaEntity): void;
+  hasEntity(): boolean;
+  clearEntity(): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaUpdateEntityResponse.AsObject;
   static toObject(includeInstance: boolean, msg: MetaUpdateEntityResponse): MetaUpdateEntityResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaUpdateEntityResponse, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaUpdateEntityResponse;
   static deserializeBinaryFromReader(message: MetaUpdateEntityResponse, reader: jspb.BinaryReader): MetaUpdateEntityResponse;
@@ -692,10 +645,10 @@ export namespace MetaUpdateEntityResponse {
 }
 
 export class MetaCreateEntityRequest extends jspb.Message {
-  hasEntity(): boolean;
-  clearEntity(): void;
   getEntity(): MetaEntity | undefined;
   setEntity(value?: MetaEntity): void;
+  hasEntity(): boolean;
+  clearEntity(): void;
 
   getKindname(): string;
   setKindname(value: string): void;
@@ -703,8 +656,6 @@ export class MetaCreateEntityRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaCreateEntityRequest.AsObject;
   static toObject(includeInstance: boolean, msg: MetaCreateEntityRequest): MetaCreateEntityRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaCreateEntityRequest, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaCreateEntityRequest;
   static deserializeBinaryFromReader(message: MetaCreateEntityRequest, reader: jspb.BinaryReader): MetaCreateEntityRequest;
@@ -718,16 +669,14 @@ export namespace MetaCreateEntityRequest {
 }
 
 export class MetaCreateEntityResponse extends jspb.Message {
-  hasEntity(): boolean;
-  clearEntity(): void;
   getEntity(): MetaEntity | undefined;
   setEntity(value?: MetaEntity): void;
+  hasEntity(): boolean;
+  clearEntity(): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaCreateEntityResponse.AsObject;
   static toObject(includeInstance: boolean, msg: MetaCreateEntityResponse): MetaCreateEntityResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaCreateEntityResponse, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaCreateEntityResponse;
   static deserializeBinaryFromReader(message: MetaCreateEntityResponse, reader: jspb.BinaryReader): MetaCreateEntityResponse;
@@ -740,10 +689,10 @@ export namespace MetaCreateEntityResponse {
 }
 
 export class MetaDeleteEntityRequest extends jspb.Message {
-  hasKey(): boolean;
-  clearKey(): void;
   getKey(): Key | undefined;
   setKey(value?: Key): void;
+  hasKey(): boolean;
+  clearKey(): void;
 
   getKindname(): string;
   setKindname(value: string): void;
@@ -751,8 +700,6 @@ export class MetaDeleteEntityRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaDeleteEntityRequest.AsObject;
   static toObject(includeInstance: boolean, msg: MetaDeleteEntityRequest): MetaDeleteEntityRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaDeleteEntityRequest, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaDeleteEntityRequest;
   static deserializeBinaryFromReader(message: MetaDeleteEntityRequest, reader: jspb.BinaryReader): MetaDeleteEntityRequest;
@@ -766,16 +713,14 @@ export namespace MetaDeleteEntityRequest {
 }
 
 export class MetaDeleteEntityResponse extends jspb.Message {
-  hasEntity(): boolean;
-  clearEntity(): void;
   getEntity(): MetaEntity | undefined;
   setEntity(value?: MetaEntity): void;
+  hasEntity(): boolean;
+  clearEntity(): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaDeleteEntityResponse.AsObject;
   static toObject(includeInstance: boolean, msg: MetaDeleteEntityResponse): MetaDeleteEntityResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
   static serializeBinaryToWriter(message: MetaDeleteEntityResponse, writer: jspb.BinaryWriter): void;
   static deserializeBinary(bytes: Uint8Array): MetaDeleteEntityResponse;
   static deserializeBinaryFromReader(message: MetaDeleteEntityResponse, reader: jspb.BinaryReader): MetaDeleteEntityResponse;
@@ -787,7 +732,7 @@ export namespace MetaDeleteEntityResponse {
   }
 }
 
-export enum ValueType {
+export enum ValueType { 
   UNKNOWN = 0,
   DOUBLE = 1,
   INT64 = 2,
@@ -798,15 +743,12 @@ export enum ValueType {
   KEY = 7,
   UINT64 = 8,
 }
-
-export enum SchemaFieldEditorInfoType {
+export enum SchemaFieldEditorInfoType { 
   DEFAULT = 0,
   PASSWORD = 1,
   LOOKUP = 2,
 }
-
-export enum SchemaIndexType {
+export enum SchemaIndexType { 
   UNSPECIFIED = 0,
   MEMORY = 1,
 }
-

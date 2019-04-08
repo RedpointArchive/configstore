@@ -21,7 +21,7 @@ export const KindRoute = (outerProps: KindRouteProps) => {
             <KindEditRoute {...props} schema={outerProps.schema} />
           )}
         </Route>
-        <Route path="/kind/:kind/edit/:id">
+        <Route path="/kind/:kind/edit/:id*">
           {(props: RouteComponentProps<KindEditRouteMatch>) => (
             <KindEditRoute {...props} schema={outerProps.schema} />
           )}

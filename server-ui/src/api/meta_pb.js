@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * @fileoverview
  * @enhanceable
@@ -5,7 +6,6 @@
  *     field starts with 'MSG_' and isn't a translatable message.
  * @public
  */
-/* eslint-disable */
 // GENERATED CODE -- DO NOT EDIT!
 
 var jspb = require('google-protobuf');
@@ -961,10 +961,10 @@ proto.meta.Value.prototype.setStringvalue = function(value) {
 
 /**
  * optional bytes timestampValue = 6;
- * @return {!(string|Uint8Array)}
+ * @return {string}
  */
 proto.meta.Value.prototype.getTimestampvalue = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
 };
 
 
@@ -1017,10 +1017,10 @@ proto.meta.Value.prototype.setBooleanvalue = function(value) {
 
 /**
  * optional bytes bytesValue = 8;
- * @return {!(string|Uint8Array)}
+ * @return {string}
  */
 proto.meta.Value.prototype.getBytesvalue = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
 };
 
 
@@ -3507,10 +3507,10 @@ proto.meta.MetaListEntitiesRequest.serializeBinaryToWriter = function(message, w
 
 /**
  * optional bytes start = 1;
- * @return {!(string|Uint8Array)}
+ * @return {string}
  */
 proto.meta.MetaListEntitiesRequest.prototype.getStart = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
@@ -3737,10 +3737,10 @@ proto.meta.MetaListEntitiesResponse.serializeBinaryToWriter = function(message, 
 
 /**
  * optional bytes next = 1;
- * @return {!(string|Uint8Array)}
+ * @return {string}
  */
 proto.meta.MetaListEntitiesResponse.prototype.getNext = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
@@ -5678,4 +5678,3 @@ proto.meta.SchemaIndexType = {
 };
 
 goog.object.extend(exports, proto.meta);
-

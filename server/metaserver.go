@@ -206,13 +206,140 @@ func (s *configstoreMetaServiceServer) MetaGet(ctx context.Context, req *MetaGet
 }
 
 func (s *configstoreMetaServiceServer) MetaUpdate(ctx context.Context, req *MetaUpdateEntityRequest) (*MetaUpdateEntityResponse, error) {
-	return nil, fmt.Errorf("not implemented")
+	pathElements := req.Entity.Key.Path
+	lastKind := pathElements[len(pathElements)-1].Kind
+
+	var kindInfo *SchemaKind
+	for kindName, kind := range s.schema.Kinds {
+		if kindName == lastKind {
+			kindInfo = kind
+			break
+		}
+	}
+	if kindInfo == nil {
+		return nil, fmt.Errorf("no such kind")
+	}
+
+	ref, data, err := convertMetaEntityToRefAndDataMap(
+		client,
+		req.Entity,
+		kindInfo,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if ref == nil {
+		return nil, fmt.Errorf("entity must be set")
+	}
+
+	_, err = ref.Set(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MetaUpdateEntityResponse{
+		Entity: req.Entity,
+	}, nil
 }
 
 func (s *configstoreMetaServiceServer) MetaDelete(ctx context.Context, req *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error) {
-	return nil, fmt.Errorf("not implemented")
+	var kindInfo *SchemaKind
+	for kindName, kind := range s.schema.Kinds {
+		if kindName == req.KindName {
+			kindInfo = kind
+			break
+		}
+	}
+	if kindInfo == nil {
+		return nil, fmt.Errorf("no such kind")
+	}
+
+	ref, err := convertMetaKeyToDocumentRef(
+		client,
+		req.Key,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	snapshot, err := ref.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := convertSnapshotToMetaEntity(kindInfo, snapshot)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = ref.Delete(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &MetaDeleteEntityResponse{
+		Entity: entity,
+	}
+
+	return response, nil
 }
 
 func (s *configstoreMetaServiceServer) MetaCreate(ctx context.Context, req *MetaCreateEntityRequest) (*MetaCreateEntityResponse, error) {
-	return nil, fmt.Errorf("not implemented")
+	var kindInfo *SchemaKind
+	for kindName, kind := range s.schema.Kinds {
+		if kindName == req.KindName {
+			kindInfo = kind
+			break
+		}
+	}
+	if kindInfo == nil {
+		return nil, fmt.Errorf("no such kind")
+	}
+
+	if req.Entity.Key == nil {
+		// we need to automatically generate a key for this entity
+		firestoreCollection := client.Collection(req.KindName)
+
+		newKey, err := convertDocumentRefToMetaKey(
+			firestoreCollection.NewDoc(),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Entity.Key = newKey
+	}
+
+	ref, data, err := convertMetaEntityToRefAndDataMap(
+		client,
+		req.Entity,
+		kindInfo,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if ref.ID == "" {
+		ref, _, err = ref.Parent.Add(ctx, data)
+	} else {
+		_, err = ref.Create(ctx, data)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := convertDocumentRefToMetaKey(
+		ref,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// set the key
+	req.Entity.Key = key
+
+	return &MetaCreateEntityResponse{
+		Entity: req.Entity,
+	}, nil
 }

@@ -1,82 +1,25 @@
-# install Go
-FROM ubuntu:18.04 AS go_install
+FROM networknext/grpc-toolkit:latest AS protocol_build
 
-ENV GOROOT=/usr/local/go
-ENV GOPATH=/go
-ENV PATH="/go/bin:/usr/local/go/bin:${PATH}"
+# Build the TypeScript protocol buffers.
 
-RUN apt update
-RUN apt install -y wget
-RUN apt install -y git
-
-RUN cd /tmp && \
-  wget https://dl.google.com/go/go1.11.linux-amd64.tar.gz && \
-  tar -xvf go1.11.linux-amd64.tar.gz && \
-  mv go /usr/local
-
-RUN go get -u github.com/golang/protobuf/protoc-gen-go
-
-# install protoc
-FROM ubuntu:18.04 AS protoc_install
-
-RUN apt update
-RUN apt install -y curl
-RUN apt install -y unzip
-
-WORKDIR /tmp
-RUN mkdir /protoc
-RUN curl -OL https://github.com/google/protobuf/releases/download/v3.6.0/protoc-3.6.0-linux-x86_64.zip
-RUN unzip protoc-3.6.0-linux-x86_64.zip -d /protoc
-
-# generate meta protocol buffers for Go
-FROM ubuntu:18.04 AS meta_generate_go
-
-ENV GOROOT=/usr/local/go
-ENV GOPATH=/go
-ENV PATH="/go/bin:/usr/local/go/bin:${PATH}"
-
-COPY --from=protoc_install /protoc /protoc
-COPY --from=go_install /go /go
-COPY /server/meta.proto /meta.proto
-RUN mkdir /meta
-RUN /protoc/bin/protoc --go_out=plugins=grpc:meta ./meta.proto
-RUN sed -i 's/package meta/package main/' /meta/meta.pb.go
-
-# generate meta protocol buffers for TypeScript
-FROM ubuntu:18.04 AS meta_generate_ts
-
-RUN apt update
-RUN apt install -y curl
-RUN apt install -y unzip
-RUN apt install -y gnupg2
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
-RUN apt-get install -y nodejs
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt-get update && apt-get install yarn
-
-RUN yarn global add ts-protoc-gen google-protobuf
-
-RUN mkdir /protoc-gen && \
-  cd /protoc-gen && \
-  wget https://github.com/grpc/grpc-web/releases/download/1.0.3/protoc-gen-grpc-web-1.0.3-linux-x86_64 && \
-  mv protoc-gen-grpc-web-1.0.3-linux-x86_64 /usr/local/bin/protoc-gen-grpc-web && \
-  chmod a+x /usr/local/bin/protoc-gen-grpc-web
-
-COPY --from=protoc_install /protoc /protoc
-COPY /server/meta.proto /meta.proto
-COPY /server-ui/api-fixups.js /api-fixups.js
-WORKDIR /
-RUN mkdir -p /src/api /src/api_grpc
+COPY server/meta.proto /workdir_ts/
+WORKDIR /workdir_ts/
+RUN mkdir -p /workdir_ts/api /workdir_ts/api_grpc
 RUN /protoc/bin/protoc \
   --plugin="protoc-gen-ts=$(yarn global bin)/protoc-gen-ts" \
-  --js_out="import_style=commonjs:src/api" \
-  --grpc-web_out="import_style=commonjs+dts:mode=grpcwebtext:src/api_grpc" \
-  --ts_out="service=false:src/api" \
-  meta.proto
-RUN mv src/api_grpc/*grpc_web* src/api/
-RUN rm -Rf src/api_grpc
-RUN node api-fixups.js
+  --js_out="import_style=commonjs:api/" \
+  --grpc-web_out="import_style=commonjs+dts,mode=grpcwebtext:api_grpc/" \
+  *.proto
+RUN mv api_grpc/* api/
+RUN rm -Rf api_grpc
+RUN sed -i '1s@^@/* eslint-disable */\n@' api/*.js
+
+# Build the Go protocol buffers.
+
+COPY server/meta.proto /workdir_go/
+WORKDIR /workdir_go/
+RUN ls /workdir_go/ && /protoc/bin/protoc --go_out=plugins=grpc:. meta.proto
+RUN sed -i 's/package meta/package main/' /workdir_go/meta.pb.go
 
 # build server
 FROM ubuntu:18.04 AS build_server
@@ -89,7 +32,7 @@ COPY --from=go_install /usr/local/go /usr/local/go
 COPY --from=go_install /go /go
 
 COPY server /src
-COPY --from=meta_generate_go /meta/meta.pb.go /src/meta.pb.go
+COPY --from=protocol_build /workdir_go/meta.pb.go /src/meta.pb.go
 WORKDIR /src
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -mod vendor -o /server
 
@@ -124,7 +67,7 @@ RUN apt-get update && apt-get install yarn
 COPY server-ui /src
 WORKDIR /src
 RUN yarn
-COPY --from=meta_generate_ts /src/api /src/api
+COPY --from=protocol_build /workdir_ts/api /src/api
 RUN yarn build
 
 # test server & client

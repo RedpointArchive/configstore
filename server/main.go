@@ -553,7 +553,6 @@ func main() {
 			if wrappedGrpc.IsGrpcWebRequest(req) ||
 				wrappedGrpc.IsAcceptableGrpcCorsRequest(req) ||
 				wrappedGrpc.IsGrpcWebSocketRequest(req) {
-				// HACK because this header doesn't seem to get set properly.
 				resp.Header().Set("Content-Type", "application/grpc-web-text")
 				wrappedGrpc.ServeHTTP(resp, req)
 				return

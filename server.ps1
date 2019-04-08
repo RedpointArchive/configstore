@@ -11,71 +11,60 @@ if ($generate) {
 
 Push-Location $PSScriptRoot\server
 try {
-    if (!$SkipDeps) {
-        Write-Output "Fetch deps..."
-        go get -u github.com/golang/protobuf/protoc-gen-go
-        if ($LastExitCode -ne 0) {
-            exit $LastExitCode
-        }
-    }
-
-    Write-Output "Generate meta.go..."
-    .\protoc.exe --go_out=plugins=grpc:meta .\meta.proto
+    Write-Output "Building protocol buffers..."
+    $env:DOCKER_BUILDKIT = 1
+    docker.exe build .. -f ../Dockerfile --target=protocol_build --tag=configstore_protocol_build
     if ($LastExitCode -ne 0) {
         exit $LastExitCode
     }
-    $Content = Get-Content -Raw -Path .\meta\meta.pb.go
-    $Content = $Content.Replace("package meta", "package main")
-    Set-Content -Path .\meta\meta.pb.go -Value $Content
-    Move-Item -Path .\meta\meta.pb.go -Destination .\meta.pb.go -Force
 
-    Write-Output "Generate TypeScript gRPC client..."
-    Push-Location ..\server-ui
+    $DockerContainerId = $null
     try {
-        if (!$SkipDeps) {
-            yarn
-            if ($LastExitCode -ne 0) {
-                exit $LastExitCode
-            }
+        $DockerContainerId = $(docker.exe create configstore_protocol_build)
+        if (Test-Path $PSScriptRoot/workdir_ts/) {
+            Remove-Item $PSScriptRoot/workdir_ts/ -Force -Recurse
         }
-        if (Test-Path .\node_modules\.bin\protoc-gen-ts.cmd) {
-            if (!(Test-Path src\api)) {
-                New-Item -ItemType Directory -Path src\api | Out-Null
-            }
-            ..\server\protoc.exe `
-                --plugin="protoc-gen-ts=.\node_modules\.bin\protoc-gen-ts.cmd" `
-                --js_out="import_style=commonjs,binary:src/api" `
-                --ts_out="service=true:src/api" `
-                -I ..\server `
-                meta.proto
-            if ($LastExitCode -ne 0) {
-                exit $LastExitCode
-            }
-            $Content = Get-Content -Raw -Path .\src\api\meta_pb.js
-            $Content = $Content.Replace("// GENERATED CODE", "/* eslint-disable */`n// GENERATED CODE")
-            Set-Content -Path .\src\api\meta_pb.js -Value $Content
+        if (Test-Path $PSScriptRoot/workdir_go/) {
+            Remove-Item $PSScriptRoot/workdir_go/ -Force -Recurse
         }
-    } finally {
-        Pop-Location
+        docker.exe cp ${DockerContainerId}:/workdir_ts/ $PSScriptRoot/workdir_ts/
+        docker.exe cp ${DockerContainerId}:/workdir_go/ $PSScriptRoot/workdir_go/
+        Start-Sleep -Seconds 1
+        Copy-Item $PSScriptRoot/workdir_go/meta.pb.go $PSScriptRoot/server/meta.pb.go -Force
+        if (Test-Path $PSScriptRoot/server-ui/src/api) {
+            Remove-Item $PSScriptRoot/server-ui/src/api -Recurse -Force
+            Start-Sleep -Seconds 1
+        }
+        Copy-Item -Recurse $PSScriptRoot/workdir_ts/api $PSScriptRoot/server-ui/src/api -Force
+        if (Test-Path $PSScriptRoot/workdir_ts/) {
+            Remove-Item $PSScriptRoot/workdir_ts/ -Force -Recurse
+        }
+        if (Test-Path $PSScriptRoot/workdir_go/) {
+            Remove-Item $PSScriptRoot/workdir_go/ -Force -Recurse
+        }
+    }
+    finally {
+        docker.exe rm $DockerContainerId
     }
 
     Write-Output "Building server..."
-    go build -mod vendor -o server.exe .
+    go.exe build -mod vendor -o server.exe .
     if ($LastExitCode -ne 0) {
         exit $LastExitCode
     }
 
     if (!$BuildOnly) {
         Write-Output "Running & testing server..."
-        $env:CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID="configstore-test-001"
-        $env:CONFIGSTORE_GRPC_PORT="13389"
-        $env:CONFIGSTORE_HTTP_PORT="13390"
-        $env:CONFIGSTORE_SCHEMA_PATH="schema.json"
+        $env:CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID = "configstore-test-001"
+        $env:CONFIGSTORE_GRPC_PORT = "13389"
+        $env:CONFIGSTORE_HTTP_PORT = "13390"
+        $env:CONFIGSTORE_SCHEMA_PATH = "schema.json"
         .\server.exe $Args
         if ($LastExitCode -ne 0) {
             exit $LastExitCode
         }
     }
-} finally {
+}
+finally {
     Pop-Location
 }

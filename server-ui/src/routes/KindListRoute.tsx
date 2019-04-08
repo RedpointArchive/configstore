@@ -4,14 +4,15 @@ import { RouteComponentProps } from "react-router";
 import {
   GetSchemaResponse,
   MetaListEntitiesResponse,
-  MetaListEntitiesRequest
+  MetaListEntitiesRequest,
+  MetaDeleteEntityRequest
 } from "../api/meta_pb";
-import { g, serializeKey } from "../core";
+import { g, serializeKey, deserializeKey } from "../core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
-import { grpcHost } from "../svcHost"
+import { grpcHost } from "../svcHost";
 import { useAsync } from "react-async";
 
 export interface KindListRouteMatch {
@@ -28,31 +29,30 @@ interface SetHolder {
 }
 
 const listKinds = async (props: any) => {
-  const svc = new ConfigstoreMetaServicePromiseClient(
-    grpcHost,
-    null,
-    null
-  );
+  const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
   const req = new MetaListEntitiesRequest();
-  req.setKindname(props.kind); 
+  req.setKindname(props.kind);
   req.setStart("");
   req.setLimit(0);
   return await svc.metaList(req, {});
-}
+};
 
 export const KindListRoute = (props: KindListRouteProps) => {
+  const [refreshCount, setRefreshCount] = useState<number>(0);
   const { data, error, isLoading } = useAsync<MetaListEntitiesResponse>({
     promiseFn: listKinds,
-    watch: props.match.params.kind, 
-    kind: props.match.params.kind,
+    watch: refreshCount + "_" + props.match.params.kind,
+    kind: props.match.params.kind
   } as any);
   const [selected, setSelected] = useState<SetHolder>({ v: new Set<string>() });
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const kindSchema = g(props.schema.getSchema())
-    .getKindsMap().get(props.match.params.kind);
-    if (kindSchema === undefined) {
-      return (<>No such kind.</>);
-    }
+    .getKindsMap()
+    .get(props.match.params.kind);
+  if (kindSchema === undefined) {
+    return <>No such kind.</>;
+  }
 
   const kindDisplay =
     selected.v.size == 1
@@ -72,9 +72,8 @@ export const KindListRoute = (props: KindListRouteProps) => {
           <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
         </td>
       </tr>
-    ]
-  }
-  else if (error) {
+    ];
+  } else if (error) {
     dataset = [
       <tr key="loading">
         <td
@@ -87,8 +86,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
         </td>
       </tr>
     ];
-  }
-  else if (data !== undefined && data.getEntitiesList().length == 0) {
+  } else if (data !== undefined && data.getEntitiesList().length == 0) {
     dataset = [
       <tr key="loading">
         <td
@@ -156,6 +154,24 @@ export const KindListRoute = (props: KindListRouteProps) => {
     }
   }
 
+  const startDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    setIsDeleting(true);
+    try {
+      const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
+      const arrayCopy = Array.from(selected.v);
+      for (const key of arrayCopy) {
+        const req = new MetaDeleteEntityRequest();
+        req.setKindname(props.match.params.kind);
+        req.setKey(deserializeKey(key));
+        await svc.metaDelete(req, {});
+        selected.v.delete(key);
+      }
+      setRefreshCount(refreshCount + 1);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
       <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-0 border-bottom">
@@ -168,12 +184,23 @@ export const KindListRoute = (props: KindListRouteProps) => {
               (selected.v.size == 0 ? "btn-outline-danger" : "btn-danger")
             }
             disabled={selected.v.size == 0}
+            onClick={startDelete}
           >
+            {isDeleting ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} spin />
+                &nbsp;
+              </>
+            ) : (
+              ""
+            )}
             Delete {selected.v.size} {kindDisplay}
           </button>
           <Link
-            to={`/kind/${props.match.params.kind}/create`}
-            className="btn btn-sm btn-success"
+            to={isDeleting ? "#" : `/kind/${props.match.params.kind}/create`}
+            className={
+              "btn btn-sm btn-success" + (isDeleting ? " disabled" : "")
+            }
           >
             Create {props.match.params.kind}
           </Link>
@@ -186,6 +213,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
               <th className="w-checkbox">
                 <input
                   type="checkbox"
+                  readOnly={isDeleting}
                   checked={
                     data !== undefined
                       ? data
@@ -199,6 +227,9 @@ export const KindListRoute = (props: KindListRouteProps) => {
                       : false
                   }
                   onChange={e => {
+                    if (isDeleting) {
+                      return;
+                    }
                     if (data !== undefined) {
                       if (e.target.checked) {
                         selected.v.clear();
