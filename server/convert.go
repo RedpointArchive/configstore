@@ -368,8 +368,6 @@ func convertMetaEntityToRefAndDataMap(
 	m := make(map[string]interface{})
 
 	for _, value := range entity.Values {
-		fmt.Printf("processing value: %d\n", value.Id)
-
 		name := ""
 		for _, field := range schema.Fields {
 			if field.Id == value.Id {
@@ -379,11 +377,8 @@ func convertMetaEntityToRefAndDataMap(
 		}
 		if name == "" {
 			// field not found?
-			fmt.Printf("field not found: %d\n", value.Id)
 			continue
 		}
-
-		fmt.Printf("updating field: %s\n", name)
 
 		switch value.Type {
 		case ValueType_double:
@@ -394,7 +389,6 @@ func convertMetaEntityToRefAndDataMap(
 			break
 		case ValueType_string:
 			m[name] = value.StringValue
-			fmt.Printf("%s = %s\n", name, value.StringValue)
 			break
 		case ValueType_timestamp:
 			m[name] = value.TimestampValue
@@ -422,7 +416,6 @@ func convertMetaEntityToRefAndDataMap(
 			break
 		default:
 			// todo, log?
-			fmt.Printf("unknown field type: %s %d\n", name, value.Type)
 			break
 		}
 	}
