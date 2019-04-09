@@ -8,7 +8,13 @@ import {
   MetaDeleteEntityRequest,
   ValueType
 } from "../api/meta_pb";
-import { g, serializeKey, deserializeKey } from "../core";
+import {
+  g,
+  serializeKey,
+  deserializeKey,
+  prettifyKey,
+  getLastKindOfKey
+} from "../core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSpinner,
@@ -129,7 +135,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 g(entity.getKey())
               )}`}
             >
-              {serializeKey(g(entity.getKey()))}
+              {prettifyKey(g(entity.getKey()))}
             </Link>
           </td>
           {kindSchema.getFieldsList().map(field => {
@@ -160,11 +166,21 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 );
               case ValueType.KEY:
                 const childKey = fieldData.getKeyvalue();
-                return (
-                  <td key={field.getId()}>
-                    {childKey === undefined ? "-" : serializeKey(childKey)}
-                  </td>
-                );
+                if (childKey === undefined) {
+                  return <td key={field.getId()}>-</td>;
+                } else {
+                  return (
+                    <td key={field.getId()}>
+                      <Link
+                        to={`/kind/${getLastKindOfKey(
+                          childKey
+                        )}/edit/${serializeKey(g(childKey))}`}
+                      >
+                        {prettifyKey(childKey)}
+                      </Link>
+                    </td>
+                  );
+                }
               case ValueType.BOOLEAN:
                 return (
                   <td key={field.getId()}>
@@ -182,8 +198,6 @@ export const KindListRoute = (props: KindListRouteProps) => {
                   </td>
                 );
             }
-
-            return <td key={field.getId()}>{fieldData.getStringvalue()}</td>;
           })}
           <td className="w-checkbox">
             <Link
@@ -198,6 +212,10 @@ export const KindListRoute = (props: KindListRouteProps) => {
       );
     }
   }
+
+  const doRefresh = () => {
+    setRefreshCount(refreshCount + 1);
+  };
 
   const startDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
     setIsDeleting(true);
@@ -222,6 +240,16 @@ export const KindListRoute = (props: KindListRouteProps) => {
       <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-0 border-bottom">
         <h1 className="h2">Kind: {props.match.params.kind}</h1>
         <div className="btn-toolbar mb-2 mb-md-0">
+          <button
+            type="button"
+            className={
+              "btn btn-sm mr-2 " +
+              (selected.v.size == 0 ? "btn-outline-primary" : "btn-primary")
+            }
+            onClick={doRefresh}
+          >
+            Refresh {kindDisplay}
+          </button>
           <button
             type="button"
             className={

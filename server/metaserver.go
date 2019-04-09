@@ -26,84 +26,6 @@ func (s *configstoreMetaServiceServer) GetDefaultPartitionId(ctx context.Context
 	}, nil
 }
 
-func convertSnapshotToMetaEntity(kindInfo *SchemaKind, snapshot *firestore.DocumentSnapshot) (*MetaEntity, error) {
-	key, err := convertDocumentRefToMetaKey(snapshot.Ref)
-	if err != nil {
-		return nil, fmt.Errorf("error while converting firestore ref to meta key: %v", err)
-	}
-	entity := &MetaEntity{
-		Key: key,
-	}
-	for key, value := range snapshot.Data() {
-		for _, field := range kindInfo.Fields {
-			if field.Name == key {
-				f := &Value{
-					Id:   field.Id,
-					Type: field.Type,
-				}
-				switch field.Type {
-				case ValueType_double:
-					switch v := value.(type) {
-					case float64:
-						f.DoubleValue = v
-					default:
-						f.DoubleValue = 0
-					}
-				case ValueType_int64:
-					switch v := value.(type) {
-					case int64:
-						f.Int64Value = v
-					default:
-						f.Int64Value = 0
-					}
-				case ValueType_string:
-					switch v := value.(type) {
-					case string:
-						f.StringValue = v
-					default:
-						f.StringValue = ""
-					}
-				case ValueType_timestamp:
-					switch v := value.(type) {
-					case []byte:
-						f.TimestampValue = v
-					default:
-						f.TimestampValue = nil
-					}
-				case ValueType_boolean:
-					switch v := value.(type) {
-					case bool:
-						f.BooleanValue = v
-					default:
-						f.BooleanValue = false
-					}
-				case ValueType_bytes:
-					switch v := value.(type) {
-					case []byte:
-						f.BytesValue = v
-					default:
-						f.BytesValue = nil
-					}
-				case ValueType_key:
-					switch v := value.(type) {
-					case *firestore.DocumentRef:
-						f.KeyValue, err = convertDocumentRefToMetaKey(v)
-						if err != nil {
-							f.KeyValue = nil
-							fmt.Printf("error while converting firestore ref to meta key: %v", err)
-						}
-					default:
-						f.KeyValue = nil
-					}
-				}
-				entity.Values = append(entity.Values, f)
-				break
-			}
-		}
-	}
-	return entity, nil
-}
-
 func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error) {
 	var start interface{}
 	if req.Start != nil {
@@ -227,7 +149,7 @@ func (s *configstoreMetaServiceServer) MetaUpdate(ctx context.Context, req *Meta
 		kindInfo,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't convert meta entity to ref and map: %v", err)
 	}
 
 	if ref == nil {
@@ -236,7 +158,7 @@ func (s *configstoreMetaServiceServer) MetaUpdate(ctx context.Context, req *Meta
 
 	_, err = ref.Set(ctx, data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't set data against entity (Firestore): %v", err)
 	}
 
 	return &MetaUpdateEntityResponse{

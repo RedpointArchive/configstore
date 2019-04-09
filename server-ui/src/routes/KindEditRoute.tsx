@@ -12,7 +12,7 @@ import {
   MetaUpdateEntityRequest,
   MetaCreateEntityRequest
 } from "../api/meta_pb";
-import { g, deserializeKey, serializeKey } from "../core";
+import { g, deserializeKey, serializeKey, prettifyKey } from "../core";
 import { Link } from "react-router-dom";
 import { useAsync } from "react-async";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
@@ -113,7 +113,9 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
 
   let header = `Create Entity: ${props.match.params.kind}`;
   if (!isCreate) {
-    header = `Edit Entity: ${props.match.params.kind}`;
+    header = `Edit Entity: ${prettifyKey(
+      deserializeKey(props.match.params.id)
+    )}`;
     const response = useAsync<MetaGetEntityResponse>({
       promiseFn: getKind,
       watch: props.match.params.kind,
@@ -206,7 +208,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
             className="form-control"
             value={
               !isCreate
-                ? serializeKey(g(editableValue.value.getKey()))
+                ? prettifyKey(g(editableValue.value.getKey()))
                 : "(Automatically generated on save)"
             }
             readOnly={true}
@@ -245,6 +247,24 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                     type="number"
                     value={value}
                     readOnly={field.getReadonly() || isSaving}
+                    onChange={e => {
+                      if (editableValue !== undefined) {
+                        const value = new Value();
+                        switch (field.getType()) {
+                          case ValueType.DOUBLE:
+                            value.setDoublevalue(parseFloat(e.target.value));
+                            break;
+                          case ValueType.INT64:
+                            value.setInt64value(parseInt(e.target.value));
+                            break;
+                          case ValueType.UINT64:
+                            value.setUint64value(parseInt(e.target.value));
+                            break;
+                        }
+                        setConditionalField(editableValue, field, value);
+                        setEditableValue({ value: editableValue.value });
+                      }
+                    }}
                   />
                   <small className="form-text text-muted">
                     {field.getComment()}
@@ -285,11 +305,29 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
               return (
                 <div className="form-check" key={field.getId()}>
                   <input
+                    id={"checkbox_" + field.getId()}
                     type="checkbox"
                     className="form-check-input"
+                    checked={getConditionalField(
+                      editableValue,
+                      field,
+                      false,
+                      value => value.getBooleanvalue()
+                    )}
                     readOnly={field.getReadonly() || isSaving}
+                    onChange={e => {
+                      if (editableValue !== undefined) {
+                        const value = new Value();
+                        value.setBooleanvalue(e.target.checked);
+                        setConditionalField(editableValue, field, value);
+                        setEditableValue({ value: editableValue.value });
+                      }
+                    }}
                   />
-                  <label className="form-check-label">
+                  <label
+                    htmlFor={"checkbox_" + field.getId()}
+                    className="form-check-label"
+                  >
                     {g(field.getEditor()).getDisplayname()}
                   </label>
                   <small className="form-text text-muted">

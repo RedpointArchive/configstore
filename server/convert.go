@@ -147,6 +147,10 @@ func convertMetaKeyToDocumentRef(
 	client *firestore.Client,
 	key *Key,
 ) (*firestore.DocumentRef, error) {
+	if key == nil || key.PartitionId == nil {
+		return nil, fmt.Errorf("key or key partition ID is nil; if the caller wants to allow nil keys, it must check to see if the input key is nil first")
+	}
+
 	namespace := key.PartitionId.Namespace
 
 	firestoreTestCollection := client.Collection("Test")
@@ -400,14 +404,18 @@ func convertMetaEntityToRefAndDataMap(
 			m[name] = value.BytesValue
 			break
 		case ValueType_key:
-			ref, err := convertMetaKeyToDocumentRef(
-				client,
-				value.KeyValue,
-			)
-			if err != nil {
-				return nil, nil, err
+			if value.KeyValue == nil {
+				m[name] = nil
+			} else {
+				ref, err := convertMetaKeyToDocumentRef(
+					client,
+					value.KeyValue,
+				)
+				if err != nil {
+					return nil, nil, err
+				}
+				m[name] = ref
 			}
-			m[name] = ref
 			break
 		case ValueType_uint64:
 			// We store uint64 as int64 inside Firestore, as Firestore
@@ -435,4 +443,91 @@ func convertMetaEntityToRefAndDataMap(
 	*/
 
 	return key, m, nil
+}
+
+func convertSnapshotToMetaEntity(kindInfo *SchemaKind, snapshot *firestore.DocumentSnapshot) (*MetaEntity, error) {
+	key, err := convertDocumentRefToMetaKey(snapshot.Ref)
+	if err != nil {
+		return nil, fmt.Errorf("error while converting firestore ref to meta key: %v", err)
+	}
+	entity := &MetaEntity{
+		Key: key,
+	}
+	for key, value := range snapshot.Data() {
+		for _, field := range kindInfo.Fields {
+			if field.Name == key {
+				f := &Value{
+					Id:   field.Id,
+					Type: field.Type,
+				}
+				switch field.Type {
+				case ValueType_double:
+					switch v := value.(type) {
+					case float64:
+						f.DoubleValue = v
+					default:
+						f.DoubleValue = 0
+					}
+				case ValueType_int64:
+					switch v := value.(type) {
+					case int64:
+						f.Int64Value = v
+					default:
+						f.Int64Value = 0
+					}
+				case ValueType_uint64:
+					switch v := value.(type) {
+					case int64:
+						f.Uint64Value = uint64(v)
+					default:
+						f.Uint64Value = 0
+					}
+				case ValueType_string:
+					switch v := value.(type) {
+					case string:
+						f.StringValue = v
+					default:
+						f.StringValue = ""
+					}
+				case ValueType_timestamp:
+					switch v := value.(type) {
+					case []byte:
+						f.TimestampValue = v
+					default:
+						f.TimestampValue = nil
+					}
+				case ValueType_boolean:
+					switch v := value.(type) {
+					case bool:
+						f.BooleanValue = v
+					default:
+						f.BooleanValue = false
+					}
+				case ValueType_bytes:
+					switch v := value.(type) {
+					case []byte:
+						f.BytesValue = v
+					default:
+						f.BytesValue = nil
+					}
+				case ValueType_key:
+					switch v := value.(type) {
+					case *firestore.DocumentRef:
+						f.KeyValue, err = convertDocumentRefToMetaKey(v)
+						if err != nil {
+							f.KeyValue = nil
+							fmt.Printf("error while converting firestore ref to meta key: %v", err)
+						}
+					default:
+						f.KeyValue = nil
+					}
+				default:
+					return nil, fmt.Errorf("field type %d not supported in convertSnapshotToMetaEntity", field.Type)
+				}
+				entity.Values = append(entity.Values, f)
+				break
+			}
+		}
+	}
+	return entity, nil
 }

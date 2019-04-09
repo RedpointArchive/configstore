@@ -4,6 +4,30 @@ export function g<T>(v: T | undefined): T {
   return v as T;
 }
 
+export function getLastKindOfKey(key: Key): string {
+  if (key.getPathList().length === 0) {
+    return "";
+  }
+
+  const lastComponent = key.getPathList()[key.getPathList().length - 1];
+  return lastComponent.getKind();
+}
+
+export function prettifyKey(key: Key): string {
+  return `${key
+    .getPathList()
+    .map(pe => {
+      if (pe.getIdtypeCase() === PathElement.IdtypeCase.ID) {
+        return `${pe.getKind()} (${pe.getId()})`;
+      } else if (pe.getIdtypeCase() === PathElement.IdtypeCase.NAME) {
+        return `${pe.getKind()} "${pe.getName()}"`;
+      } else {
+        return `${pe.getKind()} ?`;
+      }
+    })
+    .join(" -> ")}`;
+}
+
 export function serializeKey(key: Key): string {
   return `ns=${g(key.getPartitionid()).getNamespace()}|${key
     .getPathList()

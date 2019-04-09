@@ -115,9 +115,11 @@ func SerializeKey(key *Key) string {
 	var elements []string
 	for _, pathElement := range key.Path {
 		if _, ok := pathElement.IdType.(*PathElement_Id); ok {
-			elements = append(elements, fmt.Sprintf("id=%d", pathElement.GetId()))
+			elements = append(elements, fmt.Sprintf("%s:id=%d", pathElement.GetKind(), pathElement.GetId()))
+		} else if _, ok := pathElement.IdType.(*PathElement_Name); ok {
+			elements = append(elements, fmt.Sprintf("%s:name=%s", pathElement.GetKind(), pathElement.GetName()))
 		} else {
-			elements = append(elements, fmt.Sprintf("name=%s", pathElement.GetName()))
+			elements = append(elements, fmt.Sprintf("%s:unset", pathElement.GetKind()))
 		}
 	}
 	return fmt.Sprintf("ns=%s|%s", key.PartitionId.Namespace, strings.Join(elements, "|"))
