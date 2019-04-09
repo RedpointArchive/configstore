@@ -5,11 +5,16 @@ import {
   GetSchemaResponse,
   MetaListEntitiesResponse,
   MetaListEntitiesRequest,
-  MetaDeleteEntityRequest
+  MetaDeleteEntityRequest,
+  ValueType
 } from "../api/meta_pb";
 import { g, serializeKey, deserializeKey } from "../core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faSpinner,
+  faPencilAlt,
+  faCheck
+} from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
 import { grpcHost } from "../svcHost";
@@ -138,6 +143,46 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 </td>
               );
             }
+            switch (fieldData.getType()) {
+              case ValueType.STRING:
+                return (
+                  <td key={field.getId()}>{fieldData.getStringvalue()}</td>
+                );
+              case ValueType.DOUBLE:
+                return (
+                  <td key={field.getId()}>{fieldData.getDoublevalue()}</td>
+                );
+              case ValueType.INT64:
+                return <td key={field.getId()}>{fieldData.getInt64value()}</td>;
+              case ValueType.UINT64:
+                return (
+                  <td key={field.getId()}>{fieldData.getUint64value()}</td>
+                );
+              case ValueType.KEY:
+                const childKey = fieldData.getKeyvalue();
+                return (
+                  <td key={field.getId()}>
+                    {childKey === undefined ? "-" : serializeKey(childKey)}
+                  </td>
+                );
+              case ValueType.BOOLEAN:
+                return (
+                  <td key={field.getId()}>
+                    {fieldData.getBooleanvalue() ? (
+                      <FontAwesomeIcon icon={faCheck} fixedWidth />
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                );
+              default:
+                return (
+                  <td key={field.getId()}>
+                    (unknown type {fieldData.getType()})
+                  </td>
+                );
+            }
+
             return <td key={field.getId()}>{fieldData.getStringvalue()}</td>;
           })}
           <td className="w-checkbox">

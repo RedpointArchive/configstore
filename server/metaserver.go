@@ -38,7 +38,8 @@ func convertSnapshotToMetaEntity(kindInfo *SchemaKind, snapshot *firestore.Docum
 		for _, field := range kindInfo.Fields {
 			if field.Name == key {
 				f := &Value{
-					Id: field.Id,
+					Id:   field.Id,
+					Type: field.Type,
 				}
 				switch field.Type {
 				case ValueType_double:
