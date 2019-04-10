@@ -191,6 +191,10 @@ export const KindListRoute = (props: KindListRouteProps) => {
                     )}
                   </td>
                 );
+              case ValueType.BYTES:
+                return (
+                  <td key={field.getId()}><em>(bytes)</em></td>
+                );
               default:
                 return (
                   <td key={field.getId()}>

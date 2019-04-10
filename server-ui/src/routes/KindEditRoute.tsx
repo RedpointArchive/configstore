@@ -350,6 +350,35 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                   </small>
                 </div>
               );
+            case ValueType.BYTES: {
+              const value = getConditionalField(
+                editableValue,
+                field,
+                "",
+                value => value.getBytesvalue_asB64()
+              );
+              return (
+                <div className="form-group" key={field.getId()}>
+                  <label>{g(field.getEditor()).getDisplayname()}</label>
+                  <input
+                    className="form-control"
+                    value={value}
+                    readOnly={field.getReadonly() || isSaving}
+                    onChange={e => {
+                      if (editableValue !== undefined) {
+                        const value = new Value();
+                        value.setBytesvalue(e.target.value);
+                        setConditionalField(editableValue, field, value);
+                        setEditableValue({ value: editableValue.value });
+                      }
+                    }}
+                  />
+                  <small className="form-text text-muted">
+                    {field.getComment()}
+                  </small>
+                </div>
+              );
+            }
             default:
               return (
                 <div className="form-group" key={field.getId()}>

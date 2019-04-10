@@ -29,7 +29,7 @@ export function prettifyKey(key: Key): string {
 }
 
 export function serializeKey(key: Key): string {
-  return `ns=${g(key.getPartitionid()).getNamespace()}|${key
+  return encodeURIComponent(`ns=${g(key.getPartitionid()).getNamespace()}|${key
     .getPathList()
     .map(pe => {
       if (pe.getIdtypeCase() === PathElement.IdtypeCase.ID) {
@@ -40,11 +40,11 @@ export function serializeKey(key: Key): string {
         return `${pe.getKind()}:unset`;
       }
     })
-    .join("|")}`;
+    .join("|")}`);
 }
 
 export function deserializeKey(keyString: string): Key {
-  const components = keyString.split("|");
+  const components = decodeURIComponent(keyString).split("|");
   const ns = components[0].substr(3);
   const partitionId = new PartitionId();
   partitionId.setNamespace(ns);
