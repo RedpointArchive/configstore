@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func operationDelete(ctx context.Context, schema *Schema, req *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error) {
+func (s *operationProcessor) operationDelete(ctx context.Context, schema *Schema, req *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error) {
 	var kindInfo *SchemaKind
 	for kindName, kind := range schema.Kinds {
 		if kindName == req.KindName {
@@ -18,7 +18,7 @@ func operationDelete(ctx context.Context, schema *Schema, req *MetaDeleteEntityR
 	}
 
 	ref, err := convertMetaKeyToDocumentRef(
-		client,
+		s.client,
 		req.Key,
 	)
 	if err != nil {

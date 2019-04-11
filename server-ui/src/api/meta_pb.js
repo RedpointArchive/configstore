@@ -12,6 +12,7 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = Function('return this')();
 
+var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.exportSymbol('proto.meta.GetDefaultPartitionIdRequest', null, global);
 goog.exportSymbol('proto.meta.GetDefaultPartitionIdResponse', null, global);
 goog.exportSymbol('proto.meta.GetSchemaRequest', null, global);
@@ -704,7 +705,7 @@ proto.meta.Value.toObject = function(includeInstance, msg) {
     doublevalue: +jspb.Message.getFieldWithDefault(msg, 3, 0.0),
     int64value: jspb.Message.getFieldWithDefault(msg, 4, 0),
     stringvalue: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    timestampvalue: msg.getTimestampvalue_asB64(),
+    timestampvalue: (f = msg.getTimestampvalue()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
     booleanvalue: jspb.Message.getFieldWithDefault(msg, 7, false),
     bytesvalue: msg.getBytesvalue_asB64(),
     keyvalue: (f = msg.getKeyvalue()) && proto.meta.Key.toObject(includeInstance, f),
@@ -766,7 +767,8 @@ proto.meta.Value.deserializeBinaryFromReader = function(msg, reader) {
       msg.setStringvalue(value);
       break;
     case 6:
-      var value = /** @type {!Uint8Array} */ (reader.readBytes());
+      var value = new google_protobuf_timestamp_pb.Timestamp;
+      reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
       msg.setTimestampvalue(value);
       break;
     case 7:
@@ -850,11 +852,12 @@ proto.meta.Value.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getTimestampvalue_asU8();
-  if (f.length > 0) {
-    writer.writeBytes(
+  f = message.getTimestampvalue();
+  if (f != null) {
+    writer.writeMessage(
       6,
-      f
+      f,
+      google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
     );
   }
   f = message.getBooleanvalue();
@@ -965,41 +968,32 @@ proto.meta.Value.prototype.setStringvalue = function(value) {
 
 
 /**
- * optional bytes timestampValue = 6;
- * @return {string}
+ * optional google.protobuf.Timestamp timestampValue = 6;
+ * @return {?proto.google.protobuf.Timestamp}
  */
 proto.meta.Value.prototype.getTimestampvalue = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+  return /** @type{?proto.google.protobuf.Timestamp} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 6));
 };
 
 
-/**
- * optional bytes timestampValue = 6;
- * This is a type-conversion wrapper around `getTimestampvalue()`
- * @return {string}
- */
-proto.meta.Value.prototype.getTimestampvalue_asB64 = function() {
-  return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getTimestampvalue()));
-};
-
-
-/**
- * optional bytes timestampValue = 6;
- * Note that Uint8Array is not supported on all browsers.
- * @see http://caniuse.com/Uint8Array
- * This is a type-conversion wrapper around `getTimestampvalue()`
- * @return {!Uint8Array}
- */
-proto.meta.Value.prototype.getTimestampvalue_asU8 = function() {
-  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getTimestampvalue()));
-};
-
-
-/** @param {!(string|Uint8Array)} value */
+/** @param {?proto.google.protobuf.Timestamp|undefined} value */
 proto.meta.Value.prototype.setTimestampvalue = function(value) {
-  jspb.Message.setProto3BytesField(this, 6, value);
+  jspb.Message.setWrapperField(this, 6, value);
+};
+
+
+proto.meta.Value.prototype.clearTimestampvalue = function() {
+  this.setTimestampvalue(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.Value.prototype.hasTimestampvalue = function() {
+  return jspb.Message.getField(this, 6) != null;
 };
 
 

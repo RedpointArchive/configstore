@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func operationCreate(ctx context.Context, schema *Schema, req *MetaCreateEntityRequest) (*MetaCreateEntityResponse, error) {
+func (s *operationProcessor) operationCreate(ctx context.Context, schema *Schema, req *MetaCreateEntityRequest) (*MetaCreateEntityResponse, error) {
 	var kindInfo *SchemaKind
 	for kindName, kind := range schema.Kinds {
 		if kindName == req.KindName {
@@ -19,7 +19,7 @@ func operationCreate(ctx context.Context, schema *Schema, req *MetaCreateEntityR
 
 	if req.Entity.Key == nil {
 		// we need to automatically generate a key for this entity
-		firestoreCollection := client.Collection(req.KindName)
+		firestoreCollection := s.client.Collection(req.KindName)
 
 		newKey, err := convertDocumentRefToMetaKey(
 			firestoreCollection.NewDoc(),
@@ -32,7 +32,7 @@ func operationCreate(ctx context.Context, schema *Schema, req *MetaCreateEntityR
 	}
 
 	ref, data, err := convertMetaEntityToRefAndDataMap(
-		client,
+		s.client,
 		req.Entity,
 		kindInfo,
 	)

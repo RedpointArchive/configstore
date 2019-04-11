@@ -1,5 +1,7 @@
 import * as jspb from "google-protobuf"
 
+import * as google_protobuf_timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb';
+
 export class PartitionId extends jspb.Message {
   getNamespace(): string;
   setNamespace(value: string): void;
@@ -96,10 +98,10 @@ export class Value extends jspb.Message {
   getStringvalue(): string;
   setStringvalue(value: string): void;
 
-  getTimestampvalue(): Uint8Array | string;
-  getTimestampvalue_asU8(): Uint8Array;
-  getTimestampvalue_asB64(): string;
-  setTimestampvalue(value: Uint8Array | string): void;
+  getTimestampvalue(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setTimestampvalue(value?: google_protobuf_timestamp_pb.Timestamp): void;
+  hasTimestampvalue(): boolean;
+  clearTimestampvalue(): void;
 
   getBooleanvalue(): boolean;
   setBooleanvalue(value: boolean): void;
@@ -132,7 +134,7 @@ export namespace Value {
     doublevalue: number,
     int64value: number,
     stringvalue: string,
-    timestampvalue: Uint8Array | string,
+    timestampvalue?: google_protobuf_timestamp_pb.Timestamp.AsObject,
     booleanvalue: boolean,
     bytesvalue: Uint8Array | string,
     keyvalue?: Key.AsObject,

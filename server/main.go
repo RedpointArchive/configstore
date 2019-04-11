@@ -11,11 +11,8 @@ import (
 	"net/url"
 	"os"
 
-	"cloud.google.com/go/firestore"
-
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jhump/protoreflect/desc/protoprint"
-	"github.com/jhump/protoreflect/dynamic"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 
@@ -42,8 +39,6 @@ const (
 	runModeServe    runMode = "serve"
 	runModeGenerate runMode = "generate"
 )
-
-var client *firestore.Client
 
 func main() {
 	mode := runModeServe
@@ -86,7 +81,7 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		client, err = app.Firestore(ctx)
+		client, err := app.Firestore(ctx)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -100,10 +95,12 @@ func main() {
 		grpcServer := grpc.NewServer()
 		emptyServer := new(emptyServerInterface)
 		for _, service := range genResult.Services {
-			typedServer := &configstoreTypedService{
-				GenResult: genResult,
-				KindName:  genResult.KindNameMap[service],
-				Service:   service,
+			dynamicProtobufServer := &configstoreDynamicProtobufService{
+				firestoreClient: client,
+				schema:          genResult.Schema,
+				genResult:       genResult,
+				kindName:        genResult.KindNameMap[service],
+				service:         service,
 			}
 
 			grpcServer.RegisterService(
@@ -114,35 +111,35 @@ func main() {
 						{
 							MethodName: "List",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								out, err := typedServer.TypedList(srv, ctx, dec, interceptor)
+								out, err := dynamicProtobufServer.dynamicProtobufList(srv, ctx, dec, interceptor)
 								return out, err
 							},
 						},
 						{
 							MethodName: "Get",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								out, err := typedServer.TypedGet(srv, ctx, dec, interceptor)
+								out, err := dynamicProtobufServer.dynamicProtobufGet(srv, ctx, dec, interceptor)
 								return out, err
 							},
 						},
 						{
 							MethodName: "Update",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								out, err := typedServer.TypedUpdate(srv, ctx, dec, interceptor)
+								out, err := dynamicProtobufServer.dynamicProtobufUpdate(srv, ctx, dec, interceptor)
 								return out, err
 							},
 						},
 						{
 							MethodName: "Create",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								out, err := typedServer.TypedCreate(srv, ctx, dec, interceptor)
+								out, err := dynamicProtobufServer.dynamicProtobufCreate(srv, ctx, dec, interceptor)
 								return out, err
 							},
 						},
 						{
 							MethodName: "Delete",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								out, err := typedServer.TypedDelete(srv, ctx, dec, interceptor)
+								out, err := dynamicProtobufServer.dynamicProtobufDelete(srv, ctx, dec, interceptor)
 								return out, err
 							},
 						},
@@ -153,8 +150,7 @@ func main() {
 							ServerStreams: true,
 							ClientStreams: false,
 							Handler: func(srv interface{}, stream grpc.ServerStream) error {
-								out, err := typedServer.TypedWatch(srv, ctx, dec, interceptor)
-								return out, err
+								return dynamicProtobufServer.dynamicProtobufWatch(srv, ctx, stream)
 							},
 						},
 					},
@@ -166,7 +162,8 @@ func main() {
 
 		// Add the metadata server.
 		RegisterConfigstoreMetaServiceServer(grpcServer, &configstoreMetaServiceServer{
-			schema: genResult.Schema,
+			firestoreClient: client,
+			schema:          genResult.Schema,
 		})
 
 		// Start gRPC server.

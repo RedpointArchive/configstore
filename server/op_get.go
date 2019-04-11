@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func operationGet(ctx context.Context, schema *Schema, req *MetaGetEntityRequest) (*MetaGetEntityResponse, error) {
+func (s *operationProcessor) operationGet(ctx context.Context, schema *Schema, req *MetaGetEntityRequest) (*MetaGetEntityResponse, error) {
 	var kindInfo *SchemaKind
 	for kindName, kind := range schema.Kinds {
 		if kindName == req.KindName {
@@ -18,7 +18,7 @@ func operationGet(ctx context.Context, schema *Schema, req *MetaGetEntityRequest
 	}
 
 	ref, err := convertMetaKeyToDocumentRef(
-		client,
+		s.client,
 		req.Key,
 	)
 	if err != nil {

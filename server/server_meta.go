@@ -2,10 +2,15 @@ package main
 
 import (
 	"context"
+	"fmt"
+
+	"cloud.google.com/go/firestore"
 )
 
 type configstoreMetaServiceServer struct {
-	schema *Schema
+	firestoreClient      *firestore.Client
+	schema               *Schema
+	transactionProcessor *transactionProcessor
 }
 
 func (s *configstoreMetaServiceServer) GetSchema(ctx context.Context, req *GetSchemaRequest) (*GetSchemaResponse, error) {
@@ -15,7 +20,7 @@ func (s *configstoreMetaServiceServer) GetSchema(ctx context.Context, req *GetSc
 }
 
 func (s *configstoreMetaServiceServer) GetDefaultPartitionId(ctx context.Context, req *GetDefaultPartitionIdRequest) (*GetDefaultPartitionIdResponse, error) {
-	firestoreTestCollection := client.Collection("Test")
+	firestoreTestCollection := s.firestoreClient.Collection("Test")
 	firestoreNamespace := firestoreTestCollection.Path[0:(len(firestoreTestCollection.Path) - len(firestoreTestCollection.ID) - 1)]
 
 	return &GetDefaultPartitionIdResponse{
@@ -24,13 +29,15 @@ func (s *configstoreMetaServiceServer) GetDefaultPartitionId(ctx context.Context
 }
 
 func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error) {
-	resp, err := processTransaction(
+	resp, err := s.transactionProcessor.processTransaction(
 		ctx,
 		s.schema,
 		&MetaTransaction{
 			Operations: []*MetaOperation{
 				&MetaOperation{
-					Operation: req,
+					Operation: &MetaOperation_ListRequest{
+						ListRequest: req,
+					},
 				},
 			},
 		},
@@ -45,13 +52,15 @@ func (s *configstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaLi
 }
 
 func (s *configstoreMetaServiceServer) MetaGet(ctx context.Context, req *MetaGetEntityRequest) (*MetaGetEntityResponse, error) {
-	resp, err := processTransaction(
+	resp, err := s.transactionProcessor.processTransaction(
 		ctx,
 		s.schema,
 		&MetaTransaction{
 			Operations: []*MetaOperation{
 				&MetaOperation{
-					Operation: req,
+					Operation: &MetaOperation_GetRequest{
+						GetRequest: req,
+					},
 				},
 			},
 		},
@@ -66,13 +75,15 @@ func (s *configstoreMetaServiceServer) MetaGet(ctx context.Context, req *MetaGet
 }
 
 func (s *configstoreMetaServiceServer) MetaUpdate(ctx context.Context, req *MetaUpdateEntityRequest) (*MetaUpdateEntityResponse, error) {
-	resp, err := processTransaction(
+	resp, err := s.transactionProcessor.processTransaction(
 		ctx,
 		s.schema,
 		&MetaTransaction{
 			Operations: []*MetaOperation{
 				&MetaOperation{
-					Operation: req,
+					Operation: &MetaOperation_UpdateRequest{
+						UpdateRequest: req,
+					},
 				},
 			},
 		},
@@ -87,13 +98,15 @@ func (s *configstoreMetaServiceServer) MetaUpdate(ctx context.Context, req *Meta
 }
 
 func (s *configstoreMetaServiceServer) MetaDelete(ctx context.Context, req *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error) {
-	resp, err := processTransaction(
+	resp, err := s.transactionProcessor.processTransaction(
 		ctx,
 		s.schema,
 		&MetaTransaction{
 			Operations: []*MetaOperation{
 				&MetaOperation{
-					Operation: req,
+					Operation: &MetaOperation_DeleteRequest{
+						DeleteRequest: req,
+					},
 				},
 			},
 		},
@@ -108,13 +121,15 @@ func (s *configstoreMetaServiceServer) MetaDelete(ctx context.Context, req *Meta
 }
 
 func (s *configstoreMetaServiceServer) MetaCreate(ctx context.Context, req *MetaCreateEntityRequest) (*MetaCreateEntityResponse, error) {
-	resp, err := processTransaction(
+	resp, err := s.transactionProcessor.processTransaction(
 		ctx,
 		s.schema,
 		&MetaTransaction{
 			Operations: []*MetaOperation{
 				&MetaOperation{
-					Operation: req,
+					Operation: &MetaOperation_CreateRequest{
+						CreateRequest: req,
+					},
 				},
 			},
 		},
@@ -126,4 +141,13 @@ func (s *configstoreMetaServiceServer) MetaCreate(ctx context.Context, req *Meta
 		return nil, fmt.Errorf("%s", resp.OperationResults[0].Error.ErrorMessage)
 	}
 	return resp.OperationResults[0].GetCreateResponse(), nil
+}
+
+func (s *configstoreMetaServiceServer) ApplyTransaction(ctx context.Context, req *MetaTransaction) (*MetaTransactionResult, error) {
+	resp, err := s.transactionProcessor.processTransaction(
+		ctx,
+		s.schema,
+		req,
+	)
+	return resp, err
 }

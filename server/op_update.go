@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func operationUpdate(ctx context.Context, schema *Schema, req *MetaUpdateEntityRequest) (*MetaUpdateEntityResponse, error) {
+func (s *operationProcessor) operationUpdate(ctx context.Context, schema *Schema, req *MetaUpdateEntityRequest) (*MetaUpdateEntityResponse, error) {
 	pathElements := req.Entity.Key.Path
 	lastKind := pathElements[len(pathElements)-1].Kind
 
@@ -21,7 +21,7 @@ func operationUpdate(ctx context.Context, schema *Schema, req *MetaUpdateEntityR
 	}
 
 	ref, data, err := convertMetaEntityToRefAndDataMap(
-		client,
+		s.client,
 		req.Entity,
 		kindInfo,
 	)

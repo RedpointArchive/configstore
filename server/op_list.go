@@ -7,7 +7,7 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-func operationList(ctx context.Context, schema *Schema, req *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error) {
+func (s *operationProcessor) operationList(ctx context.Context, schema *Schema, req *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error) {
 	var start interface{}
 	if req.Start != nil {
 		if len(req.Start[:]) > 0 {
@@ -29,13 +29,13 @@ func operationList(ctx context.Context, schema *Schema, req *MetaListEntitiesReq
 	var err error
 	var snapshots []*firestore.DocumentSnapshot
 	if (req.Limit == 0) && start == nil {
-		snapshots, err = client.Collection(req.KindName).Documents(ctx).GetAll()
+		snapshots, err = s.client.Collection(req.KindName).Documents(ctx).GetAll()
 	} else if req.Limit == 0 {
-		snapshots, err = client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Documents(ctx).GetAll()
+		snapshots, err = s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Documents(ctx).GetAll()
 	} else if start == nil {
-		snapshots, err = client.Collection(req.KindName).Limit(int(req.Limit)).Documents(ctx).GetAll()
+		snapshots, err = s.client.Collection(req.KindName).Limit(int(req.Limit)).Documents(ctx).GetAll()
 	} else {
-		snapshots, err = client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Limit(int(req.Limit)).Documents(ctx).GetAll()
+		snapshots, err = s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Limit(int(req.Limit)).Documents(ctx).GetAll()
 	}
 
 	if err != nil {
