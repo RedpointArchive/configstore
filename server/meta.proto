@@ -187,4 +187,35 @@ service ConfigstoreMetaService {
     rpc MetaCreate(MetaCreateEntityRequest) returns (MetaCreateEntityResponse);
     rpc MetaDelete(MetaDeleteEntityRequest) returns (MetaDeleteEntityResponse);
     rpc GetDefaultPartitionId(GetDefaultPartitionIdRequest) returns (GetDefaultPartitionIdResponse);
+    rpc ApplyTransaction(MetaTransaction) returns (MetaTransactionResult);
+}
+
+// =======
+
+message MetaTransaction {
+    repeated MetaOperation operations = 1;
+}
+
+message MetaOperation {
+    oneof operation {
+        MetaListEntityRequest listRequest = 1;
+        MetaGetEntityRequest getRequest = 2;
+        MetaUpdateEntityRequest updateRequest = 3;
+        MetaCreateEntityRequest createRequest = 4;
+        MetaDeleteEntityRequest deleteRequest = 5;
+    }
+}
+
+message MetaTransactionResult {
+    repeated MetaOperationResult operationResults = 1;
+}
+
+message MetaOperationResult {
+    oneof operation {
+        MetaListEntityResponse listResponse = 1;
+        MetaGetEntityResponse getResponse = 2;
+        MetaUpdateEntityResponse updateResponse = 3;
+        MetaCreateEntityResponse createResponse = 4;
+        MetaDeleteEntityResponse deleteResponse = 5;
+    }
 }
