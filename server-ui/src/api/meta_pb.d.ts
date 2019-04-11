@@ -732,6 +732,190 @@ export namespace MetaDeleteEntityResponse {
   }
 }
 
+export class MetaTransaction extends jspb.Message {
+  getOperationsList(): Array<MetaOperation>;
+  setOperationsList(value: Array<MetaOperation>): void;
+  clearOperationsList(): void;
+  addOperations(value?: MetaOperation, index?: number): MetaOperation;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaTransaction.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaTransaction): MetaTransaction.AsObject;
+  static serializeBinaryToWriter(message: MetaTransaction, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaTransaction;
+  static deserializeBinaryFromReader(message: MetaTransaction, reader: jspb.BinaryReader): MetaTransaction;
+}
+
+export namespace MetaTransaction {
+  export type AsObject = {
+    operationsList: Array<MetaOperation.AsObject>,
+  }
+}
+
+export class MetaOperation extends jspb.Message {
+  getListrequest(): MetaListEntitiesRequest | undefined;
+  setListrequest(value?: MetaListEntitiesRequest): void;
+  hasListrequest(): boolean;
+  clearListrequest(): void;
+  hasListrequest(): boolean;
+
+  getGetrequest(): MetaGetEntityRequest | undefined;
+  setGetrequest(value?: MetaGetEntityRequest): void;
+  hasGetrequest(): boolean;
+  clearGetrequest(): void;
+  hasGetrequest(): boolean;
+
+  getUpdaterequest(): MetaUpdateEntityRequest | undefined;
+  setUpdaterequest(value?: MetaUpdateEntityRequest): void;
+  hasUpdaterequest(): boolean;
+  clearUpdaterequest(): void;
+  hasUpdaterequest(): boolean;
+
+  getCreaterequest(): MetaCreateEntityRequest | undefined;
+  setCreaterequest(value?: MetaCreateEntityRequest): void;
+  hasCreaterequest(): boolean;
+  clearCreaterequest(): void;
+  hasCreaterequest(): boolean;
+
+  getDeleterequest(): MetaDeleteEntityRequest | undefined;
+  setDeleterequest(value?: MetaDeleteEntityRequest): void;
+  hasDeleterequest(): boolean;
+  clearDeleterequest(): void;
+  hasDeleterequest(): boolean;
+
+  getOperationCase(): MetaOperation.OperationCase;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaOperation.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaOperation): MetaOperation.AsObject;
+  static serializeBinaryToWriter(message: MetaOperation, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaOperation;
+  static deserializeBinaryFromReader(message: MetaOperation, reader: jspb.BinaryReader): MetaOperation;
+}
+
+export namespace MetaOperation {
+  export type AsObject = {
+    listrequest?: MetaListEntitiesRequest.AsObject,
+    getrequest?: MetaGetEntityRequest.AsObject,
+    updaterequest?: MetaUpdateEntityRequest.AsObject,
+    createrequest?: MetaCreateEntityRequest.AsObject,
+    deleterequest?: MetaDeleteEntityRequest.AsObject,
+  }
+
+  export enum OperationCase { 
+    OPERATION_NOT_SET = 0,
+    LISTREQUEST = 1,
+    GETREQUEST = 2,
+    UPDATEREQUEST = 3,
+    CREATEREQUEST = 4,
+    DELETEREQUEST = 5,
+  }
+}
+
+export class MetaTransactionResult extends jspb.Message {
+  getOperationresultsList(): Array<MetaOperationResult>;
+  setOperationresultsList(value: Array<MetaOperationResult>): void;
+  clearOperationresultsList(): void;
+  addOperationresults(value?: MetaOperationResult, index?: number): MetaOperationResult;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaTransactionResult.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaTransactionResult): MetaTransactionResult.AsObject;
+  static serializeBinaryToWriter(message: MetaTransactionResult, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaTransactionResult;
+  static deserializeBinaryFromReader(message: MetaTransactionResult, reader: jspb.BinaryReader): MetaTransactionResult;
+}
+
+export namespace MetaTransactionResult {
+  export type AsObject = {
+    operationresultsList: Array<MetaOperationResult.AsObject>,
+  }
+}
+
+export class MetaOperationResultError extends jspb.Message {
+  getErrormessage(): string;
+  setErrormessage(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaOperationResultError.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaOperationResultError): MetaOperationResultError.AsObject;
+  static serializeBinaryToWriter(message: MetaOperationResultError, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaOperationResultError;
+  static deserializeBinaryFromReader(message: MetaOperationResultError, reader: jspb.BinaryReader): MetaOperationResultError;
+}
+
+export namespace MetaOperationResultError {
+  export type AsObject = {
+    errormessage: string,
+  }
+}
+
+export class MetaOperationResult extends jspb.Message {
+  getError(): MetaOperationResultError | undefined;
+  setError(value?: MetaOperationResultError): void;
+  hasError(): boolean;
+  clearError(): void;
+
+  getListresponse(): MetaListEntitiesResponse | undefined;
+  setListresponse(value?: MetaListEntitiesResponse): void;
+  hasListresponse(): boolean;
+  clearListresponse(): void;
+  hasListresponse(): boolean;
+
+  getGetresponse(): MetaGetEntityResponse | undefined;
+  setGetresponse(value?: MetaGetEntityResponse): void;
+  hasGetresponse(): boolean;
+  clearGetresponse(): void;
+  hasGetresponse(): boolean;
+
+  getUpdateresponse(): MetaUpdateEntityResponse | undefined;
+  setUpdateresponse(value?: MetaUpdateEntityResponse): void;
+  hasUpdateresponse(): boolean;
+  clearUpdateresponse(): void;
+  hasUpdateresponse(): boolean;
+
+  getCreateresponse(): MetaCreateEntityResponse | undefined;
+  setCreateresponse(value?: MetaCreateEntityResponse): void;
+  hasCreateresponse(): boolean;
+  clearCreateresponse(): void;
+  hasCreateresponse(): boolean;
+
+  getDeleteresponse(): MetaDeleteEntityResponse | undefined;
+  setDeleteresponse(value?: MetaDeleteEntityResponse): void;
+  hasDeleteresponse(): boolean;
+  clearDeleteresponse(): void;
+  hasDeleteresponse(): boolean;
+
+  getOperationCase(): MetaOperationResult.OperationCase;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaOperationResult.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaOperationResult): MetaOperationResult.AsObject;
+  static serializeBinaryToWriter(message: MetaOperationResult, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaOperationResult;
+  static deserializeBinaryFromReader(message: MetaOperationResult, reader: jspb.BinaryReader): MetaOperationResult;
+}
+
+export namespace MetaOperationResult {
+  export type AsObject = {
+    error?: MetaOperationResultError.AsObject,
+    listresponse?: MetaListEntitiesResponse.AsObject,
+    getresponse?: MetaGetEntityResponse.AsObject,
+    updateresponse?: MetaUpdateEntityResponse.AsObject,
+    createresponse?: MetaCreateEntityResponse.AsObject,
+    deleteresponse?: MetaDeleteEntityResponse.AsObject,
+  }
+
+  export enum OperationCase { 
+    OPERATION_NOT_SET = 0,
+    LISTRESPONSE = 2,
+    GETRESPONSE = 3,
+    UPDATERESPONSE = 4,
+    CREATERESPONSE = 5,
+    DELETERESPONSE = 6,
+  }
+}
+
 export enum ValueType { 
   UNKNOWN = 0,
   DOUBLE = 1,

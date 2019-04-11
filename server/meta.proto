@@ -198,7 +198,7 @@ message MetaTransaction {
 
 message MetaOperation {
     oneof operation {
-        MetaListEntityRequest listRequest = 1;
+        MetaListEntitiesRequest listRequest = 1;
         MetaGetEntityRequest getRequest = 2;
         MetaUpdateEntityRequest updateRequest = 3;
         MetaCreateEntityRequest createRequest = 4;
@@ -210,12 +210,17 @@ message MetaTransactionResult {
     repeated MetaOperationResult operationResults = 1;
 }
 
+message MetaOperationResultError {
+    string errorMessage = 1;
+}
+
 message MetaOperationResult {
+    MetaOperationResultError error = 1;
     oneof operation {
-        MetaListEntityResponse listResponse = 1;
-        MetaGetEntityResponse getResponse = 2;
-        MetaUpdateEntityResponse updateResponse = 3;
-        MetaCreateEntityResponse createResponse = 4;
-        MetaDeleteEntityResponse deleteResponse = 5;
+        MetaListEntitiesResponse listResponse = 2;
+        MetaGetEntityResponse getResponse = 3;
+        MetaUpdateEntityResponse updateResponse = 4;
+        MetaCreateEntityResponse createResponse = 5;
+        MetaDeleteEntityResponse deleteResponse = 6;
     }
 }

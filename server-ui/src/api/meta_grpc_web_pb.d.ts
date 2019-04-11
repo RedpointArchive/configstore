@@ -13,6 +13,8 @@ import {
   MetaGetEntityResponse,
   MetaListEntitiesRequest,
   MetaListEntitiesResponse,
+  MetaTransaction,
+  MetaTransactionResult,
   MetaUpdateEntityRequest,
   MetaUpdateEntityResponse} from './meta_pb';
 
@@ -70,6 +72,13 @@ export class ConfigstoreMetaServiceClient {
                response: GetDefaultPartitionIdResponse) => void
   ): grpcWeb.ClientReadableStream<GetDefaultPartitionIdResponse>;
 
+  applyTransaction(
+    request: MetaTransaction,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.Error,
+               response: MetaTransactionResult) => void
+  ): grpcWeb.ClientReadableStream<MetaTransactionResult>;
+
 }
 
 export class ConfigstoreMetaServicePromiseClient {
@@ -111,6 +120,11 @@ export class ConfigstoreMetaServicePromiseClient {
     request: GetDefaultPartitionIdRequest,
     metadata?: grpcWeb.Metadata
   ): Promise<GetDefaultPartitionIdResponse>;
+
+  applyTransaction(
+    request: MetaTransaction,
+    metadata?: grpcWeb.Metadata
+  ): Promise<MetaTransactionResult>;
 
 }
 
