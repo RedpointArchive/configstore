@@ -14,5 +14,5 @@ require (
 	github.com/rs/cors v1.6.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	google.golang.org/grpc v1.18.0
-	gotest.tools v2.2.0+incompatible // indirect
+	gotest.tools v2.2.0+incompatible
 )
