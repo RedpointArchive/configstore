@@ -2,19 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 )
 
 func (s *operationProcessor) operationDelete(ctx context.Context, schema *Schema, req *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error) {
-	var kindInfo *SchemaKind
-	for kindName, kind := range schema.Kinds {
-		if kindName == req.KindName {
-			kindInfo = kind
-			break
-		}
-	}
-	if kindInfo == nil {
-		return nil, fmt.Errorf("no such kind")
+	kindInfo, err := findSchemaKindByName(schema, req.KindName)
+	if err != nil {
+		return nil, err
 	}
 
 	ref, err := convertMetaKeyToDocumentRef(

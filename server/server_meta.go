@@ -13,6 +13,18 @@ type configstoreMetaServiceServer struct {
 	transactionProcessor *transactionProcessor
 }
 
+func createConfigstoreMetaServiceServer(
+	firestoreClient *firestore.Client,
+	schema *Schema,
+	transactionProcessor *transactionProcessor,
+) *configstoreMetaServiceServer {
+	return &configstoreMetaServiceServer{
+		firestoreClient:      firestoreClient,
+		schema:               schema,
+		transactionProcessor: transactionProcessor,
+	}
+}
+
 func (s *configstoreMetaServiceServer) GetSchema(ctx context.Context, req *GetSchemaRequest) (*GetSchemaResponse, error) {
 	return &GetSchemaResponse{
 		Schema: s.schema,

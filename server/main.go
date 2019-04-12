@@ -95,13 +95,13 @@ func main() {
 		grpcServer := grpc.NewServer()
 		emptyServer := new(emptyServerInterface)
 		for _, service := range genResult.Services {
-			dynamicProtobufServer := &configstoreDynamicProtobufService{
-				firestoreClient: client,
-				schema:          genResult.Schema,
-				genResult:       genResult,
-				kindName:        genResult.KindNameMap[service],
-				service:         service,
-			}
+			dynamicProtobufServer := createConfigstoreDynamicProtobufServer(
+				client,
+				genResult,
+				service,
+				genResult.KindNameMap[service],
+				genResult.Schema,
+			)
 
 			grpcServer.RegisterService(
 				&grpc.ServiceDesc{
@@ -161,10 +161,11 @@ func main() {
 		}
 
 		// Add the metadata server.
-		RegisterConfigstoreMetaServiceServer(grpcServer, &configstoreMetaServiceServer{
-			firestoreClient: client,
-			schema:          genResult.Schema,
-		})
+		RegisterConfigstoreMetaServiceServer(grpcServer, createConfigstoreMetaServiceServer(
+			client,
+			genResult.Schema,
+			createTransactionProcessor(client),
+		))
 
 		// Start gRPC server.
 		go func() {

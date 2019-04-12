@@ -12,6 +12,10 @@ func convertMetaKeyToDynamicKey(
 	key *Key,
 	common *commonMessageDescriptors,
 ) (*dynamic.Message, error) {
+	if key == nil {
+		return nil, fmt.Errorf("meta key was nil, internal caller must handle this scenario\n")
+	}
+
 	partitionID := messageFactory.NewDynamicMessage(common.PartitionId)
 	partitionID.SetFieldByName("namespace", key.PartitionId.Namespace)
 
@@ -67,7 +71,7 @@ func convertMetaEntityToDynamicMessage(
 
 		var err error
 		if value == nil {
-			out.TryClearFieldByName(field.Name)
+			err = out.TryClearFieldByName(field.Name)
 		} else {
 			switch field.Type {
 			case ValueType_double:
@@ -80,7 +84,11 @@ func convertMetaEntityToDynamicMessage(
 				err = out.TrySetFieldByName(field.Name, value.StringValue)
 				break
 			case ValueType_timestamp:
-				err = out.TrySetFieldByName(field.Name, value.TimestampValue)
+				if value.TimestampValue == nil {
+					err = out.TryClearFieldByName(field.Name)
+				} else {
+					err = out.TrySetFieldByName(field.Name, value.TimestampValue)
+				}
 				break
 			case ValueType_boolean:
 				err = out.TrySetFieldByName(field.Name, value.BooleanValue)
@@ -89,15 +97,19 @@ func convertMetaEntityToDynamicMessage(
 				err = out.TrySetFieldByName(field.Name, value.BytesValue)
 				break
 			case ValueType_key:
-				key, err := convertMetaKeyToDynamicKey(
-					messageFactory,
-					value.KeyValue,
-					common,
-				)
-				if err != nil {
-					// pass error through
+				if value.KeyValue == nil {
+					err = out.TryClearFieldByName(field.Name)
 				} else {
-					err = out.TrySetFieldByName(field.Name, key)
+					key, err := convertMetaKeyToDynamicKey(
+						messageFactory,
+						value.KeyValue,
+						common,
+					)
+					if err != nil {
+						// pass error through
+					} else {
+						err = out.TrySetFieldByName(field.Name, key)
+					}
 				}
 				break
 			case ValueType_uint64:

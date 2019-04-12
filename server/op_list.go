@@ -15,18 +15,11 @@ func (s *operationProcessor) operationList(ctx context.Context, schema *Schema, 
 		}
 	}
 
-	var kindInfo *SchemaKind
-	for kindName, kind := range schema.Kinds {
-		if kindName == req.KindName {
-			kindInfo = kind
-			break
-		}
-	}
-	if kindInfo == nil {
-		return nil, fmt.Errorf("no such kind")
+	kindInfo, err := findSchemaKindByName(schema, req.KindName)
+	if err != nil {
+		return nil, err
 	}
 
-	var err error
 	var snapshots []*firestore.DocumentSnapshot
 	if (req.Limit == 0) && start == nil {
 		snapshots, err = s.client.Collection(req.KindName).Documents(ctx).GetAll()

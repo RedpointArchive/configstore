@@ -9,15 +9,9 @@ func (s *operationProcessor) operationUpdate(ctx context.Context, schema *Schema
 	pathElements := req.Entity.Key.Path
 	lastKind := pathElements[len(pathElements)-1].Kind
 
-	var kindInfo *SchemaKind
-	for kindName, kind := range schema.Kinds {
-		if kindName == lastKind {
-			kindInfo = kind
-			break
-		}
-	}
-	if kindInfo == nil {
-		return nil, fmt.Errorf("no such kind")
+	kindInfo, err := findSchemaKindByName(schema, lastKind)
+	if err != nil {
+		return nil, err
 	}
 
 	ref, data, err := convertMetaEntityToRefAndDataMap(

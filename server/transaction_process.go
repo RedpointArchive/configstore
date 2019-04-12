@@ -11,9 +11,7 @@ func (s *transactionProcessor) processTransaction(
 	req *MetaTransaction,
 ) (*MetaTransactionResult, error) {
 	resp := &MetaTransactionResult{}
-	opProcessor := &operationProcessor{
-		client: s.client,
-	}
+	opProcessor := createOperationProcessor(s.client)
 	for _, operation := range req.Operations {
 		var operationResult *MetaOperationResult
 

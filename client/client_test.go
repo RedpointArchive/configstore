@@ -93,7 +93,13 @@ func TestKeyStorage(t *testing.T) {
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
+	assert.Assert(t, resp2.Entity.Key != nil, "entity key was nil")
+	assert.Assert(t, resp2.Entity.Key.Path != nil, "entity key path was nil")
+	assert.Assert(t, resp2.Entity.Key.Path[0] != nil, "entity key path[0] was nil")
 	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
+	assert.Assert(t, resp2.Entity.NilKeyTest != nil, "entity nilkeytest was nil")
+	assert.Assert(t, resp2.Entity.NilKeyTest.Path != nil, "entity nilkeytest path was nil")
+	assert.Assert(t, resp2.Entity.NilKeyTest.Path[0] != nil, "entity nilkeytest path[0] was nil")
 	assert.Equal(t, resp2.Entity.NilKeyTest.Path[0].GetName(), resp.Entity.NilKeyTest.Path[0].GetName())
 }
 

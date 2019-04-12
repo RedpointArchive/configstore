@@ -13,18 +13,37 @@ import (
 )
 
 type configstoreDynamicProtobufService struct {
-	firestoreClient *firestore.Client
-	genResult       *generatorResult
-	service         *builder.ServiceBuilder
-	kindName        string
-	schema          *Schema
+	firestoreClient      *firestore.Client
+	genResult            *generatorResult
+	service              *builder.ServiceBuilder
+	kindName             string
+	schema               *Schema
+	transactionProcessor *transactionProcessor
+}
+
+func createConfigstoreDynamicProtobufServer(
+	firestoreClient *firestore.Client,
+	genResult *generatorResult,
+	service *builder.ServiceBuilder,
+	kindName string,
+	schema *Schema,
+) *configstoreDynamicProtobufService {
+	return &configstoreDynamicProtobufService{
+		firestoreClient:      firestoreClient,
+		genResult:            genResult,
+		service:              service,
+		kindName:             kindName,
+		schema:               schema,
+		transactionProcessor: createTransactionProcessor(firestoreClient),
+	}
 }
 
 func (s *configstoreDynamicProtobufService) getMetaServiceServer() *configstoreMetaServiceServer {
-	return &configstoreMetaServiceServer{
-		firestoreClient: s.firestoreClient,
-		schema:          s.schema,
-	}
+	return createConfigstoreMetaServiceServer(
+		s.firestoreClient,
+		s.schema,
+		s.transactionProcessor,
+	)
 }
 
 func (s *configstoreDynamicProtobufService) dynamicProtobufList(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -128,7 +147,8 @@ func (s *configstoreDynamicProtobufService) dynamicProtobufGet(srv interface{}, 
 
 	metaServer := s.getMetaServiceServer()
 	resp, err := metaServer.MetaGet(ctx, &MetaGetEntityRequest{
-		Key: key,
+		Key:      key,
+		KindName: s.kindName,
 	})
 	if err != nil {
 		return nil, err
@@ -238,7 +258,8 @@ func (s *configstoreDynamicProtobufService) dynamicProtobufCreate(srv interface{
 
 	metaServer := s.getMetaServiceServer()
 	resp, err := metaServer.MetaCreate(ctx, &MetaCreateEntityRequest{
-		Entity: entity,
+		Entity:   entity,
+		KindName: s.kindName,
 	})
 	if err != nil {
 		return nil, err
@@ -291,7 +312,8 @@ func (s *configstoreDynamicProtobufService) dynamicProtobufDelete(srv interface{
 
 	metaServer := s.getMetaServiceServer()
 	resp, err := metaServer.MetaDelete(ctx, &MetaDeleteEntityRequest{
-		Key: key,
+		Key:      key,
+		KindName: s.kindName,
 	})
 	if err != nil {
 		return nil, err
