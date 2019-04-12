@@ -61,6 +61,7 @@ type generatorResult struct {
 	KindMap                  map[*builder.ServiceBuilder]*SchemaKind
 	KindNameMap              map[*builder.ServiceBuilder]string
 	MessageMap               map[string]*desc.MessageDescriptor
+	ServiceMap               map[string]*builder.ServiceBuilder
 	WatchTypeEnumValues      *watchTypeEnumValues
 	CommonMessageDescriptors *commonMessageDescriptors
 }
@@ -100,6 +101,7 @@ func generate(path string) (*generatorResult, error) {
 	kindMap := make(map[*builder.ServiceBuilder]*SchemaKind)
 	kindNameMap := make(map[*builder.ServiceBuilder]string)
 	messageMap := make(map[string]*desc.MessageDescriptor)
+	serviceMap := make(map[string]*builder.ServiceBuilder)
 
 	partitionIdMessage := builder.NewMessage("PartitionId")
 	partitionIdMessage.AddField(
@@ -306,6 +308,7 @@ func generate(path string) (*generatorResult, error) {
 
 		kindMap[service] = kind
 		kindNameMap[service] = name
+		serviceMap[name] = service
 	}
 
 	for _, message := range messages {
@@ -342,6 +345,7 @@ func generate(path string) (*generatorResult, error) {
 		KindMap:                  kindMap,
 		KindNameMap:              kindNameMap,
 		MessageMap:               messageMap,
+		ServiceMap:               serviceMap,
 		WatchTypeEnumValues:      watchTypeEnumValues,
 		CommonMessageDescriptors: common,
 	}, nil

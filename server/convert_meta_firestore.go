@@ -28,12 +28,25 @@ func convertMetaKeyToDocumentRef(
 
 	var ref *firestore.DocumentRef
 	for _, pathElement := range key.Path {
+		var collectionRef *firestore.CollectionRef
 		if ref == nil {
-			ref = client.Collection(pathElement.Kind).
-				Doc(pathElement.GetName())
+			collectionRef = client.Collection(pathElement.Kind)
 		} else {
-			ref = ref.Collection(pathElement.Kind).
-				Doc(pathElement.GetName())
+			collectionRef = ref.Collection(pathElement.Kind)
+		}
+
+		if pathElement.IdType == nil {
+			// unset, automatically generate an ID
+			ref = collectionRef.NewDoc()
+		} else {
+			switch pathElement.IdType.(type) {
+			case *PathElement_Name:
+				ref = collectionRef.Doc(pathElement.GetName())
+				break
+			case *PathElement_Id:
+				ref = collectionRef.Doc(fmt.Sprintf("__datastore_id_polyfill=%d", pathElement.GetId()))
+				break
+			}
 		}
 	}
 	if ref == nil {

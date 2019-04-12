@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/jhump/protoreflect/desc"
@@ -47,7 +48,7 @@ func convertDynamicKeyToMetaKey(
 	for idx, elem := range paths {
 		kindField, err := elem.TryGetFieldByName("kind")
 		if err != nil {
-			return nil, fmt.Errorf("unable to retrieve kind value from path element at index", idx)
+			return nil, fmt.Errorf("unable to retrieve kind value from path element at index %d", idx)
 		}
 		nameField, _ := elem.TryGetFieldByName("name")
 		idField, _ := elem.TryGetFieldByName("id")
@@ -56,21 +57,17 @@ func convertDynamicKeyToMetaKey(
 			Kind: kindField.(string),
 		}
 
-		if nameField != nil {
+		if elem.HasFieldName("name") {
 			pathElement.IdType = &PathElement_Name{
 				Name: nameField.(string),
 			}
-		} else if idField != nil {
+		} else if elem.HasFieldName("id") {
 			pathElement.IdType = &PathElement_Id{
 				Id: idField.(int64),
 			}
 		}
 
 		pathElements = append(pathElements, pathElement)
-	}
-
-	if len(pathElements) == 0 {
-		return nil, fmt.Errorf("key contained no path elements")
 	}
 
 	return &Key{
@@ -111,6 +108,7 @@ func convertDynamicMessageIntoMetaEntity(
 		Values: nil,
 	}
 
+	setFields := make(map[int32]bool)
 	for _, fieldDescriptor := range message.GetKnownFields() {
 		if fieldDescriptor.GetName() == "key" {
 			continue
@@ -124,46 +122,56 @@ func convertDynamicMessageIntoMetaEntity(
 
 		switch value := rawValue.(type) {
 		case float64:
+			setFields[fieldDescriptor.GetNumber()] = true
 			metaEntity.Values = append(
 				metaEntity.Values,
 				&Value{
 					Id:          fieldDescriptor.GetNumber(),
+					Type:        ValueType_double,
 					DoubleValue: value,
 				},
 			)
 			break
 		case int64:
+			setFields[fieldDescriptor.GetNumber()] = true
 			metaEntity.Values = append(
 				metaEntity.Values,
 				&Value{
 					Id:         fieldDescriptor.GetNumber(),
+					Type:       ValueType_int64,
 					Int64Value: value,
 				},
 			)
 			break
 		case string:
+			setFields[fieldDescriptor.GetNumber()] = true
 			metaEntity.Values = append(
 				metaEntity.Values,
 				&Value{
 					Id:          fieldDescriptor.GetNumber(),
+					Type:        ValueType_string,
 					StringValue: value,
 				},
 			)
 			break
 		case bool:
+			setFields[fieldDescriptor.GetNumber()] = true
 			metaEntity.Values = append(
 				metaEntity.Values,
 				&Value{
 					Id:           fieldDescriptor.GetNumber(),
+					Type:         ValueType_boolean,
 					BooleanValue: value,
 				},
 			)
 			break
 		case []byte:
+			setFields[fieldDescriptor.GetNumber()] = true
 			metaEntity.Values = append(
 				metaEntity.Values,
 				&Value{
 					Id:         fieldDescriptor.GetNumber(),
+					Type:       ValueType_bytes,
 					BytesValue: value,
 				},
 			)
@@ -171,11 +179,24 @@ func convertDynamicMessageIntoMetaEntity(
 		case uint64:
 			// We store uint64 as int64 inside Firestore, as Firestore
 			// does not support uint64 natively
+			setFields[fieldDescriptor.GetNumber()] = true
 			metaEntity.Values = append(
 				metaEntity.Values,
 				&Value{
 					Id:          fieldDescriptor.GetNumber(),
+					Type:        ValueType_uint64,
 					Uint64Value: value,
+				},
+			)
+			break
+		case *timestamp.Timestamp:
+			setFields[fieldDescriptor.GetNumber()] = true
+			metaEntity.Values = append(
+				metaEntity.Values,
+				&Value{
+					Id:             fieldDescriptor.GetNumber(),
+					Type:           ValueType_timestamp,
+					TimestampValue: value,
 				},
 			)
 			break
@@ -193,45 +214,65 @@ func convertDynamicMessageIntoMetaEntity(
 					if err != nil {
 						return nil, fmt.Errorf("error on field '%s': %v", fieldDescriptor.GetName(), err)
 					}
+					setFields[fieldDescriptor.GetNumber()] = true
 					metaEntity.Values = append(
 						metaEntity.Values,
 						&Value{
 							Id:       fieldDescriptor.GetNumber(),
+							Type:     ValueType_key,
 							KeyValue: nkey,
 						},
 					)
 				} else {
+					setFields[fieldDescriptor.GetNumber()] = true
 					metaEntity.Values = append(
 						metaEntity.Values,
 						&Value{
 							Id:       fieldDescriptor.GetNumber(),
+							Type:     ValueType_key,
 							KeyValue: nil,
 						},
 					)
 				}
 				break
-			case "Timestamp":
-				seconds := value.GetFieldByName("seconds")
-				nanos := value.GetFieldByName("nanos")
-
-				metaEntity.Values = append(
-					metaEntity.Values,
-					&Value{
-						Id: fieldDescriptor.GetNumber(),
-						TimestampValue: &timestamp.Timestamp{
-							Seconds: seconds.(int64),
-							Nanos:   nanos.(int32),
-						},
-					},
-				)
-				break
 			default:
 				return nil, fmt.Errorf("field '%s' contained unknown protobuf message", fieldDescriptor.GetName())
 			}
 		default:
-			return nil, fmt.Errorf("field '%s' contained unknown field type", fieldDescriptor.GetName())
+			return nil, fmt.Errorf("field '%s' contained unknown field type '%T' with value: %v", fieldDescriptor.GetName(), rawValue, rawValue)
 		}
 	}
+
+	// polyfill nil fields (keys and timestamps)
+	for _, schemaField := range schemaKind.Fields {
+		if _, ok := setFields[schemaField.Id]; !ok {
+			// need to polyfill this value
+			if schemaField.Type == ValueType_key {
+				metaEntity.Values = append(
+					metaEntity.Values,
+					&Value{
+						Id:       schemaField.Id,
+						Type:     ValueType_key,
+						KeyValue: nil,
+					},
+				)
+			} else if schemaField.Type == ValueType_timestamp {
+				metaEntity.Values = append(
+					metaEntity.Values,
+					&Value{
+						Id:             schemaField.Id,
+						Type:           ValueType_timestamp,
+						TimestampValue: nil,
+					},
+				)
+			}
+		}
+	}
+
+	// sort, this is mainly so unit tests pass...
+	sort.Slice(metaEntity.Values[:], func(i, j int) bool {
+		return metaEntity.Values[i].Id < metaEntity.Values[j].Id
+	})
 
 	return metaEntity, nil
 }

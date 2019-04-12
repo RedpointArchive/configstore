@@ -213,6 +213,69 @@
           "type": "key"
         }
       ]
+    },
+    "UnitTest001": {
+      "editor": {
+        "singular": "UnitTest001",
+        "plural": "UnitTest001s"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "d1",
+          "type": "double"
+        },
+        {
+          "id": 3,
+          "name": "i1",
+          "type": "int64"
+        },
+        {
+          "id": 4,
+          "name": "s1",
+          "type": "string"
+        },
+        {
+          "id": 5,
+          "name": "t1",
+          "type": "timestamp"
+        },
+        {
+          "id": 6,
+          "name": "b1",
+          "type": "boolean"
+        },
+        {
+          "id": 7,
+          "name": "b2",
+          "type": "bytes"
+        },
+        {
+          "id": 8,
+          "name": "k1",
+          "type": "key"
+        },
+        {
+          "id": 9,
+          "name": "k2",
+          "type": "key"
+        },
+        {
+          "id": 10,
+          "name": "i2",
+          "type": "int64"
+        },
+        {
+          "id": 11,
+          "name": "u1",
+          "type": "uint64"
+        },
+        {
+          "id": 12,
+          "name": "t2",
+          "type": "timestamp"
+        }
+      ]
     }
   }
 }

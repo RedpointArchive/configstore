@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"cloud.google.com/go/firestore"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
@@ -21,11 +23,22 @@ func convertDocumentRefToMetaKey(
 
 	var reversePaths []*PathElement
 	for ref != nil {
-		pathElement := &PathElement{
-			Kind: ref.Parent.ID,
-			IdType: &PathElement_Name{
-				Name: ref.ID,
-			},
+		var pathElement *PathElement
+		if strings.HasPrefix(ref.ID, "__datastore_id_polyfill=") {
+			id, _ := strconv.ParseInt(ref.ID[len("__datastore_id_polyfill="):], 10, 64)
+			pathElement = &PathElement{
+				Kind: ref.Parent.ID,
+				IdType: &PathElement_Id{
+					Id: id,
+				},
+			}
+		} else {
+			pathElement = &PathElement{
+				Kind: ref.Parent.ID,
+				IdType: &PathElement_Name{
+					Name: ref.ID,
+				},
+			}
 		}
 
 		reversePaths = append(reversePaths, pathElement)
