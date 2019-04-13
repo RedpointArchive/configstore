@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/firestore"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 )
 
 func convertDocumentRefToMetaKey(
@@ -102,8 +103,8 @@ func convertSnapshotToMetaEntity(kindInfo *SchemaKind, snapshot *firestore.Docum
 					}
 				case ValueType_timestamp:
 					switch v := value.(type) {
-					case *timestamp.Timestamp:
-						f.TimestampValue = v
+					case time.Time:
+						f.TimestampValue = convertTimeToTimestamp(v)
 					default:
 						f.TimestampValue = nil
 					}
@@ -140,5 +141,11 @@ func convertSnapshotToMetaEntity(kindInfo *SchemaKind, snapshot *firestore.Docum
 			}
 		}
 	}
+
+	// sort, this is mainly so unit tests pass...
+	sort.Slice(entity.Values[:], func(i, j int) bool {
+		return entity.Values[i].Id < entity.Values[j].Id
+	})
+
 	return entity, nil
 }

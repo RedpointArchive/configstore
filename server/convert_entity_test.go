@@ -164,20 +164,28 @@ func verifyEntityIntact(t *testing.T, entity *MetaEntity, ty EntityTestType) {
 		// verify that it survived intact
 		assert.DeepEqual(t, entity, resultEntity)
 	}
-	/*
-		if ty == All || ty == FirestoreOnly {
-			// convert key meta -> firestore -> meta
-			ref, err := convertMetaKeyToDocumentRef(
-				client,
-				key,
-			)
-			assert.NilError(t, err)
-			resultKey2, err := convertDocumentRefToMetaKey(
-				ref,
-			)
-			assert.NilError(t, err)
 
-			// verify that it survived intact
-			assert.DeepEqual(t, key, resultKey2)
-		}*/
+	if ty == EntityTestType_All || ty == EntityTestType_FirestoreOnly {
+		// convert key meta -> ref/map -> firestore -> meta
+		ref, data, err := convertMetaEntityToRefAndDataMap(
+			client,
+			entity,
+			genResult.KindMap[genResult.ServiceMap["UnitTest001"]],
+		)
+		assert.NilError(t, err)
+		// this technically writes to and reads from firestore for the test,
+		// which actually allows us to test persistent to firestore as well
+		_, err = ref.Set(context.Background(), data)
+		assert.NilError(t, err)
+		snapshot, err := ref.Get(context.Background())
+		assert.NilError(t, err)
+		resultEntity2, err := convertSnapshotToMetaEntity(
+			genResult.KindMap[genResult.ServiceMap["UnitTest001"]],
+			snapshot,
+		)
+		assert.NilError(t, err)
+
+		// verify that it survived intact
+		assert.DeepEqual(t, entity, resultEntity2)
+	}
 }
