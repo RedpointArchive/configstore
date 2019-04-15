@@ -197,6 +197,7 @@ service ConfigstoreMetaService {
 
 message MetaTransaction {
     repeated MetaOperation operations = 1;
+    string description = 2;
 }
 
 message MetaOperation {

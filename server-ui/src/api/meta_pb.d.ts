@@ -740,6 +740,9 @@ export class MetaTransaction extends jspb.Message {
   clearOperationsList(): void;
   addOperations(value?: MetaOperation, index?: number): MetaOperation;
 
+  getDescription(): string;
+  setDescription(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaTransaction.AsObject;
   static toObject(includeInstance: boolean, msg: MetaTransaction): MetaTransaction.AsObject;
@@ -751,6 +754,7 @@ export class MetaTransaction extends jspb.Message {
 export namespace MetaTransaction {
   export type AsObject = {
     operationsList: Array<MetaOperation.AsObject>,
+    description: string,
   }
 }
 

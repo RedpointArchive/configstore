@@ -5699,7 +5699,8 @@ proto.meta.MetaTransaction.prototype.toObject = function(opt_includeInstance) {
 proto.meta.MetaTransaction.toObject = function(includeInstance, msg) {
   var f, obj = {
     operationsList: jspb.Message.toObjectList(msg.getOperationsList(),
-    proto.meta.MetaOperation.toObject, includeInstance)
+    proto.meta.MetaOperation.toObject, includeInstance),
+    description: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -5741,6 +5742,10 @@ proto.meta.MetaTransaction.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.meta.MetaOperation.deserializeBinaryFromReader);
       msg.addOperations(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDescription(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -5778,6 +5783,13 @@ proto.meta.MetaTransaction.serializeBinaryToWriter = function(message, writer) {
       proto.meta.MetaOperation.serializeBinaryToWriter
     );
   }
+  f = message.getDescription();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -5809,6 +5821,21 @@ proto.meta.MetaTransaction.prototype.addOperations = function(opt_value, opt_ind
 
 proto.meta.MetaTransaction.prototype.clearOperationsList = function() {
   this.setOperationsList([]);
+};
+
+
+/**
+ * optional string description = 2;
+ * @return {string}
+ */
+proto.meta.MetaTransaction.prototype.getDescription = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.MetaTransaction.prototype.setDescription = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
