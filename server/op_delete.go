@@ -18,7 +18,7 @@ func (s *operationProcessor) operationDelete(ctx context.Context, schema *Schema
 		return nil, err
 	}
 
-	snapshot, err := ref.Get(ctx)
+	snapshot, err := s.tx.Get(ref)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (s *operationProcessor) operationDelete(ctx context.Context, schema *Schema
 		return nil, err
 	}
 
-	_, err = ref.Delete(ctx)
+	err = s.tx.Delete(ref)
 	if err != nil {
 		return nil, err
 	}

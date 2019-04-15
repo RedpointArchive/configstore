@@ -9,6 +9,8 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -2240,6 +2242,35 @@ type ConfigstoreMetaServiceServer interface {
 	MetaDelete(context.Context, *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error)
 	GetDefaultPartitionId(context.Context, *GetDefaultPartitionIdRequest) (*GetDefaultPartitionIdResponse, error)
 	ApplyTransaction(context.Context, *MetaTransaction) (*MetaTransactionResult, error)
+}
+
+// UnimplementedConfigstoreMetaServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedConfigstoreMetaServiceServer struct {
+}
+
+func (*UnimplementedConfigstoreMetaServiceServer) GetSchema(ctx context.Context, req *GetSchemaRequest) (*GetSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSchema not implemented")
+}
+func (*UnimplementedConfigstoreMetaServiceServer) MetaList(ctx context.Context, req *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MetaList not implemented")
+}
+func (*UnimplementedConfigstoreMetaServiceServer) MetaGet(ctx context.Context, req *MetaGetEntityRequest) (*MetaGetEntityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MetaGet not implemented")
+}
+func (*UnimplementedConfigstoreMetaServiceServer) MetaUpdate(ctx context.Context, req *MetaUpdateEntityRequest) (*MetaUpdateEntityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MetaUpdate not implemented")
+}
+func (*UnimplementedConfigstoreMetaServiceServer) MetaCreate(ctx context.Context, req *MetaCreateEntityRequest) (*MetaCreateEntityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MetaCreate not implemented")
+}
+func (*UnimplementedConfigstoreMetaServiceServer) MetaDelete(ctx context.Context, req *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MetaDelete not implemented")
+}
+func (*UnimplementedConfigstoreMetaServiceServer) GetDefaultPartitionId(ctx context.Context, req *GetDefaultPartitionIdRequest) (*GetDefaultPartitionIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDefaultPartitionId not implemented")
+}
+func (*UnimplementedConfigstoreMetaServiceServer) ApplyTransaction(ctx context.Context, req *MetaTransaction) (*MetaTransactionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyTransaction not implemented")
 }
 
 func RegisterConfigstoreMetaServiceServer(s *grpc.Server, srv ConfigstoreMetaServiceServer) {

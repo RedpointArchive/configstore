@@ -43,7 +43,7 @@ func convertMetaEntityToRefAndDataMap(
 			m[name] = value.StringValue
 			break
 		case ValueType_timestamp:
-			m[name] = convertTimestampToTime(value.TimestampValue)
+			m[name] = value.TimestampValue
 			break
 		case ValueType_boolean:
 			m[name] = value.BooleanValue

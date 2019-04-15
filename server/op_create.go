@@ -34,10 +34,9 @@ func (s *operationProcessor) operationCreate(ctx context.Context, schema *Schema
 	}
 
 	if ref.ID == "" {
-		ref, _, err = ref.Parent.Add(ctx, data)
-	} else {
-		_, err = ref.Create(ctx, data)
+		ref = ref.Parent.NewDoc()
 	}
+	err = s.tx.Create(ref, data)
 	if err != nil {
 		return nil, err
 	}

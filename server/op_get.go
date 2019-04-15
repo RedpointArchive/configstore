@@ -18,7 +18,7 @@ func (s *operationProcessor) operationGet(ctx context.Context, schema *Schema, r
 		return nil, err
 	}
 
-	snapshot, err := ref.Get(ctx)
+	snapshot, err := s.tx.Get(ref)
 	if err != nil {
 		return nil, err
 	}

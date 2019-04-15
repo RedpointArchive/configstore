@@ -27,7 +27,7 @@ func (s *operationProcessor) operationUpdate(ctx context.Context, schema *Schema
 		return nil, fmt.Errorf("entity must be set")
 	}
 
-	_, err = ref.Set(ctx, data)
+	err = s.tx.Set(ref, data)
 	if err != nil {
 		return nil, fmt.Errorf("can't set data against entity (Firestore): %v", err)
 	}
