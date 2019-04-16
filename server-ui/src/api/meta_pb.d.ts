@@ -922,6 +922,62 @@ export namespace MetaOperationResult {
   }
 }
 
+export class WatchTransactionsRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): WatchTransactionsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: WatchTransactionsRequest): WatchTransactionsRequest.AsObject;
+  static serializeBinaryToWriter(message: WatchTransactionsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): WatchTransactionsRequest;
+  static deserializeBinaryFromReader(message: WatchTransactionsRequest, reader: jspb.BinaryReader): WatchTransactionsRequest;
+}
+
+export namespace WatchTransactionsRequest {
+  export type AsObject = {
+  }
+}
+
+export class MetaTransactionRecord extends jspb.Message {
+  getMutatedkeysList(): Array<Key>;
+  setMutatedkeysList(value: Array<Key>): void;
+  clearMutatedkeysList(): void;
+  addMutatedkeys(value?: Key, index?: number): Key;
+
+  getDeletedkeysList(): Array<Key>;
+  setDeletedkeysList(value: Array<Key>): void;
+  clearDeletedkeysList(): void;
+  addDeletedkeys(value?: Key, index?: number): Key;
+
+  getDatesubmitted(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setDatesubmitted(value?: google_protobuf_timestamp_pb.Timestamp): void;
+  hasDatesubmitted(): boolean;
+  clearDatesubmitted(): void;
+
+  getDatecreated(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setDatecreated(value?: google_protobuf_timestamp_pb.Timestamp): void;
+  hasDatecreated(): boolean;
+  clearDatecreated(): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaTransactionRecord.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaTransactionRecord): MetaTransactionRecord.AsObject;
+  static serializeBinaryToWriter(message: MetaTransactionRecord, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaTransactionRecord;
+  static deserializeBinaryFromReader(message: MetaTransactionRecord, reader: jspb.BinaryReader): MetaTransactionRecord;
+}
+
+export namespace MetaTransactionRecord {
+  export type AsObject = {
+    mutatedkeysList: Array<Key.AsObject>,
+    deletedkeysList: Array<Key.AsObject>,
+    datesubmitted?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    datecreated?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    description: string,
+  }
+}
+
 export enum ValueType { 
   UNKNOWN = 0,
   DOUBLE = 1,

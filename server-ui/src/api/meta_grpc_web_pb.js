@@ -529,5 +529,55 @@ proto.meta.ConfigstoreMetaServicePromiseClient.prototype.applyTransaction =
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.meta.WatchTransactionsRequest,
+ *   !proto.meta.MetaTransactionRecord>}
+ */
+const methodInfo_ConfigstoreMetaService_WatchTransactions = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.meta.MetaTransactionRecord,
+  /** @param {!proto.meta.WatchTransactionsRequest} request */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.meta.MetaTransactionRecord.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.meta.WatchTransactionsRequest} request The request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.meta.MetaTransactionRecord>}
+ *     The XHR Node Readable Stream
+ */
+proto.meta.ConfigstoreMetaServiceClient.prototype.watchTransactions =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/meta.ConfigstoreMetaService/WatchTransactions',
+      request,
+      metadata || {},
+      methodInfo_ConfigstoreMetaService_WatchTransactions);
+};
+
+
+/**
+ * @param {!proto.meta.WatchTransactionsRequest} request The request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.meta.MetaTransactionRecord>}
+ *     The XHR Node Readable Stream
+ */
+proto.meta.ConfigstoreMetaServicePromiseClient.prototype.watchTransactions =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/meta.ConfigstoreMetaService/WatchTransactions',
+      request,
+      metadata || {},
+      methodInfo_ConfigstoreMetaService_WatchTransactions);
+};
+
+
 module.exports = proto.meta;
 

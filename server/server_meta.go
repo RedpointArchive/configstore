@@ -163,3 +163,7 @@ func (s *configstoreMetaServiceServer) ApplyTransaction(ctx context.Context, req
 	)
 	return resp, err
 }
+
+func (s *configstoreMetaServiceServer) WatchTransactions(*WatchTransactionsRequest, ConfigstoreMetaService_WatchTransactionsServer) error {
+	return fmt.Errorf("not implemented")
+}

@@ -189,7 +189,7 @@ type <ENTITY>Store interface {
 
 <INDEXFUNCDEFS>
 
-func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTITY>Store, error) {
+func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient, configstore *Configstore) (<ENTITY>Store, error) {
 	ref := &<ENTITY>ImplStore{
 		client:   client,
 		store:    make(map[string]*<ENTITY>),
@@ -421,6 +421,109 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 	} else {
 		extendedCode = strings.Replace(extendedCode, "import (", "import (\n    \"io\"\n    \"sync\"\n    \"strings\"\n    \"time\"\n    \"encoding/binary\"\n    \"google.golang.org/grpc/status\"\n    \"google.golang.org/grpc/codes\"\n    \"hash/fnv\"\n    timestamp \"github.com/golang/protobuf/ptypes/timestamp\"", 1)
 	}
+
+	configstoreImplementationCode := `
+type Configstore struct {
+	conn *grpc.ClientConn
+	transactions []*MetaTransactionRecord
+
+`
+	for kindName := range schema.Kinds {
+		configstoreImplementationCode = strings.Join([]string{configstoreImplementationCode, `
+	pending`, kindName, ` []`, kindName, `
+	`, kindName, `s *`, kindName, `Store
+`}, "")
+	}
+	configstoreImplementationCode = strings.Join([]string{configstoreImplementationCode, `
+	sync.RWMutex storeMutex
+	sync.RWMutex pendingMutex
+	sync.RWMutex transactionsMutex
+}
+
+func (configstore *Configstore) startListeningForTransactions() error {
+	client := NewConfigstoreMetaServiceClient(configstore.Conn)
+	watcher, err := client.Watch(ctx, &WatchTransactionsRequest{})
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			resp, err := watcher.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err == nil || status.Code(err) == codes.OK {
+				if resp == nil {
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				if resp.Type == WatchEventType_Created {
+					configstore.transactionsMutex.Lock()
+					configstore.transactions = append(configstore.transactions, resp)
+					sort.Slice(configstore.transactions[:], func(i, j int) bool {
+						if (configstore.transactions[i].Seconds < configstore.transactions[j].Seconds) {
+							return true
+						}
+						if (configstore.transactions[i].Nanos < configstore.transactions[j].Nanos) {
+							return true
+						}
+						return false
+					})
+					configstore.transactionsMutex.Unlock()
+
+					configstore.rescanPendingTransactions()
+				}
+			} else if status.Code(err) == codes.Unavailable {
+				// Retry the Watch request itself
+				watcher, err = client.Watch(ctx, &WatchTransactionsRequest{})
+				if err != nil {
+					time.Sleep(30 * time.Second)
+					continue
+				} else {
+					// Connection re-established, loop back around again to receive updates.
+				}
+			} else {
+				time.Sleep(1 * time.Second)
+				continue
+			}
+		}
+	}()
+	return nil
+}
+
+func (configstore *Configstore) rescanPendingTransactions() error {
+	configstore.transactionsMutex.RLock()
+	defer configstore.transactionsMutex.RUnlock()
+
+	// transactions are in order from earliest to latest
+
+	for _, transaction := range configstore.transactions {
+		if len(transaction.MutatedKeys) == 0 {
+			
+		}
+
+		// check to see if this transaction has all the mutated entities it needs
+		hasAllMutatedKeys := true
+		
+	}
+}
+
+func NewConfigstore(ctx context.Context, conn *grpc.ClientConn) *Configstore {
+	configstore := &Configstore{
+		Conn: conn,
+	}
+`}, "")
+	for kindName := range schema.Kinds {
+		configstoreImplementationCode = strings.Join([]string{configstoreImplementationCode, `
+	configstore.`, kindName, `s = New`, kindName, `Store(ctx, New`, kindName, `Client(conn), configstore)`}, "")
+	}
+	configstoreImplementationCode = strings.Join([]string{configstoreImplementationCode, `
+	configstore.startListeningForTransactions()
+}
+`}, "")
+
+	extendedCode = fmt.Sprintf("%s\n%s", extendedCode, configstoreImplementationCode)
+
 	for kindName := range schema.Kinds {
 		indexStores := ""
 		indexFuncDecls := ""
