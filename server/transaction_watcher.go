@@ -72,45 +72,6 @@ func serializeTime(ts time.Time) string {
 }
 
 func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTransactionRecord) bool {
-	// check if the transaction is already complete
-	/*allMutatedKeysAreNewer := true
-	allDeletedKeysAreGoneOrCreatedAfterTransaction := true
-	for _, mutatedKey := range transaction.MutatedKeys {
-		mks := serializeKey(mutatedKey)
-		mutatedEntity, ok := watcher.currentEntities[mks]
-		if !ok {
-			allMutatedKeysAreNewer = false
-			break
-		}
-		if !mutatedEntity.UpdateTime.After(convertTimestampToTime(transaction.DateCreated)) {
-			allMutatedKeysAreNewer = false
-			break
-		}
-		fmt.Printf("%s: mutated entity %s is newer (%s > %s)\n", transaction.Id, mks, mutatedEntity.UpdateTime, transaction.DateCreated)
-	}
-	for _, deletedKey := range transaction.DeletedKeys {
-		dks := serializeKey(deletedKey)
-		deletedEntity, ok := watcher.currentEntities[dks]
-		if ok {
-			if !deletedEntity.CreateTime.After(convertTimestampToTime(transaction.DateCreated)) {
-				allDeletedKeysAreGoneOrCreatedAfterTransaction = false
-				break
-			} else {
-				fmt.Printf("%s: deleted entity %s has create time newer (%s > %s)\n", transaction.Id, dks, deletedEntity.CreateTime, transaction.DateCreated)
-			}
-		} else {
-			fmt.Printf("%s: deleted entity %s doesn't exist\n", transaction.Id, dks)
-		}
-	}
-	if allMutatedKeysAreNewer && allDeletedKeysAreGoneOrCreatedAfterTransaction {
-		// this transaction has already been applied to the current entities
-		// list (usually this happens when we're loading initial state from
-		// Firestore and have fetched the previous 5 minutes of transactions to
-		// ensure coverage of transactions).
-		fmt.Printf("skipping transaction %s, all related entities are newer\n", transaction.Id)
-		return true
-	}*/
-
 	// at this point, we know the transaction hasn't already been applied to
 	// current entities, so we need to check the pendingChangesByTimestamp
 	// to see if we have all the mutated keys present (deleted keys won't exist;
