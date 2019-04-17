@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/firestore"
 )
@@ -172,10 +173,21 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 	s.transactionWatcher.RegisterChannel(ch)
 	defer s.transactionWatcher.DeregisterChannel(ch)
 
-	for msg := range ch {
-		srv.Send(&WatchTransactionsResponse{
-			Batch: msg,
-		})
+	connected := true
+	for connected {
+		select {
+		case msg := <-ch:
+			srv.Send(&WatchTransactionsResponse{
+				Batch: msg,
+			})
+		case <-time.After(1 * time.Second):
+			err := srv.Context().Err()
+			if err != nil {
+				fmt.Println("detected client disconnection")
+				connected = false
+				break
+			}
+		}
 	}
 
 	return nil

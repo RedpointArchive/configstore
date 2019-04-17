@@ -12,7 +12,7 @@
     "@types/react-dom": "16.8.0",
     "bootstrap": "^4.2.1",
     "google-protobuf": "^3.2.0",
-    "grpc-web": "^1.0.4",
+    "grpc-web": "file:./grpc-web",
     "jquery": "^3.3.1",
     "popper.js": "^1.14.7",
     "react": "^16.8.1",

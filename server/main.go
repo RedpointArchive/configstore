@@ -10,13 +10,16 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jhump/protoreflect/desc/protoprint"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 
-	"github.com/gorilla/handlers"
+	"time"
+
 	"github.com/gorilla/mux"
 
 	firebase "firebase.google.com/go"
@@ -225,42 +228,100 @@ func main() {
 			})
 		}
 
-		wrappedGrpc := grpcweb.WrapServer(
-			grpcServer,
-			grpcweb.WithAllowedRequestHeaders([]string{"*"}),
-			grpcweb.WithCorsForRegisteredEndpointsOnly(false),
-			grpcweb.WithOriginFunc(func(origin string) bool {
-				return true
-			}),
-			grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
-				return true
-			}),
-			grpcweb.WithWebsockets(true),
-		)
-		root := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			if wrappedGrpc.IsGrpcWebRequest(req) ||
-				wrappedGrpc.IsAcceptableGrpcCorsRequest(req) ||
-				wrappedGrpc.IsGrpcWebSocketRequest(req) {
-				resp.Header().Set("Content-Type", "application/grpc-web-text")
-				wrappedGrpc.ServeHTTP(resp, req)
-				return
-			}
-			router.ServeHTTP(resp, req)
-		})
-
 		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
-		srv := &http.Server{
-			Handler: handlers.LoggingHandler(os.Stdout, root),
-			Addr:    fmt.Sprintf("0.0.0.0:%d", config.HTTPPort),
-		}
 
-		err = srv.ListenAndServe()
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			log.Print("HTTP server shutdown gracefully.")
-		}
+		GrpcServe(router, grpcServer, fmt.Sprintf("0.0.0.0:%d", config.HTTPPort))
+
 	} else if mode == runModeGenerate {
 		fmt.Println(clientProtoGoCode)
+	}
+}
+
+// setDummyClientHeaders sets two empty headers "grpc-status" and "grpc-message", which
+// the JS client tries to read on responses. We don't actually populate them with anything
+// but the server-side gRPC handler looks at the headers that were sent by the server
+// to determine what value to set in Access-Control-Expose-Headers. Since prior to this
+// change we didn't send them at all, they wouldn't be included in Access-Control-Expose-Headers
+// and thus when the JS client tried to read them it would log errors in the Chrome console
+// (and those error counts add up pretty fast when we're repeatedly polling endpoints).
+//
+// These headers are apparently only used for streaming requests, and we don't use those
+// yet (and ideally, they should get overwritten by the server-side gRPC if they need to be
+// set).
+func setDummyClientHeaders(resp http.ResponseWriter) {
+	resp.Header().Set("grpc-status", "")
+	resp.Header().Set("grpc-message", "")
+}
+
+// GrpcServe starts a HTTP server, with a gRPC server attached. This uses HttpServe
+// underneath, and just contains the logic for setting up the HTTP handler with gRPC
+// support.
+func GrpcServe(handler http.Handler, grpcServer *grpc.Server, addr string) {
+	wrappedGrpc := grpcweb.WrapServer(
+		grpcServer,
+		grpcweb.WithAllowedRequestHeaders([]string{"*"}),
+		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+		grpcweb.WithOriginFunc(func(origin string) bool {
+			return true
+		}),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+			_, err := grpcweb.WebsocketRequestOrigin(req)
+			if err != nil {
+				return false
+			}
+			return true
+		}),
+		grpcweb.WithWebsockets(true),
+	)
+	mixHandler := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		// Serve GRPC if this is a GRPC request.
+		if wrappedGrpc.IsGrpcWebRequest(req) ||
+			wrappedGrpc.IsAcceptableGrpcCorsRequest(req) ||
+			wrappedGrpc.IsGrpcWebSocketRequest(req) {
+			setDummyClientHeaders(resp)
+			wrappedGrpc.ServeHTTP(resp, req)
+			return
+		}
+
+		// Otherwise, fallback to the specified HTTP handler.
+		handler.ServeHTTP(resp, req)
+	})
+	HttpServe(mixHandler, addr)
+}
+
+// HttpServe starts a HTTP server using the given HTTP handler and listening
+// on the specified address.
+func HttpServe(handler http.Handler, addr string) {
+	server := &http.Server{
+		Addr:         addr,
+		WriteTimeout: time.Second * 15,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+		Handler:      handler,
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			fmt.Printf("http server error: %v", err)
+			os.Exit(1)
+		}
+	}()
+
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, syscall.SIGTERM, syscall.SIGINT)
+
+	<-signalChannel
+
+	if os.Getenv("DEV") != "1" {
+		fmt.Printf("gracefully shutting down...\n")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		if err.Error() != "http: Server closed" { // ignore this "error"
+			fmt.Printf("could not gracefully shut down server: %v\n", err)
+		}
 	}
 }

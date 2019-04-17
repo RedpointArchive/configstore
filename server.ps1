@@ -34,8 +34,12 @@ try {
       if (Test-Path $PSScriptRoot/workdir_go/) {
         Remove-Item $PSScriptRoot/workdir_go/ -Force -Recurse
       }
+      if (Test-Path $PSScriptRoot/runtime_ts/) {
+        Remove-Item $PSScriptRoot/runtime_ts/ -Force -Recurse
+      }
       docker.exe cp ${DockerContainerId}:/workdir_ts/ $PSScriptRoot/workdir_ts/
       docker.exe cp ${DockerContainerId}:/workdir_go/ $PSScriptRoot/workdir_go/
+      docker.exe cp ${DockerContainerId}:/grpc_runtime_out/ $PSScriptRoot/runtime_ts/
       Start-Sleep -Seconds 1
       Copy-Item $PSScriptRoot/workdir_go/meta.pb.go $PSScriptRoot/server/meta.pb.go -Force
       if (Test-Path $PSScriptRoot/server-ui/src/api) {
@@ -43,11 +47,19 @@ try {
         Start-Sleep -Seconds 1
       }
       Copy-Item -Recurse $PSScriptRoot/workdir_ts/api $PSScriptRoot/server-ui/src/api -Force
+      if (Test-Path $PSScriptRoot/server-ui/grpc-web) {
+        Remove-Item $PSScriptRoot/server-ui/grpc-web -Recurse -Force
+        Start-Sleep -Seconds 1
+      }
+      Copy-Item -Recurse $PSScriptRoot/runtime_ts/package $PSScriptRoot/server-ui/grpc-web -Force
       if (Test-Path $PSScriptRoot/workdir_ts/) {
         Remove-Item $PSScriptRoot/workdir_ts/ -Force -Recurse
       }
       if (Test-Path $PSScriptRoot/workdir_go/) {
         Remove-Item $PSScriptRoot/workdir_go/ -Force -Recurse
+      }
+      if (Test-Path $PSScriptRoot/runtime_ts/) {
+        Remove-Item $PSScriptRoot/runtime_ts/ -Force -Recurse
       }
     }
     finally {

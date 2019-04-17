@@ -1,5 +1,10 @@
 FROM networknext/grpc-toolkit:latest AS protocol_build
 
+# Copy the runtime code for TypeScript
+RUN mkdir /grpc_runtime_out && \
+  cd /grpc_runtime_out && \
+  tar -xvf /grpc-web.tar.gz
+
 # Build the TypeScript protocol buffers.
 
 COPY server/meta.proto /workdir_ts/

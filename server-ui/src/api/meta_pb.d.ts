@@ -1016,6 +1016,9 @@ export class MetaTransactionBatch extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
+  getId(): string;
+  setId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaTransactionBatch.AsObject;
   static toObject(includeInstance: boolean, msg: MetaTransactionBatch): MetaTransactionBatch.AsObject;
@@ -1029,6 +1032,7 @@ export namespace MetaTransactionBatch {
     mutatedentitiesList: Array<MetaEntity.AsObject>,
     deletedkeysList: Array<Key.AsObject>,
     description: string,
+    id: string,
   }
 }
 

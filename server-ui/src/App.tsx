@@ -10,6 +10,7 @@ import { useAsync } from "react-async";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { grpcHost } from "./svcHost";
+import { DashboardRoute } from "./routes/DashboardRoute";
 
 const loadSchema = async () => {
   const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
@@ -54,6 +55,7 @@ const App = () => {
       ));
     content = (
       <Switch>
+        <Route path="/" exact component={DashboardRoute} />
         <Route path="/kind/:kind">
           {(props: RouteComponentProps<KindRouteMatch>) => (
             <KindRoute {...props} schema={data} />

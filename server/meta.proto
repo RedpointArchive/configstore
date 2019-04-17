@@ -251,4 +251,5 @@ message MetaTransactionBatch {
     repeated MetaEntity mutatedEntities = 1;
     repeated Key deletedKeys = 2;
     string description = 3;
+    string id = 4;
 }

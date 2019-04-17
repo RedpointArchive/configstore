@@ -1,1 +1,1 @@
-export const grpcHost = `${window.location.protocol}//${window.location.hostname}:30100`;
+export const grpcHost = `${window.location.protocol}//${window.location.hostname}:13390`;

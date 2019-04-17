@@ -7614,7 +7614,8 @@ proto.meta.MetaTransactionBatch.toObject = function(includeInstance, msg) {
     proto.meta.MetaEntity.toObject, includeInstance),
     deletedkeysList: jspb.Message.toObjectList(msg.getDeletedkeysList(),
     proto.meta.Key.toObject, includeInstance),
-    description: jspb.Message.getFieldWithDefault(msg, 3, "")
+    description: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -7665,6 +7666,10 @@ proto.meta.MetaTransactionBatch.deserializeBinaryFromReader = function(msg, read
       var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -7714,6 +7719,13 @@ proto.meta.MetaTransactionBatch.serializeBinaryToWriter = function(message, writ
   if (f.length > 0) {
     writer.writeString(
       3,
+      f
+    );
+  }
+  f = message.getId();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
       f
     );
   }
@@ -7794,6 +7806,21 @@ proto.meta.MetaTransactionBatch.prototype.getDescription = function() {
 /** @param {string} value */
 proto.meta.MetaTransactionBatch.prototype.setDescription = function(value) {
   jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional string id = 4;
+ * @return {string}
+ */
+proto.meta.MetaTransactionBatch.prototype.getId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.MetaTransactionBatch.prototype.setId = function(value) {
+  jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
