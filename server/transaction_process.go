@@ -111,7 +111,7 @@ func (s *transactionProcessor) processTransaction(
 			transaction := make(map[string]interface{})
 			transaction["mutatedKeys"] = mutatedKeys
 			transaction["deletedKeys"] = deletedKeys
-			transaction["dateProcessed"] = time.Now()
+			transaction["dateSubmitted"] = time.Now()
 			transaction["description"] = req.Description
 			tx.Create(ref, transaction)
 		}

@@ -16,11 +16,11 @@ import {
   MetaListEntitiesRequest,
   MetaListEntitiesResponse,
   MetaTransaction,
-  MetaTransactionRecord,
   MetaTransactionResult,
   MetaUpdateEntityRequest,
   MetaUpdateEntityResponse,
-  WatchTransactionsRequest} from './meta_pb';
+  WatchTransactionsRequest,
+  WatchTransactionsResponse} from './meta_pb';
 
 export class ConfigstoreMetaServiceClient {
   constructor (hostname: string,
@@ -86,7 +86,7 @@ export class ConfigstoreMetaServiceClient {
   watchTransactions(
     request: WatchTransactionsRequest,
     metadata?: grpcWeb.Metadata
-  ): grpcWeb.ClientReadableStream<MetaTransactionRecord>;
+  ): grpcWeb.ClientReadableStream<WatchTransactionsResponse>;
 
 }
 
@@ -138,7 +138,7 @@ export class ConfigstoreMetaServicePromiseClient {
   watchTransactions(
     request: WatchTransactionsRequest,
     metadata?: grpcWeb.Metadata
-  ): grpcWeb.ClientReadableStream<MetaTransactionRecord>;
+  ): grpcWeb.ClientReadableStream<WatchTransactionsResponse>;
 
 }
 

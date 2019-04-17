@@ -2,7 +2,6 @@ package main
 
 import (
 	firebase "firebase.google.com/go"
-	"github.com/jhump/protoreflect/dynamic"
 
 	"context"
 
@@ -136,29 +135,6 @@ func verifyKeyIntact(t *testing.T, key *Key, ty KeyTestType) {
 	client, err := app.Firestore(ctx)
 	assert.NilError(t, err)
 	defer client.Close()
-
-	// generate schema
-	genResult, err := generate("./schema.json")
-	assert.NilError(t, err)
-
-	if ty == KeyTestType_All || ty == KeyTestType_ProtobufOnly {
-		// convert key meta -> dynamic -> meta
-		messageFactory := dynamic.NewMessageFactoryWithDefaults()
-		message, err := convertMetaKeyToDynamicKey(
-			messageFactory,
-			key,
-			genResult.CommonMessageDescriptors,
-		)
-		assert.NilError(t, err)
-		resultKey, err := convertDynamicKeyToMetaKey(
-			client,
-			message,
-		)
-		assert.NilError(t, err)
-
-		// verify that it survived intact
-		assert.DeepEqual(t, key, resultKey)
-	}
 
 	if ty == KeyTestType_All || ty == KeyTestType_FirestoreOnly {
 		// convert key meta -> firestore -> meta

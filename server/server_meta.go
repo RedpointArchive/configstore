@@ -11,17 +11,20 @@ type configstoreMetaServiceServer struct {
 	firestoreClient      *firestore.Client
 	schema               *Schema
 	transactionProcessor *transactionProcessor
+	transactionWatcher   *transactionWatcher
 }
 
 func createConfigstoreMetaServiceServer(
 	firestoreClient *firestore.Client,
 	schema *Schema,
 	transactionProcessor *transactionProcessor,
+	transactionWatcher *transactionWatcher,
 ) *configstoreMetaServiceServer {
 	return &configstoreMetaServiceServer{
 		firestoreClient:      firestoreClient,
 		schema:               schema,
 		transactionProcessor: transactionProcessor,
+		transactionWatcher:   transactionWatcher,
 	}
 }
 
@@ -164,6 +167,16 @@ func (s *configstoreMetaServiceServer) ApplyTransaction(ctx context.Context, req
 	return resp, err
 }
 
-func (s *configstoreMetaServiceServer) WatchTransactions(*WatchTransactionsRequest, ConfigstoreMetaService_WatchTransactionsServer) error {
-	return fmt.Errorf("not implemented")
+func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsRequest, srv ConfigstoreMetaService_WatchTransactionsServer) error {
+	ch := make(chan *MetaTransactionBatch)
+	s.transactionWatcher.RegisterChannel(ch)
+	defer s.transactionWatcher.DeregisterChannel(ch)
+
+	for msg := range ch {
+		srv.Send(&WatchTransactionsResponse{
+			Batch: msg,
+		})
+	}
+
+	return nil
 }

@@ -12,3 +12,7 @@ func convertTimeToTimestamp(t time.Time) *timestamp.Timestamp {
 		Nanos:   int32(t.Nanosecond()),
 	}
 }
+
+func convertTimestampToTime(t *timestamp.Timestamp) time.Time {
+	return time.Unix(t.Seconds, int64(t.Nanos))
+}

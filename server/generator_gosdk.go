@@ -189,7 +189,7 @@ type <ENTITY>Store interface {
 
 <INDEXFUNCDEFS>
 
-func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient, configstore *Configstore) (<ENTITY>Store, error) {
+func New<ENTITY>Store(ctx context.Context, client <ENTITY>ServiceClient) (<ENTITY>Store, error) {
 	ref := &<ENTITY>ImplStore{
 		client:   client,
 		store:    make(map[string]*<ENTITY>),
@@ -522,7 +522,7 @@ func NewConfigstore(ctx context.Context, conn *grpc.ClientConn) *Configstore {
 }
 `}, "")
 
-	extendedCode = fmt.Sprintf("%s\n%s", extendedCode, configstoreImplementationCode)
+	// extendedCode = fmt.Sprintf("%s\n%s", extendedCode, configstoreImplementationCode)
 
 	for kindName := range schema.Kinds {
 		indexStores := ""

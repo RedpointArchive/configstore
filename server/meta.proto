@@ -191,7 +191,7 @@ service ConfigstoreMetaService {
     rpc MetaDelete(MetaDeleteEntityRequest) returns (MetaDeleteEntityResponse);
     rpc GetDefaultPartitionId(GetDefaultPartitionIdRequest) returns (GetDefaultPartitionIdResponse);
     rpc ApplyTransaction(MetaTransaction) returns (MetaTransactionResult);
-    rpc WatchTransactions(WatchTransactionsRequest) returns (stream MetaTransactionRecord);
+    rpc WatchTransactions(WatchTransactionsRequest) returns (stream WatchTransactionsResponse);
 }
 
 // =======
@@ -234,10 +234,21 @@ message WatchTransactionsRequest {
 
 }
 
+message WatchTransactionsResponse {
+    MetaTransactionBatch batch = 1;
+}
+
 message MetaTransactionRecord {
     repeated Key mutatedKeys = 1;
     repeated Key deletedKeys = 2;
     google.protobuf.Timestamp dateSubmitted = 3;
     google.protobuf.Timestamp dateCreated = 4;
     string description = 5;
+    string id = 6;
+}
+
+message MetaTransactionBatch {
+    repeated MetaEntity mutatedEntities = 1;
+    repeated Key deletedEntities = 2;
+    string description = 3;
 }

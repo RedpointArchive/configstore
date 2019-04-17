@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"sync"
 	"time"
 
 	"cloud.google.com/go/firestore"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 )
 
 type transactionWatcher struct {
@@ -17,16 +17,148 @@ type transactionWatcher struct {
 
 	currentEntities               map[string]*firestore.DocumentSnapshot
 	currentEntitiesLock           sync.RWMutex
-	pendingChangesByTimestamp     map[string][]*firestore.DocumentChange
+	pendingChangesByTimestamp     map[string]map[string]*firestore.DocumentChange
 	pendingChangesByTimestampLock sync.RWMutex
 	inboundChanges                chan firestore.DocumentChange
 
 	transactions     []*MetaTransactionRecord
 	transactionsLock sync.RWMutex
+
+	outboundChanges chan *MetaTransactionBatch
+
+	outboundChannels     []chan *MetaTransactionBatch
+	outboundChannelsLock sync.Mutex
+}
+
+func (watcher *transactionWatcher) RegisterChannel(newCh chan *MetaTransactionBatch) {
+	watcher.outboundChannelsLock.Lock()
+	defer watcher.outboundChannelsLock.Unlock()
+
+	for _, ch := range watcher.outboundChannels {
+		if ch == newCh {
+			return
+		}
+	}
+
+	watcher.outboundChannels = append(
+		watcher.outboundChannels,
+		newCh,
+	)
+}
+
+func (watcher *transactionWatcher) DeregisterChannel(oldCh chan *MetaTransactionBatch) {
+	watcher.outboundChannelsLock.Lock()
+	defer watcher.outboundChannelsLock.Unlock()
+
+	idx := -1
+	for i, ch := range watcher.outboundChannels {
+		if ch == oldCh {
+			idx = i
+			break
+		}
+	}
+
+	if idx == -1 {
+		return
+	}
+
+	// remove the element quickly
+	watcher.outboundChannels[len(watcher.outboundChannels)-1], watcher.outboundChannels[idx] = watcher.outboundChannels[idx], watcher.outboundChannels[len(watcher.outboundChannels)-1]
+	watcher.outboundChannels = watcher.outboundChannels[:len(watcher.outboundChannels)-1]
 }
 
 func serializeTime(ts time.Time) string {
 	return fmt.Sprintf("%d-%d", ts.Unix(), ts.Nanosecond())
+}
+
+func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTransactionRecord) bool {
+	// check if the transaction is already complete
+	fmt.Println("processing transaction...", transaction)
+	allMutatedKeysAreNewer := true
+	allDeletedKeysAreGoneOrCreatedAfterTransaction := true
+	for _, mutatedKey := range transaction.MutatedKeys {
+		mks := serializeKey(mutatedKey)
+		mutatedEntity, ok := watcher.currentEntities[mks]
+		if !ok {
+			allMutatedKeysAreNewer = false
+			break
+		}
+		if mutatedEntity.UpdateTime.Before(convertTimestampToTime(transaction.DateCreated)) {
+			allMutatedKeysAreNewer = false
+			break
+		}
+	}
+	for _, deletedKey := range transaction.DeletedKeys {
+		dks := serializeKey(deletedKey)
+		deletedEntity, ok := watcher.currentEntities[dks]
+		if ok {
+			if deletedEntity.CreateTime.Before(convertTimestampToTime(transaction.DateCreated)) {
+				allDeletedKeysAreGoneOrCreatedAfterTransaction = false
+				break
+			}
+		}
+	}
+	if allMutatedKeysAreNewer && allDeletedKeysAreGoneOrCreatedAfterTransaction {
+		// this transaction has already been applied to the current entities
+		// list (usually this happens when we're loading initial state from
+		// Firestore and have fetched the previous 5 minutes of transactions to
+		// ensure coverage of transactions).
+		fmt.Println("transaction already applied")
+		return true
+	}
+
+	// at this point, we know the transaction hasn't already been applied to
+	// current entities, so we need to check the pendingChangesByTimestamp
+	// to see if we have all the mutated keys present (deleted keys won't exist;
+	// we just remove them from current entities once we have all the mutations
+	// we need)
+	if len(transaction.MutatedKeys) > 0 {
+		ts := serializeTime(convertTimestampToTime(transaction.DateCreated))
+		pendingChanges, ok := watcher.pendingChangesByTimestamp[ts]
+		if !ok {
+			// we don't have any of the pending changes, but we have at least one
+			// mutated key. we can't be ready to apply this transaction
+			fmt.Println("has no mutated entities at all")
+			return false
+		}
+		for _, mutatedKey := range transaction.MutatedKeys {
+			mks := serializeKey(mutatedKey)
+			_, ok := pendingChanges[mks]
+			if !ok {
+				// we don't have this entity's snapshot yet
+				fmt.Println("missing mutated entity snapshot: ", mks)
+				return false
+			}
+		}
+	}
+
+	// at this point, we have all the changes for this transaction in pendingChanges,
+	// we can apply them to currentEntities
+	// TODO: emit the "transaction batch" data structure, containing all of the changes
+	// for configstore clients to apply atomically
+	fmt.Println("applying transaction...")
+	if len(transaction.MutatedKeys) > 0 {
+		ts := serializeTime(convertTimestampToTime(transaction.DateCreated))
+		pendingChanges := watcher.pendingChangesByTimestamp[ts]
+		for _, mutatedKey := range transaction.MutatedKeys {
+			mks := serializeKey(mutatedKey)
+			mutatedEntity := pendingChanges[mks]
+			watcher.currentEntities[mks] = mutatedEntity.Doc
+			delete(pendingChanges, mks)
+		}
+		if len(pendingChanges) == 0 {
+			// we can free up the map as well
+			delete(watcher.pendingChangesByTimestamp, ts)
+		}
+	}
+	for _, deletedKey := range transaction.DeletedKeys {
+		dks := serializeKey(deletedKey)
+		delete(watcher.currentEntities, dks)
+	}
+
+	// the transaction has been applied and can be removed from the transaction list
+	fmt.Println("applied transaction")
+	return true
 }
 
 func createTransactionWatcher(ctx context.Context, client *firestore.Client, schema *Schema) (*transactionWatcher, error) {
@@ -34,7 +166,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 		client:                    client,
 		schema:                    schema,
 		currentEntities:           make(map[string]*firestore.DocumentSnapshot),
-		pendingChangesByTimestamp: make(map[string][]*firestore.DocumentChange),
+		pendingChangesByTimestamp: make(map[string]map[string]*firestore.DocumentChange),
 		inboundChanges:            make(chan firestore.DocumentChange),
 		transactions:              nil,
 	}
@@ -60,35 +192,59 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 			watcher.transactionsLock.Lock()
 			watcher.pendingChangesByTimestampLock.Lock()
 			watcher.currentEntitiesLock.Lock()
-			defer watcher.transactionsLock.Unlock()
-			defer watcher.pendingChangesByTimestampLock.Unlock()
-			defer watcher.currentEntitiesLock.Unlock()
 
 			// we have transactions to process
-			for _, transaction := range watcher.transactions {
-				// WIP: todo complete....
+			for len(watcher.transactions) > 0 {
+				result := watcher.processTransaction(0, watcher.transactions[0])
+				if result {
+					// remove transaction because it's been applied
+					watcher.transactions = watcher.transactions[1:]
+				} else {
+					// can't apply the first transaction yet, wait a little longer
+					// for new entities, notifications, etc. to come in before
+					// retrying
+					break
+				}
 			}
+
+			// release all locks
+			watcher.transactionsLock.Unlock()
+			watcher.pendingChangesByTimestampLock.Unlock()
+			watcher.currentEntitiesLock.Unlock()
 		}
-	}
+	}()
 
 	// listen for inbound changes
 	go func() {
 		for elem := range watcher.inboundChanges {
 			watcher.pendingChangesByTimestampLock.Lock()
-			defer watcher.pendingChangesByTimestampLock.Unlock()
 
 			ts := serializeTime(elem.Doc.UpdateTime)
 
-			watcher.pendingChangesByTimestamp[ts] = append(
-				watcher.pendingChangesByTimestamp[ts],
-				&elem,
-			)
+			if watcher.pendingChangesByTimestamp[ts] == nil {
+				watcher.pendingChangesByTimestamp[ts] = make(map[string]*firestore.DocumentChange)
+			}
+			watcher.pendingChangesByTimestamp[ts][serializeRef(elem.Doc.Ref)] = &elem
+
+			watcher.pendingChangesByTimestampLock.Unlock()
+		}
+	}()
+
+	// propagate outbound changes
+	go func() {
+		for elem := range watcher.outboundChanges {
+			watcher.outboundChannelsLock.Lock()
+			for _, ch := range watcher.outboundChannels {
+				ch <- elem
+			}
+			watcher.outboundChannelsLock.Unlock()
 		}
 	}()
 
 	// listen for new transactions coming in
+	startTime := time.Now().Add(time.Minute * -5)
 	go func() {
-		transactions := watcher.client.Collection("Transaction").Snapshots(ctx)
+		transactions := watcher.client.Collection("Transaction").Where("dateSubmitted", ">=", startTime).OrderBy("dateSubmitted", firestore.Asc).Snapshots(ctx)
 		for true {
 			transactionSnapshot, err := transactions.Next()
 			if err != nil {
@@ -96,42 +252,47 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 				return
 			}
 
+			fmt.Println("got transaction snapshot", transactionSnapshot)
+
 			watcher.transactionsLock.Lock()
-			defer watcher.transactionsLock.Unlock()
 
 			for _, change := range transactionSnapshot.Changes {
-				data := change.Data()
+				data := change.Doc.Data()
 
 				var mutatedRefs []*firestore.DocumentRef
 				var mutatedKeys []*Key
 				var deletedRefs []*firestore.DocumentRef
 				var deletedKeys []*Key
 				var dateSubmitted time.Time
-				var dateCreated time.Time
 				var description string
-				if w, ok := data["mutatedKeys"].([]*firestore.DocumentRef); ok {
-					mutatedRefs = w
+				if w, ok := data["mutatedKeys"].([]interface{}); ok {
+					for _, ww := range w {
+						if www, ok := ww.(*firestore.DocumentRef); ok {
+							mutatedRefs = append(mutatedRefs, www)
+						}
+					}
 				}
-				if w, ok := data["deletedKeys"].([]*firestore.DocumentRef); ok {
-					deletedRefs = w
+				if w, ok := data["deletedKeys"].([]interface{}); ok {
+					for _, ww := range w {
+						if www, ok := ww.(*firestore.DocumentRef); ok {
+							deletedRefs = append(deletedRefs, www)
+						}
+					}
 				}
 				if w, ok := data["dateSubmitted"].(time.Time); ok {
 					dateSubmitted = w
 				}
-				if w, ok := data["dateCreated"].(time.Time); ok {
-					dateCreated = w
-				}
 				if w, ok := data["description"].(string); ok {
 					description = w
 				}
-				for _, ref := mutatedRefs {
+				for _, ref := range mutatedRefs {
 					key, err := convertDocumentRefToMetaKey(ref)
 					if err != nil {
 						continue
 					}
 					mutatedKeys = append(mutatedKeys, key)
 				}
-				for _, ref := deletedRefs {
+				for _, ref := range deletedRefs {
 					key, err := convertDocumentRefToMetaKey(ref)
 					if err != nil {
 						continue
@@ -139,27 +300,36 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 					deletedKeys = append(deletedKeys, key)
 				}
 
+				if len(mutatedKeys) == 0 && len(deletedKeys) == 0 {
+					// we decoded these incorrectly, because we never write transactions
+					// that don't have at least one of these
+					panic("mutatedKeys and deletedKeys are both length 0!")
+				}
+
 				watcher.transactions = append(
 					watcher.transactions,
 					&MetaTransactionRecord{
-						MutatedKeys: mutatedKeys,
-						DeletedKeys: deletedKeys,
+						MutatedKeys:   mutatedKeys,
+						DeletedKeys:   deletedKeys,
 						DateSubmitted: convertTimeToTimestamp(dateSubmitted),
-						DateCreated: convertTimeToTimestamp(dateCreated),
-						Description: description,
+						DateCreated:   convertTimeToTimestamp(change.Doc.CreateTime),
+						Description:   description,
+						Id:            change.Doc.Ref.ID,
 					},
 				)
 			}
 
 			sort.Slice(watcher.transactions[:], func(i, j int) bool {
-				if (watcher.transactions[i].DateCreated.Seconds < watcher.transactions[j].DateCreated.Seconds) {
+				if watcher.transactions[i].DateCreated.Seconds < watcher.transactions[j].DateCreated.Seconds {
 					return true
 				}
-				if (watcher.transactions[i].DateCreated.Nanos < watcher.transactions[j].DateCreated.Nanos) {
+				if watcher.transactions[i].DateCreated.Nanos < watcher.transactions[j].DateCreated.Nanos {
 					return true
 				}
 				return false
 			})
+
+			watcher.transactionsLock.Unlock()
 		}
 	}()
 

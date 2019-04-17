@@ -19,6 +19,7 @@ type configstoreDynamicProtobufService struct {
 	kindName             string
 	schema               *Schema
 	transactionProcessor *transactionProcessor
+	transactionWatcher   *transactionWatcher
 }
 
 func createConfigstoreDynamicProtobufServer(
@@ -27,6 +28,7 @@ func createConfigstoreDynamicProtobufServer(
 	service *builder.ServiceBuilder,
 	kindName string,
 	schema *Schema,
+	transactionWatcher *transactionWatcher,
 ) *configstoreDynamicProtobufService {
 	return &configstoreDynamicProtobufService{
 		firestoreClient:      firestoreClient,
@@ -35,6 +37,7 @@ func createConfigstoreDynamicProtobufServer(
 		kindName:             kindName,
 		schema:               schema,
 		transactionProcessor: createTransactionProcessor(firestoreClient),
+		transactionWatcher:   transactionWatcher,
 	}
 }
 
@@ -43,6 +46,7 @@ func (s *configstoreDynamicProtobufService) getMetaServiceServer() *configstoreM
 		s.firestoreClient,
 		s.schema,
 		s.transactionProcessor,
+		s.transactionWatcher,
 	)
 }
 
@@ -132,17 +136,9 @@ func (s *configstoreDynamicProtobufService) dynamicProtobufGet(srv interface{}, 
 		return nil, err
 	}
 
-	rawKeyV, ok := rawKey.(*dynamic.Message)
+	key, ok := rawKey.(*Key)
 	if !ok {
 		return nil, fmt.Errorf("unable to read key")
-	}
-
-	key, err := convertDynamicKeyToMetaKey(
-		s.firestoreClient,
-		rawKeyV,
-	)
-	if err != nil {
-		return nil, err
 	}
 
 	metaServer := s.getMetaServiceServer()
@@ -297,17 +293,9 @@ func (s *configstoreDynamicProtobufService) dynamicProtobufDelete(srv interface{
 		return nil, err
 	}
 
-	rawKeyV, ok := rawKey.(*dynamic.Message)
+	key, ok := rawKey.(*Key)
 	if !ok {
 		return nil, fmt.Errorf("unable to read key")
-	}
-
-	key, err := convertDynamicKeyToMetaKey(
-		s.firestoreClient,
-		rawKeyV,
-	)
-	if err != nil {
-		return nil, err
 	}
 
 	metaServer := s.getMetaServiceServer()

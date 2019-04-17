@@ -66,23 +66,31 @@ type generatorResult struct {
 	CommonMessageDescriptors *commonMessageDescriptors
 }
 
-func generate(path string) (*generatorResult, error) {
-	timestampFileDescriptor, err := desc.LoadFileDescriptor("google/protobuf/timestamp.proto")
-	if err != nil {
-		return nil, err
-	}
-
+func getMessageDescriptorFromFile(fileDescriptor *desc.FileDescriptor, name string) *desc.MessageDescriptor {
 	var timestampMessage *desc.MessageDescriptor
-	for _, tfd := range timestampFileDescriptor.GetMessageTypes() {
-		if tfd.GetName() == "Timestamp" {
+	for _, tfd := range fileDescriptor.GetMessageTypes() {
+		if tfd.GetName() == name {
 			timestampMessage = tfd
 			break
 		}
 	}
 	if timestampMessage == nil {
-		return nil, fmt.Errorf("unable to locate Timestamp proto descriptor in google/protobuf/timestamp.proto")
+		panic("unable to locate Timestamp proto descriptor in google/protobuf/timestamp.proto")
 	}
+	return timestampMessage
+}
 
+func findMessageBuilderByName(messages []*builder.MessageBuilder, name string) *builder.MessageBuilder {
+	for _, msg := range messages {
+		if msg.GetName() == name {
+			return msg
+		}
+	}
+	return nil
+}
+
+func generate(path string) (*generatorResult, error) {
+	// load schema file and parse it
 	schemaFile, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -95,6 +103,23 @@ func generate(path string) (*generatorResult, error) {
 		return nil, fmt.Errorf("unable to deserialize schema.json: %v", err)
 	}
 
+	// use meta.proto as the base file builder
+	metaFileDescriptor, err := desc.LoadFileDescriptor("meta.proto")
+	if err != nil {
+		return nil, err
+	}
+	fileBuilder, err := builder.FromFile(metaFileDescriptor)
+	if err != nil {
+		return nil, err
+	}
+
+	timestampFileDescriptor, err := desc.LoadFileDescriptor("google/protobuf/timestamp.proto")
+	if err != nil {
+		return nil, err
+	}
+
+	timestampMessage := getMessageDescriptorFromFile(timestampFileDescriptor, "Timestamp")
+
 	var messages []*builder.MessageBuilder
 	var services []*builder.ServiceBuilder
 	var enums []*builder.EnumBuilder
@@ -103,51 +128,11 @@ func generate(path string) (*generatorResult, error) {
 	messageMap := make(map[string]*desc.MessageDescriptor)
 	serviceMap := make(map[string]*builder.ServiceBuilder)
 
-	partitionIdMessage := builder.NewMessage("PartitionId")
-	partitionIdMessage.AddField(
-		builder.NewField("namespace", builder.FieldTypeString()).
-			SetNumber(1),
-	)
-	messages = append(messages, partitionIdMessage)
+	partitionIDMessage := fileBuilder.GetMessage("PartitionId")
+	pathElementMessage := fileBuilder.GetMessage("PathElement")
+	keyMessage := fileBuilder.GetMessage("Key")
 
-	pathElementIdMessage := builder.NewOneOf("idType")
-	pathElementIdMessage.AddChoice(
-		builder.NewField("id", builder.FieldTypeInt64()).
-			SetNumber(2).
-			SetOptional().
-			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The ID in the path component")}),
-	)
-	pathElementIdMessage.AddChoice(
-		builder.NewField("name", builder.FieldTypeString()).
-			SetNumber(3).
-			SetOptional().
-			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The name in the path component")}),
-	)
-
-	pathElementMessage := builder.NewMessage("PathElement")
-	pathElementMessage.AddField(
-		builder.NewField("kind", builder.FieldTypeString()).
-			SetNumber(1).
-			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The kind in the path component")}),
-	)
-	pathElementMessage.AddOneOf(pathElementIdMessage)
-	messages = append(messages, pathElementMessage)
-
-	keyMessage := builder.NewMessage("Key")
-	keyMessage.AddField(
-		builder.NewField("partitionId", builder.FieldTypeMessage(partitionIdMessage)).
-			SetNumber(1).
-			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The partition that the entity is stored in; if omitted, the default is used")}),
-	)
-	keyMessage.AddField(
-		builder.NewField("path", builder.FieldTypeMessage(pathElementMessage)).
-			SetNumber(2).
-			SetRepeated().
-			SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The path to the entity")}),
-	)
-	messages = append(messages, keyMessage)
-
-	partitionIdDescriptor, err := partitionIdMessage.Build()
+	partitionIDDescriptor, err := partitionIDMessage.Build()
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +147,7 @@ func generate(path string) (*generatorResult, error) {
 
 	common := &commonMessageDescriptors{
 		Timestamp:   timestampMessage,
-		PartitionId: partitionIdDescriptor,
+		PartitionId: partitionIDDescriptor,
 		PathElement: pathElementDescriptor,
 		Key:         keyDescriptor,
 	}
@@ -319,8 +304,8 @@ func generate(path string) (*generatorResult, error) {
 		messageMap[message.GetName()] = msgDesc
 	}
 
-	fileBuilder := builder.NewFile("")
 	fileBuilder.SetProto3(true)
+	fileBuilder.SetName("")
 	fileBuilder.SetPackageName(schema.Name)
 	for _, message := range messages {
 		fileBuilder.AddMessage(message)

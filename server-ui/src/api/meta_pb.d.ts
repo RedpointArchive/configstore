@@ -936,6 +936,26 @@ export namespace WatchTransactionsRequest {
   }
 }
 
+export class WatchTransactionsResponse extends jspb.Message {
+  getBatch(): MetaTransactionBatch | undefined;
+  setBatch(value?: MetaTransactionBatch): void;
+  hasBatch(): boolean;
+  clearBatch(): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): WatchTransactionsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: WatchTransactionsResponse): WatchTransactionsResponse.AsObject;
+  static serializeBinaryToWriter(message: WatchTransactionsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): WatchTransactionsResponse;
+  static deserializeBinaryFromReader(message: WatchTransactionsResponse, reader: jspb.BinaryReader): WatchTransactionsResponse;
+}
+
+export namespace WatchTransactionsResponse {
+  export type AsObject = {
+    batch?: MetaTransactionBatch.AsObject,
+  }
+}
+
 export class MetaTransactionRecord extends jspb.Message {
   getMutatedkeysList(): Array<Key>;
   setMutatedkeysList(value: Array<Key>): void;
@@ -960,6 +980,9 @@ export class MetaTransactionRecord extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
+  getId(): string;
+  setId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MetaTransactionRecord.AsObject;
   static toObject(includeInstance: boolean, msg: MetaTransactionRecord): MetaTransactionRecord.AsObject;
@@ -974,6 +997,37 @@ export namespace MetaTransactionRecord {
     deletedkeysList: Array<Key.AsObject>,
     datesubmitted?: google_protobuf_timestamp_pb.Timestamp.AsObject,
     datecreated?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    description: string,
+    id: string,
+  }
+}
+
+export class MetaTransactionBatch extends jspb.Message {
+  getMutatedentitiesList(): Array<MetaEntity>;
+  setMutatedentitiesList(value: Array<MetaEntity>): void;
+  clearMutatedentitiesList(): void;
+  addMutatedentities(value?: MetaEntity, index?: number): MetaEntity;
+
+  getDeletedentitiesList(): Array<Key>;
+  setDeletedentitiesList(value: Array<Key>): void;
+  clearDeletedentitiesList(): void;
+  addDeletedentities(value?: Key, index?: number): Key;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaTransactionBatch.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaTransactionBatch): MetaTransactionBatch.AsObject;
+  static serializeBinaryToWriter(message: MetaTransactionBatch, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaTransactionBatch;
+  static deserializeBinaryFromReader(message: MetaTransactionBatch, reader: jspb.BinaryReader): MetaTransactionBatch;
+}
+
+export namespace MetaTransactionBatch {
+  export type AsObject = {
+    mutatedentitiesList: Array<MetaEntity.AsObject>,
+    deletedentitiesList: Array<Key.AsObject>,
     description: string,
   }
 }

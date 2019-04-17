@@ -87,6 +87,12 @@ func main() {
 		}
 		defer client.Close()
 
+		// Start the transaction watcher
+		transactionWatcher, err := createTransactionWatcher(ctx, client, genResult.Schema)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
 		// Serve the configstore gRPC server
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.GrpcPort))
 		if err != nil {
@@ -101,6 +107,7 @@ func main() {
 				service,
 				genResult.KindNameMap[service],
 				genResult.Schema,
+				transactionWatcher,
 			)
 
 			grpcServer.RegisterService(
@@ -165,6 +172,7 @@ func main() {
 			client,
 			genResult.Schema,
 			createTransactionProcessor(client),
+			transactionWatcher,
 		))
 
 		// Start gRPC server.

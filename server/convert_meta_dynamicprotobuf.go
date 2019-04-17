@@ -7,41 +7,6 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 )
 
-func convertMetaKeyToDynamicKey(
-	messageFactory *dynamic.MessageFactory,
-	key *Key,
-	common *commonMessageDescriptors,
-) (*dynamic.Message, error) {
-	if key == nil {
-		return nil, fmt.Errorf("meta key was nil, internal caller must handle this scenario\n")
-	}
-
-	partitionID := messageFactory.NewDynamicMessage(common.PartitionId)
-	partitionID.SetFieldByName("namespace", key.PartitionId.Namespace)
-
-	var path []*dynamic.Message
-	for _, elem := range key.Path {
-		pathElement := messageFactory.NewDynamicMessage(common.PathElement)
-		pathElement.SetFieldByName("kind", elem.Kind)
-		switch elem.GetIdType().(type) {
-		case *PathElement_Id:
-			pathElement.SetFieldByName("id", elem.GetId())
-			break
-		case *PathElement_Name:
-			pathElement.SetFieldByName("name", elem.GetName())
-			break
-		}
-
-		path = append(path, pathElement)
-	}
-
-	dynamicKey := messageFactory.NewDynamicMessage(common.Key)
-	dynamicKey.SetFieldByName("partitionId", partitionID)
-	dynamicKey.SetFieldByName("path", path)
-
-	return dynamicKey, nil
-}
-
 func convertMetaEntityToDynamicMessage(
 	messageFactory *dynamic.MessageFactory,
 	messageDescriptor *desc.MessageDescriptor,
@@ -49,17 +14,8 @@ func convertMetaEntityToDynamicMessage(
 	common *commonMessageDescriptors,
 	schemaKind *SchemaKind,
 ) (*dynamic.Message, error) {
-	key, err := convertMetaKeyToDynamicKey(
-		messageFactory,
-		entity.Key,
-		common,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	out := messageFactory.NewDynamicMessage(messageDescriptor)
-	out.SetFieldByName("key", key)
+	out.SetFieldByName("key", entity.Key)
 
 	for _, value := range entity.Values {
 		field := findSchemaFieldByID(schemaKind, value.Id)
@@ -100,16 +56,7 @@ func convertMetaEntityToDynamicMessage(
 				if value.KeyValue == nil {
 					err = out.TryClearFieldByName(field.Name)
 				} else {
-					key, err := convertMetaKeyToDynamicKey(
-						messageFactory,
-						value.KeyValue,
-						common,
-					)
-					if err != nil {
-						// pass error through
-					} else {
-						err = out.TrySetFieldByName(field.Name, key)
-					}
+					err = out.TrySetFieldByName(field.Name, value.KeyValue)
 				}
 				break
 			case ValueType_uint64:
