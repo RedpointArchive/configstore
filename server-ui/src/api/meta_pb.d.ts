@@ -1008,10 +1008,10 @@ export class MetaTransactionBatch extends jspb.Message {
   clearMutatedentitiesList(): void;
   addMutatedentities(value?: MetaEntity, index?: number): MetaEntity;
 
-  getDeletedentitiesList(): Array<Key>;
-  setDeletedentitiesList(value: Array<Key>): void;
-  clearDeletedentitiesList(): void;
-  addDeletedentities(value?: Key, index?: number): Key;
+  getDeletedkeysList(): Array<Key>;
+  setDeletedkeysList(value: Array<Key>): void;
+  clearDeletedkeysList(): void;
+  addDeletedkeys(value?: Key, index?: number): Key;
 
   getDescription(): string;
   setDescription(value: string): void;
@@ -1027,7 +1027,7 @@ export class MetaTransactionBatch extends jspb.Message {
 export namespace MetaTransactionBatch {
   export type AsObject = {
     mutatedentitiesList: Array<MetaEntity.AsObject>,
-    deletedentitiesList: Array<Key.AsObject>,
+    deletedkeysList: Array<Key.AsObject>,
     description: string,
   }
 }

@@ -249,6 +249,6 @@ message MetaTransactionRecord {
 
 message MetaTransactionBatch {
     repeated MetaEntity mutatedEntities = 1;
-    repeated Key deletedEntities = 2;
+    repeated Key deletedKeys = 2;
     string description = 3;
 }

@@ -7612,7 +7612,7 @@ proto.meta.MetaTransactionBatch.toObject = function(includeInstance, msg) {
   var f, obj = {
     mutatedentitiesList: jspb.Message.toObjectList(msg.getMutatedentitiesList(),
     proto.meta.MetaEntity.toObject, includeInstance),
-    deletedentitiesList: jspb.Message.toObjectList(msg.getDeletedentitiesList(),
+    deletedkeysList: jspb.Message.toObjectList(msg.getDeletedkeysList(),
     proto.meta.Key.toObject, includeInstance),
     description: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
@@ -7659,7 +7659,7 @@ proto.meta.MetaTransactionBatch.deserializeBinaryFromReader = function(msg, read
     case 2:
       var value = new proto.meta.Key;
       reader.readMessage(value,proto.meta.Key.deserializeBinaryFromReader);
-      msg.addDeletedentities(value);
+      msg.addDeletedkeys(value);
       break;
     case 3:
       var value = /** @type {string} */ (reader.readString());
@@ -7702,7 +7702,7 @@ proto.meta.MetaTransactionBatch.serializeBinaryToWriter = function(message, writ
       proto.meta.MetaEntity.serializeBinaryToWriter
     );
   }
-  f = message.getDeletedentitiesList();
+  f = message.getDeletedkeysList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
       2,
@@ -7752,17 +7752,17 @@ proto.meta.MetaTransactionBatch.prototype.clearMutatedentitiesList = function() 
 
 
 /**
- * repeated Key deletedEntities = 2;
+ * repeated Key deletedKeys = 2;
  * @return {!Array<!proto.meta.Key>}
  */
-proto.meta.MetaTransactionBatch.prototype.getDeletedentitiesList = function() {
+proto.meta.MetaTransactionBatch.prototype.getDeletedkeysList = function() {
   return /** @type{!Array<!proto.meta.Key>} */ (
     jspb.Message.getRepeatedWrapperField(this, proto.meta.Key, 2));
 };
 
 
 /** @param {!Array<!proto.meta.Key>} value */
-proto.meta.MetaTransactionBatch.prototype.setDeletedentitiesList = function(value) {
+proto.meta.MetaTransactionBatch.prototype.setDeletedkeysList = function(value) {
   jspb.Message.setRepeatedWrapperField(this, 2, value);
 };
 
@@ -7772,13 +7772,13 @@ proto.meta.MetaTransactionBatch.prototype.setDeletedentitiesList = function(valu
  * @param {number=} opt_index
  * @return {!proto.meta.Key}
  */
-proto.meta.MetaTransactionBatch.prototype.addDeletedentities = function(opt_value, opt_index) {
+proto.meta.MetaTransactionBatch.prototype.addDeletedkeys = function(opt_value, opt_index) {
   return jspb.Message.addToRepeatedWrapperField(this, 2, opt_value, proto.meta.Key, opt_index);
 };
 
 
-proto.meta.MetaTransactionBatch.prototype.clearDeletedentitiesList = function() {
-  this.setDeletedentitiesList([]);
+proto.meta.MetaTransactionBatch.prototype.clearDeletedkeysList = function() {
+  this.setDeletedkeysList([]);
 };
 
 

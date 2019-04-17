@@ -73,7 +73,6 @@ func serializeTime(ts time.Time) string {
 
 func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTransactionRecord) bool {
 	// check if the transaction is already complete
-	fmt.Println("processing transaction...", transaction)
 	allMutatedKeysAreNewer := true
 	allDeletedKeysAreGoneOrCreatedAfterTransaction := true
 	for _, mutatedKey := range transaction.MutatedKeys {
@@ -103,7 +102,6 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 		// list (usually this happens when we're loading initial state from
 		// Firestore and have fetched the previous 5 minutes of transactions to
 		// ensure coverage of transactions).
-		fmt.Println("transaction already applied")
 		return true
 	}
 
@@ -118,7 +116,6 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 		if !ok {
 			// we don't have any of the pending changes, but we have at least one
 			// mutated key. we can't be ready to apply this transaction
-			fmt.Println("has no mutated entities at all")
 			return false
 		}
 		for _, mutatedKey := range transaction.MutatedKeys {
@@ -126,7 +123,6 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 			_, ok := pendingChanges[mks]
 			if !ok {
 				// we don't have this entity's snapshot yet
-				fmt.Println("missing mutated entity snapshot: ", mks)
 				return false
 			}
 		}
@@ -136,7 +132,11 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 	// we can apply them to currentEntities
 	// TODO: emit the "transaction batch" data structure, containing all of the changes
 	// for configstore clients to apply atomically
-	fmt.Println("applying transaction...")
+	batch := &MetaTransactionBatch{
+		Description:     transaction.Description,
+		DeletedKeys:     transaction.DeletedKeys,
+		MutatedEntities: nil,
+	}
 	if len(transaction.MutatedKeys) > 0 {
 		ts := serializeTime(convertTimestampToTime(transaction.DateCreated))
 		pendingChanges := watcher.pendingChangesByTimestamp[ts]
@@ -144,6 +144,18 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 			mks := serializeKey(mutatedKey)
 			mutatedEntity := pendingChanges[mks]
 			watcher.currentEntities[mks] = mutatedEntity.Doc
+			convertedEntity, err := convertSnapshotToMetaEntity(
+				watcher.schema.Kinds[mutatedKey.Path[len(mutatedKey.Path)-1].Kind],
+				mutatedEntity.Doc,
+			)
+			if err != nil {
+				log.Printf("error during batch construction: %v", err)
+			} else {
+				batch.MutatedEntities = append(
+					batch.MutatedEntities,
+					convertedEntity,
+				)
+			}
 			delete(pendingChanges, mks)
 		}
 		if len(pendingChanges) == 0 {
@@ -156,8 +168,10 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 		delete(watcher.currentEntities, dks)
 	}
 
+	// push the batch out
+	watcher.outboundChanges <- batch
+
 	// the transaction has been applied and can be removed from the transaction list
-	fmt.Println("applied transaction")
 	return true
 }
 
@@ -251,8 +265,6 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 				log.Printf("error during transaction watch: %v", err)
 				return
 			}
-
-			fmt.Println("got transaction snapshot", transactionSnapshot)
 
 			watcher.transactionsLock.Lock()
 
