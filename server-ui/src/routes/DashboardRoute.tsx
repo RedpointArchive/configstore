@@ -12,7 +12,9 @@ import { Error } from "grpc-web";
 export interface DashboardRouteProps extends RouteComponentProps<{}> {}
 
 export const DashboardRoute = (props: DashboardRouteProps) => {
-  const [transactions, setTransactions] = useState<MetaTransactionBatch[]>([]);
+  const [transactions, setTransactions] = useState<{
+    transactions: MetaTransactionBatch[];
+  }>({ transactions: [] });
   const [connected, setConnected] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   useEffect(() => {
@@ -27,8 +29,10 @@ export const DashboardRoute = (props: DashboardRouteProps) => {
     });
     stream.on("data", resp => {
       console.log(resp.getBatch());
-      transactions.splice(0, 0, g(resp.getBatch()));
-      setTransactions(transactions);
+      transactions.transactions.splice(0, 0, g(resp.getBatch()));
+      setTransactions({
+        transactions: transactions.transactions
+      });
     });
     stream.on("end", () => {
       setConnected(false);
@@ -64,7 +68,7 @@ export const DashboardRoute = (props: DashboardRouteProps) => {
             </tr>
           </thead>
           <tbody>
-            {transactions.length === 0 ? (
+            {transactions.transactions.length === 0 ? (
               <>
                 <tr>
                   <td colSpan={2} className="text-muted">
@@ -83,7 +87,7 @@ export const DashboardRoute = (props: DashboardRouteProps) => {
                 </tr>
               </>
             ) : null}
-            {transactions.map(transaction => (
+            {transactions.transactions.map(transaction => (
               <tr key={transaction.getId()}>
                 <td>{transaction.getId()}</td>
                 <td>{transaction.getDescription()}</td>

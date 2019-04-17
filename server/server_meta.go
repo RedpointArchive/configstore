@@ -169,6 +169,10 @@ func (s *configstoreMetaServiceServer) ApplyTransaction(ctx context.Context, req
 }
 
 func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsRequest, srv ConfigstoreMetaService_WatchTransactionsServer) error {
+	if !s.transactionWatcher.isConsistent {
+		return fmt.Errorf("configstore is not yet transactionally consistent because it is starting up, please try again in a moment")
+	}
+
 	ch := make(chan *MetaTransactionBatch)
 	s.transactionWatcher.RegisterChannel(ch)
 	defer s.transactionWatcher.DeregisterChannel(ch)
@@ -177,6 +181,7 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 	for connected {
 		select {
 		case msg := <-ch:
+			fmt.Printf("%s: pushing to client\n", msg.Id)
 			srv.Send(&WatchTransactionsResponse{
 				Batch: msg,
 			})

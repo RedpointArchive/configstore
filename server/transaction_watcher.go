@@ -28,6 +28,10 @@ type transactionWatcher struct {
 
 	outboundChannels     []chan *MetaTransactionBatch
 	outboundChannelsLock sync.Mutex
+
+	initialReadTimeByKind map[string]time.Time
+
+	isConsistent bool
 }
 
 func (watcher *transactionWatcher) RegisterChannel(newCh chan *MetaTransactionBatch) {
@@ -81,25 +85,51 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 		ts := serializeTime(convertTimestampToTime(transaction.DateCreated))
 		pendingChanges, ok := watcher.pendingChangesByTimestamp[ts]
 		if !ok {
-			// we don't have any of the pending changes, but we have at least one
-			// mutated key. we can't be ready to apply this transaction
-			return false
-			fmt.Printf("can't process transaction %s, waiting on entity snapshots list\n")
+			// auto-create map for simplicity
+			watcher.pendingChangesByTimestamp[ts] = make(map[string]*firestore.DocumentChange)
+			pendingChanges = watcher.pendingChangesByTimestamp[ts]
 		}
 		for _, mutatedKey := range transaction.MutatedKeys {
 			mks := serializeKey(mutatedKey)
-			_, ok := pendingChanges[mks]
-			if !ok {
-				// we don't have this entity's snapshot yet
-				fmt.Printf("can't process transaction %s, waiting on entity snapshot with key: %s\n", mks)
-				return false
+
+			// we have a mutated key, check if the initial read for this entity kind occurred after
+			// this transaction was created - if it did, we may never see the pending arrive because
+			// the entity has since been deleted (and we already have the up to date state of this type
+			// of change anyway).
+			kindName := mutatedKey.Path[len(mutatedKey.Path)-1].Kind
+			if watcher.initialReadTimeByKind[kindName].After(convertTimestampToTime(transaction.DateCreated)) {
+				// we won't receive a pending change for this entity, pretend that the "current entity" state is the
+				// pending change we're waiting for to make further logic work later
+				if doc, ok := watcher.currentEntities[mks]; ok {
+					watcher.pendingChangesByTimestamp[ts][mks] = &firestore.DocumentChange{
+						Kind:     firestore.DocumentAdded,
+						Doc:      doc,
+						OldIndex: -1,
+						NewIndex: -1,
+					}
+				} else {
+					watcher.pendingChangesByTimestamp[ts][mks] = &firestore.DocumentChange{
+						Kind:     firestore.DocumentRemoved,
+						Doc:      nil,
+						OldIndex: -1,
+						NewIndex: -1,
+					}
+				}
+			} else {
+				// our initial state for entities of this kind didn't include this entity (and therefore we can't
+				// have had a newer "delete" transaction prevent the entity from appearing, so we need to check it)
+				_, ok := pendingChanges[mks]
+				if !ok {
+					// we don't have this entity's snapshot yet
+					fmt.Printf("%s: can't process transaction, waiting on entity snapshot with key: %s\n", transaction.Id, mks)
+					return false
+				}
 			}
 		}
 	}
 
 	// at this point, we have all the changes for this transaction in pendingChanges,
 	// we can apply them to currentEntities
-	fmt.Println("got transaction batch")
 	batch := &MetaTransactionBatch{
 		Id:              transaction.Id,
 		Description:     transaction.Description,
@@ -112,18 +142,32 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 		for _, mutatedKey := range transaction.MutatedKeys {
 			mks := serializeKey(mutatedKey)
 			mutatedEntity := pendingChanges[mks]
-			watcher.currentEntities[mks] = mutatedEntity.Doc
-			convertedEntity, err := convertSnapshotToMetaEntity(
-				watcher.schema.Kinds[mutatedKey.Path[len(mutatedKey.Path)-1].Kind],
-				mutatedEntity.Doc,
-			)
-			if err != nil {
-				log.Printf("error during batch construction: %v", err)
-			} else {
-				batch.MutatedEntities = append(
-					batch.MutatedEntities,
-					convertedEntity,
+			// doc can be nil here if we're recovering from a partial read during
+			// initial load, and we can't provide the historical version of a snapshot
+			// after it's been deleted
+			//
+			// clients can't connect to configstore's WatchTransactions endpoint
+			// until the watcher is "consistent", which is only true once 30 seconds have
+			// passed since reading all of the initial entities (this gives enough time
+			// for any transactions occurring during startup to come in) and once all pending
+			// transactions have been processed. thus we can reasonably be certain that
+			// configstore's in memory version of the database is consistent, and all future
+			// transactions will be applied atomically and consistently via this code (since once
+			// configstore has started, we *can* see historical versions of snapshots that are deleted).
+			if mutatedEntity.Doc != nil {
+				watcher.currentEntities[mks] = mutatedEntity.Doc
+				convertedEntity, err := convertSnapshotToMetaEntity(
+					watcher.schema.Kinds[mutatedKey.Path[len(mutatedKey.Path)-1].Kind],
+					mutatedEntity.Doc,
 				)
+				if err != nil {
+					log.Printf("error during batch construction: %v", err)
+				} else {
+					batch.MutatedEntities = append(
+						batch.MutatedEntities,
+						convertedEntity,
+					)
+				}
 			}
 			delete(pendingChanges, mks)
 		}
@@ -141,7 +185,7 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 	watcher.outboundChanges <- batch
 
 	// the transaction has been applied and can be removed from the transaction list
-	fmt.Printf("finished processing transaction: %s\n", transaction.Id)
+	fmt.Printf("%s: finished processing transaction (%d transactions left to process)\n", transaction.Id, len(watcher.transactions)-1)
 	return true
 }
 
@@ -154,6 +198,8 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 		inboundChanges:            make(chan firestore.DocumentChange),
 		outboundChanges:           make(chan *MetaTransactionBatch),
 		transactions:              nil,
+		initialReadTimeByKind:     make(map[string]time.Time),
+		isConsistent:              false,
 	}
 
 	watcher.currentEntitiesLock.Lock()
@@ -161,6 +207,12 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 
 	// process transactions every second
 	go func() {
+		// prevents transaction processing from starting until
+		// after we have got the initial reads of all entities (so
+		// watcher.initialReadTimeByKind is populated)
+		watcher.currentEntitiesLock.Lock()
+		watcher.currentEntitiesLock.Unlock()
+
 		for true {
 			// wait a second
 			time.Sleep(time.Second * 1)
@@ -168,6 +220,20 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 			// preemptive lock to check if we have any transactions to process at all
 			watcher.transactionsLock.RLock()
 			if len(watcher.transactions) == 0 {
+				if !watcher.isConsistent {
+					deadline := time.Now().Add(time.Second * 30)
+					isConsistent := true
+					for _, readTime := range watcher.initialReadTimeByKind {
+						if !readTime.Before(deadline) {
+							isConsistent = false
+							break
+						}
+					}
+					if isConsistent {
+						fmt.Printf("configstore is now consistent and ready to serve transactions\n")
+						watcher.isConsistent = isConsistent
+					}
+				}
 				watcher.transactionsLock.RUnlock()
 				continue
 			}
@@ -188,6 +254,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 					// can't apply the first transaction yet, wait a little longer
 					// for new entities, notifications, etc. to come in before
 					// retrying
+					fmt.Printf("%s: unable to process yet\n", watcher.transactions[0].Id)
 					break
 				}
 			}
@@ -218,20 +285,55 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 	// propagate outbound changes
 	go func() {
 		for elem := range watcher.outboundChanges {
-			fmt.Println("got outbound change...")
 			watcher.outboundChannelsLock.Lock()
 			for _, ch := range watcher.outboundChannels {
-				fmt.Println("pushing to channel")
+				fmt.Printf("%s: pushing to outbound channels\n", elem.Id)
 				ch <- elem
 			}
 			watcher.outboundChannelsLock.Unlock()
 		}
 	}()
 
+	// for each kind, start watching the collection and pipe snapshots into
+	// the inboundChanges channel
+	for kindName := range schema.Kinds {
+		snapshots := watcher.client.Collection(kindName).Snapshots(ctx)
+		go func() {
+			for true {
+				snapshot, err := snapshots.Next()
+				if err != nil {
+					log.Printf("error during entity watch: %v", err)
+					return
+				}
+
+				for _, change := range snapshot.Changes {
+					watcher.inboundChanges <- change
+				}
+			}
+		}()
+	}
+
+	err := client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+		// for each kind, fill in the current entities
+		for kindName := range schema.Kinds {
+			documents, err := tx.Documents(watcher.client.Collection(kindName)).GetAll()
+			if err != nil {
+				return err
+			}
+			for _, document := range documents {
+				watcher.initialReadTimeByKind[kindName] = document.ReadTime
+				watcher.currentEntities[serializeRef(document.Ref)] = document
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// listen for new transactions coming in
-	startTime := time.Now().Add(time.Minute * -5)
 	go func() {
-		transactions := watcher.client.Collection("Transaction").Where("dateSubmitted", ">=", startTime).OrderBy("dateSubmitted", firestore.Asc).Snapshots(ctx)
+		transactions := watcher.client.Collection("Transaction").Where("dateSubmitted", ">=", time.Now().Add(time.Second*-60)).OrderBy("dateSubmitted", firestore.Asc).Snapshots(ctx)
 		for true {
 			transactionSnapshot, err := transactions.Next()
 			if err != nil {
@@ -291,6 +393,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 					panic("mutatedKeys and deletedKeys are both length 0!")
 				}
 
+				fmt.Printf("%s: transaction arrived\n", change.Doc.Ref.ID)
 				watcher.transactions = append(
 					watcher.transactions,
 					&MetaTransactionRecord{
@@ -317,36 +420,6 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 			watcher.transactionsLock.Unlock()
 		}
 	}()
-
-	// for each kind, start watching the collection and pipe snapshots into
-	// the inboundChanges channel
-	for kindName := range schema.Kinds {
-		snapshots := watcher.client.Collection(kindName).Snapshots(ctx)
-		go func() {
-			for true {
-				snapshot, err := snapshots.Next()
-				if err != nil {
-					log.Printf("error during entity watch: %v", err)
-					return
-				}
-
-				for _, change := range snapshot.Changes {
-					watcher.inboundChanges <- change
-				}
-			}
-		}()
-	}
-
-	// for each kind, fill in the current entities
-	for kindName := range schema.Kinds {
-		documents, err := watcher.client.Collection(kindName).Documents(ctx).GetAll()
-		if err != nil {
-			return nil, err
-		}
-		for _, document := range documents {
-			watcher.currentEntities[serializeRef(document.Ref)] = document
-		}
-	}
 
 	return watcher, nil
 }

@@ -18,6 +18,7 @@ func convertMetaEntityToRefAndDataMap(
 	}
 
 	m := make(map[string]interface{})
+	m["_deleted"] = false
 
 	for _, value := range entity.Values {
 		name := ""
