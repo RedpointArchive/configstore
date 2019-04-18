@@ -7,7 +7,9 @@ import {
   MetaListEntitiesRequest,
   MetaDeleteEntityRequest,
   ValueType,
-  SchemaFieldEditorInfo
+  SchemaFieldEditorInfo,
+  MetaOperation,
+  MetaEntity
 } from "../api/meta_pb";
 import {
   g,
@@ -27,6 +29,7 @@ import { Link } from "react-router-dom";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
 import { grpcHost } from "../svcHost";
 import { useAsync } from "react-async";
+import { PendingTransactionContext, PendingTransaction } from "../App";
 
 export interface KindListRouteMatch {
   kind: string;
@@ -50,7 +53,33 @@ const listKinds = async (props: any) => {
   return await svc.metaList(req, {});
 };
 
-export const KindListRoute = (props: KindListRouteProps) => {
+export const KindListRoute = (props: KindListRouteProps) => (
+  <PendingTransactionContext.Consumer>
+    {value => <KindListRealRoute {...props} pendingTransaction={value} />}
+  </PendingTransactionContext.Consumer>
+);
+
+function isPendingDelete(
+  pendingTransaction: PendingTransaction,
+  entity: MetaEntity
+) {
+  for (const operation of pendingTransaction.operations) {
+    if (operation.hasDeleterequest()) {
+      const deleteRequest = g(operation.getDeleterequest());
+      if (
+        serializeKey(g(deleteRequest.getKey())) ==
+        serializeKey(g(entity.getKey()))
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+const KindListRealRoute = (
+  props: KindListRouteProps & { pendingTransaction: PendingTransaction }
+) => {
   const [refreshCount, setRefreshCount] = useState<number>(0);
   const { data, error, isLoading } = useAsync<MetaListEntitiesResponse>({
     promiseFn: listKinds,
@@ -58,7 +87,6 @@ export const KindListRoute = (props: KindListRouteProps) => {
     kind: props.match.params.kind
   } as any);
   const [selected, setSelected] = useState<SetHolder>({ v: new Set<string>() });
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const kindSchema = g(props.schema.getSchema())
     .getKindsMap()
@@ -115,12 +143,20 @@ export const KindListRoute = (props: KindListRouteProps) => {
   } else if (data !== undefined) {
     dataset = [];
     for (const entity of data.getEntitiesList()) {
+      const pendingDelete = isPendingDelete(props.pendingTransaction, entity);
       dataset.push(
-        <tr key={serializeKey(g(entity.getKey()))}>
+        <tr
+          key={serializeKey(g(entity.getKey()))}
+          className={pendingDelete ? "strikethrough" : ""}
+        >
           <td className="w-checkbox">
             <input
               type="checkbox"
-              checked={selected.v.has(serializeKey(g(entity.getKey())))}
+              checked={
+                selected.v.has(serializeKey(g(entity.getKey()))) &&
+                !pendingDelete
+              }
+              disabled={pendingDelete}
               onChange={e => {
                 if (e.target.checked) {
                   selected.v.add(serializeKey(g(entity.getKey())));
@@ -226,21 +262,22 @@ export const KindListRoute = (props: KindListRouteProps) => {
   };
 
   const startDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    setIsDeleting(true);
-    try {
-      const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
-      const arrayCopy = Array.from(selected.v);
-      for (const key of arrayCopy) {
-        const req = new MetaDeleteEntityRequest();
-        req.setKindname(props.match.params.kind);
-        req.setKey(deserializeKey(key));
-        await svc.metaDelete(req, {});
-        selected.v.delete(key);
-      }
-      setRefreshCount(refreshCount + 1);
-    } finally {
-      setIsDeleting(false);
+    const ops = [];
+    const arrayCopy = Array.from(selected.v);
+    for (const key of arrayCopy) {
+      const operation = new MetaOperation();
+      const req = new MetaDeleteEntityRequest();
+      req.setKindname(props.match.params.kind);
+      req.setKey(deserializeKey(key));
+      operation.setDeleterequest(req);
+      ops.push(operation);
     }
+
+    props.pendingTransaction.setOperations([
+      ...props.pendingTransaction.operations,
+      ...ops
+    ]);
+    setRefreshCount(refreshCount + 1);
   };
 
   return (
@@ -267,21 +304,11 @@ export const KindListRoute = (props: KindListRouteProps) => {
             disabled={selected.v.size == 0}
             onClick={startDelete}
           >
-            {isDeleting ? (
-              <>
-                <FontAwesomeIcon icon={faSpinner} spin />
-                &nbsp;
-              </>
-            ) : (
-              ""
-            )}
             Delete {selected.v.size} {kindDisplay}
           </button>
           <Link
-            to={isDeleting ? "#" : `/kind/${props.match.params.kind}/create`}
-            className={
-              "btn btn-sm btn-success" + (isDeleting ? " disabled" : "")
-            }
+            to={`/kind/${props.match.params.kind}/create`}
+            className={"btn btn-sm btn-success"}
           >
             Create {props.match.params.kind}
           </Link>
@@ -294,7 +321,6 @@ export const KindListRoute = (props: KindListRouteProps) => {
               <th className="w-checkbox">
                 <input
                   type="checkbox"
-                  readOnly={isDeleting}
                   checked={
                     data !== undefined
                       ? data
@@ -308,9 +334,6 @@ export const KindListRoute = (props: KindListRouteProps) => {
                       : false
                   }
                   onChange={e => {
-                    if (isDeleting) {
-                      return;
-                    }
                     if (data !== undefined) {
                       if (e.target.checked) {
                         selected.v.clear();

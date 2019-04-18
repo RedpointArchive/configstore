@@ -128,3 +128,11 @@ body {
   bottom: 0;
   border-bottom: 1px solid #dee2e6;
 }
+
+tr.strikethrough a {
+  color: #ccc;
+}
+tr.strikethrough {
+  text-decoration: line-through;
+  color: #ccc !important;
+}

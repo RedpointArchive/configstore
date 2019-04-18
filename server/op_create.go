@@ -4,7 +4,11 @@ import (
 	"context"
 )
 
-func (s *operationProcessor) operationCreate(ctx context.Context, schema *Schema, req *MetaCreateEntityRequest) (*MetaCreateEntityResponse, error) {
+func (s *operationProcessor) operationCreateRead(ctx context.Context, schema *Schema, req *MetaCreateEntityRequest) (interface{}, error) {
+	return nil, nil
+}
+
+func (s *operationProcessor) operationCreateWrite(ctx context.Context, schema *Schema, req *MetaCreateEntityRequest, readState interface{}) (*MetaCreateEntityResponse, error) {
 	kindInfo, err := findSchemaKindByName(schema, req.KindName)
 	if err != nil {
 		return nil, err

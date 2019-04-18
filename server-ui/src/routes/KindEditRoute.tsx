@@ -11,7 +11,9 @@ import {
   MetaEntity,
   MetaUpdateEntityRequest,
   MetaCreateEntityRequest,
-  SchemaFieldEditorInfo
+  SchemaFieldEditorInfo,
+  MetaTransaction,
+  MetaOperation
 } from "../api/meta_pb";
 import { g, deserializeKey, serializeKey, prettifyKey, c } from "../core";
 import { Link } from "react-router-dom";
@@ -20,6 +22,7 @@ import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
 import { grpcHost } from "../svcHost";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { PendingTransactionContext, PendingTransaction } from "../App";
 /*
 import { grpc } from "@improbable-eng/grpc-web";
 import { ConfigstoreMetaService } from "../api/meta_pb_service";
@@ -85,7 +88,15 @@ function setConditionalField<T>(
   entity.value.setValuesList(valuesList);
 }
 
-export const KindEditRoute = (props: KindEditRouteProps) => {
+export const KindEditRoute = (props: KindEditRouteProps) => (
+  <PendingTransactionContext.Consumer>
+    {value => <KindEditRealRoute {...props} pendingTransaction={value} />}
+  </PendingTransactionContext.Consumer>
+);
+
+const KindEditRealRoute = (
+  props: KindEditRouteProps & { pendingTransaction: PendingTransaction }
+) => {
   const isCreate = props.location.pathname.startsWith(
     `/kind/${props.match.params.kind}/create`
   );
@@ -173,26 +184,23 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    setIsSaving(true);
-    setSaveError(undefined);
-    try {
-      const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
-      if (isCreate) {
-        const req = new MetaCreateEntityRequest();
-        req.setKindname(props.match.params.kind);
-        req.setEntity(editableValue.value);
-        await svc.metaCreate(req, {});
-      } else {
-        const req = new MetaUpdateEntityRequest();
-        req.setEntity(editableValue.value);
-        await svc.metaUpdate(req, {});
-      }
-      props.history.push(`/kind/${props.match.params.kind}`);
-    } catch (e) {
-      setSaveError(e);
-    } finally {
-      setIsSaving(false);
+    const operation = new MetaOperation();
+    if (isCreate) {
+      const req = new MetaCreateEntityRequest();
+      req.setKindname(props.match.params.kind);
+      req.setEntity(editableValue.value);
+      operation.setCreaterequest(req);
+    } else {
+      const req = new MetaUpdateEntityRequest();
+      req.setEntity(editableValue.value);
+      operation.setUpdaterequest(req);
     }
+
+    props.pendingTransaction.setOperations([
+      ...props.pendingTransaction.operations,
+      operation
+    ]);
+    props.history.push(`/kind/${props.match.params.kind}`);
   };
 
   return (
@@ -410,7 +418,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
           ) : (
             ""
           )}
-          Save Changes
+          Queue Changes
         </button>
         <Link
           className="btn btn-outline-secondary ml-2"

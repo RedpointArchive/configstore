@@ -7,7 +7,7 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-func (s *operationProcessor) operationList(ctx context.Context, schema *Schema, req *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error) {
+func (s *operationProcessor) operationListRead(ctx context.Context, schema *Schema, req *MetaListEntitiesRequest) (interface{}, error) {
 	var start interface{}
 	if req.Start != nil {
 		if len(req.Start[:]) > 0 {
@@ -63,4 +63,8 @@ func (s *operationProcessor) operationList(ctx context.Context, schema *Schema, 
 	}
 
 	return response, nil
+}
+
+func (s *operationProcessor) operationListWrite(ctx context.Context, schema *Schema, req *MetaListEntitiesRequest, readState interface{}) (*MetaListEntitiesResponse, error) {
+	return readState.(*MetaListEntitiesResponse), nil
 }

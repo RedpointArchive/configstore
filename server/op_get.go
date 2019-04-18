@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func (s *operationProcessor) operationGet(ctx context.Context, schema *Schema, req *MetaGetEntityRequest) (*MetaGetEntityResponse, error) {
+func (s *operationProcessor) operationGetRead(ctx context.Context, schema *Schema, req *MetaGetEntityRequest) (interface{}, error) {
 	kindInfo, err := findSchemaKindByName(schema, req.KindName)
 	if err != nil {
 		return nil, err
@@ -33,4 +33,8 @@ func (s *operationProcessor) operationGet(ctx context.Context, schema *Schema, r
 	}
 
 	return response, nil
+}
+
+func (s *operationProcessor) operationGetWrite(ctx context.Context, schema *Schema, req *MetaGetEntityRequest, readState interface{}) (*MetaGetEntityResponse, error) {
+	return readState.(*MetaGetEntityResponse), nil
 }

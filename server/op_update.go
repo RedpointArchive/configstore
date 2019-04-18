@@ -5,7 +5,11 @@ import (
 	"fmt"
 )
 
-func (s *operationProcessor) operationUpdate(ctx context.Context, schema *Schema, req *MetaUpdateEntityRequest) (*MetaUpdateEntityResponse, error) {
+func (s *operationProcessor) operationUpdateRead(ctx context.Context, schema *Schema, req *MetaUpdateEntityRequest) (interface{}, error) {
+	return nil, nil
+}
+
+func (s *operationProcessor) operationUpdateWrite(ctx context.Context, schema *Schema, req *MetaUpdateEntityRequest, readState interface{}) (*MetaUpdateEntityResponse, error) {
 	pathElements := req.Entity.Key.Path
 	lastKind := pathElements[len(pathElements)-1].Kind
 
