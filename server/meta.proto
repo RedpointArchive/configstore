@@ -235,7 +235,10 @@ message WatchTransactionsRequest {
 }
 
 message WatchTransactionsResponse {
-    MetaTransactionBatch batch = 1;
+    oneof response {
+        MetaTransactionBatch batch = 1;
+        MetaTransactionInitialState initialState = 2;
+    }
 }
 
 message MetaTransactionRecord {
@@ -252,4 +255,8 @@ message MetaTransactionBatch {
     repeated Key deletedKeys = 2;
     string description = 3;
     string id = 4;
+}
+
+message MetaTransactionInitialState {
+    repeated MetaEntity entities = 1;
 }

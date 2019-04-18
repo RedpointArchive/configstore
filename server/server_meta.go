@@ -173,22 +173,63 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 		return fmt.Errorf("configstore is not yet transactionally consistent because it is starting up, please try again in a moment")
 	}
 
+	// lock before registering for notifications, so we don't miss any transactions
+	// that get applied to the entity state
+	s.transactionWatcher.CurrentEntitiesTakeReadLock()
+	hasReadLock := true
+	releaseLockIfHeld := func() {
+		if hasReadLock {
+			s.transactionWatcher.CurrentEntitiesReleaseReadLock()
+			hasReadLock = false
+		}
+	}
+	defer releaseLockIfHeld()
+
+	// register for new transaction notifications
 	ch := make(chan *MetaTransactionBatch)
 	s.transactionWatcher.RegisterChannel(ch)
 	defer s.transactionWatcher.DeregisterChannel(ch)
 
+	// send down the initial state of the database
+	initialState := &MetaTransactionInitialState{}
+	for _, snapshot := range s.transactionWatcher.currentEntities {
+		key, err := convertDocumentRefToMetaKey(snapshot.Ref)
+		if err != nil {
+			return err
+		}
+		entity, err := convertSnapshotToMetaEntity(
+			s.transactionWatcher.schema.Kinds[key.Path[len(key.Path)-1].Kind],
+			snapshot,
+		)
+		if err != nil {
+			return err
+		}
+		initialState.Entities = append(
+			initialState.Entities,
+			entity,
+		)
+	}
+	releaseLockIfHeld()
+
+	srv.Send(&WatchTransactionsResponse{
+		Response: &WatchTransactionsResponse_InitialState{
+			InitialState: initialState,
+		},
+	})
+
+	// send down transactions as they occur
 	connected := true
 	for connected {
 		select {
 		case msg := <-ch:
-			fmt.Printf("%s: pushing to client\n", msg.Id)
 			srv.Send(&WatchTransactionsResponse{
-				Batch: msg,
+				Response: &WatchTransactionsResponse_Batch{
+					Batch: msg,
+				},
 			})
 		case <-time.After(1 * time.Second):
 			err := srv.Context().Err()
 			if err != nil {
-				fmt.Println("detected client disconnection")
 				connected = false
 				break
 			}

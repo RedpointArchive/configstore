@@ -941,6 +941,15 @@ export class WatchTransactionsResponse extends jspb.Message {
   setBatch(value?: MetaTransactionBatch): void;
   hasBatch(): boolean;
   clearBatch(): void;
+  hasBatch(): boolean;
+
+  getInitialstate(): MetaTransactionInitialState | undefined;
+  setInitialstate(value?: MetaTransactionInitialState): void;
+  hasInitialstate(): boolean;
+  clearInitialstate(): void;
+  hasInitialstate(): boolean;
+
+  getResponseCase(): WatchTransactionsResponse.ResponseCase;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): WatchTransactionsResponse.AsObject;
@@ -953,6 +962,13 @@ export class WatchTransactionsResponse extends jspb.Message {
 export namespace WatchTransactionsResponse {
   export type AsObject = {
     batch?: MetaTransactionBatch.AsObject,
+    initialstate?: MetaTransactionInitialState.AsObject,
+  }
+
+  export enum ResponseCase { 
+    RESPONSE_NOT_SET = 0,
+    BATCH = 1,
+    INITIALSTATE = 2,
   }
 }
 
@@ -1033,6 +1049,26 @@ export namespace MetaTransactionBatch {
     deletedkeysList: Array<Key.AsObject>,
     description: string,
     id: string,
+  }
+}
+
+export class MetaTransactionInitialState extends jspb.Message {
+  getEntitiesList(): Array<MetaEntity>;
+  setEntitiesList(value: Array<MetaEntity>): void;
+  clearEntitiesList(): void;
+  addEntities(value?: MetaEntity, index?: number): MetaEntity;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MetaTransactionInitialState.AsObject;
+  static toObject(includeInstance: boolean, msg: MetaTransactionInitialState): MetaTransactionInitialState.AsObject;
+  static serializeBinaryToWriter(message: MetaTransactionInitialState, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MetaTransactionInitialState;
+  static deserializeBinaryFromReader(message: MetaTransactionInitialState, reader: jspb.BinaryReader): MetaTransactionInitialState;
+}
+
+export namespace MetaTransactionInitialState {
+  export type AsObject = {
+    entitiesList: Array<MetaEntity.AsObject>,
   }
 }
 

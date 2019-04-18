@@ -34,6 +34,19 @@ type transactionWatcher struct {
 	isConsistent bool
 }
 
+func (watcher *transactionWatcher) CurrentEntitiesTakeReadLock() {
+	watcher.currentEntitiesLock.RLock()
+}
+func (watcher *transactionWatcher) CurrentEntitiesReleaseReadLock() {
+	watcher.currentEntitiesLock.RUnlock()
+}
+func (watcher *transactionWatcher) CurrentEntitiesTakeWriteLock() {
+	watcher.currentEntitiesLock.Lock()
+}
+func (watcher *transactionWatcher) CurrentEntitiesReleaseWriteLock() {
+	watcher.currentEntitiesLock.Unlock()
+}
+
 func (watcher *transactionWatcher) RegisterChannel(newCh chan *MetaTransactionBatch) {
 	watcher.outboundChannelsLock.Lock()
 	defer watcher.outboundChannelsLock.Unlock()
@@ -51,6 +64,8 @@ func (watcher *transactionWatcher) RegisterChannel(newCh chan *MetaTransactionBa
 }
 
 func (watcher *transactionWatcher) DeregisterChannel(oldCh chan *MetaTransactionBatch) {
+	close(oldCh)
+
 	watcher.outboundChannelsLock.Lock()
 	defer watcher.outboundChannelsLock.Unlock()
 
@@ -189,6 +204,14 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 	return true
 }
 
+func safeSendBatchToChannel(ch chan *MetaTransactionBatch, batch *MetaTransactionBatch) bool {
+	defer func() {
+		recover()
+	}()
+	ch <- batch
+	return true
+}
+
 func createTransactionWatcher(ctx context.Context, client *firestore.Client, schema *Schema) (*transactionWatcher, error) {
 	watcher := &transactionWatcher{
 		client:                    client,
@@ -202,16 +225,16 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 		isConsistent:              false,
 	}
 
-	watcher.currentEntitiesLock.Lock()
-	defer watcher.currentEntitiesLock.Unlock()
+	watcher.CurrentEntitiesTakeWriteLock()
+	defer watcher.CurrentEntitiesReleaseWriteLock()
 
 	// process transactions every second
 	go func() {
 		// prevents transaction processing from starting until
 		// after we have got the initial reads of all entities (so
 		// watcher.initialReadTimeByKind is populated)
-		watcher.currentEntitiesLock.Lock()
-		watcher.currentEntitiesLock.Unlock()
+		watcher.CurrentEntitiesTakeWriteLock()
+		watcher.CurrentEntitiesReleaseWriteLock()
 
 		for true {
 			// wait a second
@@ -242,7 +265,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 			// obtain all locks
 			watcher.transactionsLock.Lock()
 			watcher.pendingChangesByTimestampLock.Lock()
-			watcher.currentEntitiesLock.Lock()
+			watcher.CurrentEntitiesTakeWriteLock()
 
 			// we have transactions to process
 			for len(watcher.transactions) > 0 {
@@ -260,9 +283,9 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 			}
 
 			// release all locks
-			watcher.transactionsLock.Unlock()
+			watcher.CurrentEntitiesReleaseWriteLock()
 			watcher.pendingChangesByTimestampLock.Unlock()
-			watcher.currentEntitiesLock.Unlock()
+			watcher.transactionsLock.Unlock()
 		}
 	}()
 
@@ -287,8 +310,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 		for elem := range watcher.outboundChanges {
 			watcher.outboundChannelsLock.Lock()
 			for _, ch := range watcher.outboundChannels {
-				fmt.Printf("%s: pushing to outbound channels\n", elem.Id)
-				ch <- elem
+				safeSendBatchToChannel(ch, elem)
 			}
 			watcher.outboundChannelsLock.Unlock()
 		}
@@ -407,7 +429,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 				)
 			}
 
-			sort.Slice(watcher.transactions[:], func(i, j int) bool {
+			sort.Slice(watcher.transactions, func(i, j int) bool {
 				if watcher.transactions[i].DateCreated.Seconds < watcher.transactions[j].DateCreated.Seconds {
 					return true
 				}

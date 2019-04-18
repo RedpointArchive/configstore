@@ -32,6 +32,7 @@ goog.exportSymbol('proto.meta.MetaOperationResult', null, global);
 goog.exportSymbol('proto.meta.MetaOperationResultError', null, global);
 goog.exportSymbol('proto.meta.MetaTransaction', null, global);
 goog.exportSymbol('proto.meta.MetaTransactionBatch', null, global);
+goog.exportSymbol('proto.meta.MetaTransactionInitialState', null, global);
 goog.exportSymbol('proto.meta.MetaTransactionRecord', null, global);
 goog.exportSymbol('proto.meta.MetaTransactionResult', null, global);
 goog.exportSymbol('proto.meta.MetaUpdateEntityRequest', null, global);
@@ -7053,12 +7054,38 @@ proto.meta.WatchTransactionsRequest.serializeBinaryToWriter = function(message, 
  * @constructor
  */
 proto.meta.WatchTransactionsResponse = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, null, proto.meta.WatchTransactionsResponse.oneofGroups_);
 };
 goog.inherits(proto.meta.WatchTransactionsResponse, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
   proto.meta.WatchTransactionsResponse.displayName = 'proto.meta.WatchTransactionsResponse';
 }
+/**
+ * Oneof group definitions for this message. Each group defines the field
+ * numbers belonging to that group. When of these fields' value is set, all
+ * other fields in the group are cleared. During deserialization, if multiple
+ * fields are encountered for a group, only the last value seen will be kept.
+ * @private {!Array<!Array<number>>}
+ * @const
+ */
+proto.meta.WatchTransactionsResponse.oneofGroups_ = [[1,2]];
+
+/**
+ * @enum {number}
+ */
+proto.meta.WatchTransactionsResponse.ResponseCase = {
+  RESPONSE_NOT_SET: 0,
+  BATCH: 1,
+  INITIALSTATE: 2
+};
+
+/**
+ * @return {proto.meta.WatchTransactionsResponse.ResponseCase}
+ */
+proto.meta.WatchTransactionsResponse.prototype.getResponseCase = function() {
+  return /** @type {proto.meta.WatchTransactionsResponse.ResponseCase} */(jspb.Message.computeOneofCase(this, proto.meta.WatchTransactionsResponse.oneofGroups_[0]));
+};
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -7088,7 +7115,8 @@ proto.meta.WatchTransactionsResponse.prototype.toObject = function(opt_includeIn
  */
 proto.meta.WatchTransactionsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    batch: (f = msg.getBatch()) && proto.meta.MetaTransactionBatch.toObject(includeInstance, f)
+    batch: (f = msg.getBatch()) && proto.meta.MetaTransactionBatch.toObject(includeInstance, f),
+    initialstate: (f = msg.getInitialstate()) && proto.meta.MetaTransactionInitialState.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -7130,6 +7158,11 @@ proto.meta.WatchTransactionsResponse.deserializeBinaryFromReader = function(msg,
       reader.readMessage(value,proto.meta.MetaTransactionBatch.deserializeBinaryFromReader);
       msg.setBatch(value);
       break;
+    case 2:
+      var value = new proto.meta.MetaTransactionInitialState;
+      reader.readMessage(value,proto.meta.MetaTransactionInitialState.deserializeBinaryFromReader);
+      msg.setInitialstate(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -7167,6 +7200,14 @@ proto.meta.WatchTransactionsResponse.serializeBinaryToWriter = function(message,
       proto.meta.MetaTransactionBatch.serializeBinaryToWriter
     );
   }
+  f = message.getInitialstate();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto.meta.MetaTransactionInitialState.serializeBinaryToWriter
+    );
+  }
 };
 
 
@@ -7182,7 +7223,7 @@ proto.meta.WatchTransactionsResponse.prototype.getBatch = function() {
 
 /** @param {?proto.meta.MetaTransactionBatch|undefined} value */
 proto.meta.WatchTransactionsResponse.prototype.setBatch = function(value) {
-  jspb.Message.setWrapperField(this, 1, value);
+  jspb.Message.setOneofWrapperField(this, 1, proto.meta.WatchTransactionsResponse.oneofGroups_[0], value);
 };
 
 
@@ -7197,6 +7238,36 @@ proto.meta.WatchTransactionsResponse.prototype.clearBatch = function() {
  */
 proto.meta.WatchTransactionsResponse.prototype.hasBatch = function() {
   return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional MetaTransactionInitialState initialState = 2;
+ * @return {?proto.meta.MetaTransactionInitialState}
+ */
+proto.meta.WatchTransactionsResponse.prototype.getInitialstate = function() {
+  return /** @type{?proto.meta.MetaTransactionInitialState} */ (
+    jspb.Message.getWrapperField(this, proto.meta.MetaTransactionInitialState, 2));
+};
+
+
+/** @param {?proto.meta.MetaTransactionInitialState|undefined} value */
+proto.meta.WatchTransactionsResponse.prototype.setInitialstate = function(value) {
+  jspb.Message.setOneofWrapperField(this, 2, proto.meta.WatchTransactionsResponse.oneofGroups_[0], value);
+};
+
+
+proto.meta.WatchTransactionsResponse.prototype.clearInitialstate = function() {
+  this.setInitialstate(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.WatchTransactionsResponse.prototype.hasInitialstate = function() {
+  return jspb.Message.getField(this, 2) != null;
 };
 
 
@@ -7821,6 +7892,174 @@ proto.meta.MetaTransactionBatch.prototype.getId = function() {
 /** @param {string} value */
 proto.meta.MetaTransactionBatch.prototype.setId = function(value) {
   jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.MetaTransactionInitialState = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.meta.MetaTransactionInitialState.repeatedFields_, null);
+};
+goog.inherits(proto.meta.MetaTransactionInitialState, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.MetaTransactionInitialState.displayName = 'proto.meta.MetaTransactionInitialState';
+}
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.meta.MetaTransactionInitialState.repeatedFields_ = [1];
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.MetaTransactionInitialState.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.MetaTransactionInitialState.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.MetaTransactionInitialState} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaTransactionInitialState.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    entitiesList: jspb.Message.toObjectList(msg.getEntitiesList(),
+    proto.meta.MetaEntity.toObject, includeInstance)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.MetaTransactionInitialState}
+ */
+proto.meta.MetaTransactionInitialState.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.MetaTransactionInitialState;
+  return proto.meta.MetaTransactionInitialState.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.MetaTransactionInitialState} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.MetaTransactionInitialState}
+ */
+proto.meta.MetaTransactionInitialState.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto.meta.MetaEntity;
+      reader.readMessage(value,proto.meta.MetaEntity.deserializeBinaryFromReader);
+      msg.addEntities(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.MetaTransactionInitialState.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.MetaTransactionInitialState.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.MetaTransactionInitialState} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.MetaTransactionInitialState.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getEntitiesList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      1,
+      f,
+      proto.meta.MetaEntity.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * repeated MetaEntity entities = 1;
+ * @return {!Array<!proto.meta.MetaEntity>}
+ */
+proto.meta.MetaTransactionInitialState.prototype.getEntitiesList = function() {
+  return /** @type{!Array<!proto.meta.MetaEntity>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.meta.MetaEntity, 1));
+};
+
+
+/** @param {!Array<!proto.meta.MetaEntity>} value */
+proto.meta.MetaTransactionInitialState.prototype.setEntitiesList = function(value) {
+  jspb.Message.setRepeatedWrapperField(this, 1, value);
+};
+
+
+/**
+ * @param {!proto.meta.MetaEntity=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.meta.MetaEntity}
+ */
+proto.meta.MetaTransactionInitialState.prototype.addEntities = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.meta.MetaEntity, opt_index);
+};
+
+
+proto.meta.MetaTransactionInitialState.prototype.clearEntitiesList = function() {
+  this.setEntitiesList([]);
 };
 
 
