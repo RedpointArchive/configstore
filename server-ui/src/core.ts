@@ -1,7 +1,14 @@
 import { Key, PathElement, PartitionId } from "./api/meta_pb";
 
-export function g<T>(v: T | undefined): T {
+export function g<T>(v: T | undefined | null): T {
   return v as T;
+}
+
+export function c<T>(v: T | undefined | null | "", def: T): T {
+  if (v === undefined || v === null || v === "") {
+    return def;
+  }
+  return v;
 }
 
 export function getLastKindOfKey(key: Key): string {
@@ -29,18 +36,20 @@ export function prettifyKey(key: Key): string {
 }
 
 export function serializeKey(key: Key): string {
-  return encodeURIComponent(`ns=${g(key.getPartitionid()).getNamespace()}|${key
-    .getPathList()
-    .map(pe => {
-      if (pe.getIdtypeCase() === PathElement.IdtypeCase.ID) {
-        return `${pe.getKind()}:id=${pe.getId()}`;
-      } else if (pe.getIdtypeCase() === PathElement.IdtypeCase.NAME) {
-        return `${pe.getKind()}:name=${pe.getName()}`;
-      } else {
-        return `${pe.getKind()}:unset`;
-      }
-    })
-    .join("|")}`);
+  return encodeURIComponent(
+    `ns=${g(key.getPartitionid()).getNamespace()}|${key
+      .getPathList()
+      .map(pe => {
+        if (pe.getIdtypeCase() === PathElement.IdtypeCase.ID) {
+          return `${pe.getKind()}:id=${pe.getId()}`;
+        } else if (pe.getIdtypeCase() === PathElement.IdtypeCase.NAME) {
+          return `${pe.getKind()}:name=${pe.getName()}`;
+        } else {
+          return `${pe.getKind()}:unset`;
+        }
+      })
+      .join("|")}`
+  );
 }
 
 export function deserializeKey(keyString: string): Key {

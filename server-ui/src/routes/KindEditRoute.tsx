@@ -10,9 +10,10 @@ import {
   Value,
   MetaEntity,
   MetaUpdateEntityRequest,
-  MetaCreateEntityRequest
+  MetaCreateEntityRequest,
+  SchemaFieldEditorInfo
 } from "../api/meta_pb";
-import { g, deserializeKey, serializeKey, prettifyKey } from "../core";
+import { g, deserializeKey, serializeKey, prettifyKey, c } from "../core";
 import { Link } from "react-router-dom";
 import { useAsync } from "react-async";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
@@ -218,6 +219,8 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
           </small>
         </div>
         {kindSchema.getFieldsList().map(field => {
+          const editor = c(field.getEditor(), new SchemaFieldEditorInfo());
+          const displayName = c(editor.getDisplayname(), field.getName());
           switch (field.getType()) {
             case ValueType.DOUBLE:
             case ValueType.INT64:
@@ -241,7 +244,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
               );
               return (
                 <div className="form-group" key={field.getId()}>
-                  <label>{g(field.getEditor()).getDisplayname()}</label>
+                  <label>{displayName}</label>
                   <input
                     className="form-control"
                     type="number"
@@ -281,7 +284,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
               );
               return (
                 <div className="form-group" key={field.getId()}>
-                  <label>{g(field.getEditor()).getDisplayname()}</label>
+                  <label>{displayName}</label>
                   <input
                     className="form-control"
                     value={value}
@@ -328,7 +331,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
                     htmlFor={"checkbox_" + field.getId()}
                     className="form-check-label"
                   >
-                    {g(field.getEditor()).getDisplayname()}
+                    {displayName}
                   </label>
                   <small className="form-text text-muted">
                     {field.getComment()}
@@ -338,7 +341,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
             case ValueType.TIMESTAMP:
               return (
                 <div className="form-group" key={field.getId()}>
-                  <label>{g(field.getEditor()).getDisplayname()}</label>
+                  <label>{displayName}</label>
                   <input
                     className="form-control"
                     type="datetime-local"
@@ -359,7 +362,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
               );
               return (
                 <div className="form-group" key={field.getId()}>
-                  <label>{g(field.getEditor()).getDisplayname()}</label>
+                  <label>{displayName}</label>
                   <input
                     className="form-control"
                     value={value}
@@ -382,7 +385,7 @@ export const KindEditRoute = (props: KindEditRouteProps) => {
             default:
               return (
                 <div className="form-group" key={field.getId()}>
-                  <label>{g(field.getEditor()).getDisplayname()}</label>
+                  <label>{displayName}</label>
                   <input
                     className="form-control"
                     type="text"

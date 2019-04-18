@@ -6,14 +6,16 @@ import {
   MetaListEntitiesResponse,
   MetaListEntitiesRequest,
   MetaDeleteEntityRequest,
-  ValueType
+  ValueType,
+  SchemaFieldEditorInfo
 } from "../api/meta_pb";
 import {
   g,
   serializeKey,
   deserializeKey,
   prettifyKey,
-  getLastKindOfKey
+  getLastKindOfKey,
+  c
 } from "../core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -193,7 +195,9 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 );
               case ValueType.BYTES:
                 return (
-                  <td key={field.getId()}><em>(bytes)</em></td>
+                  <td key={field.getId()}>
+                    <em>(bytes)</em>
+                  </td>
                 );
               default:
                 return (
@@ -322,11 +326,11 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 />
               </th>
               <th>ID</th>
-              {kindSchema.getFieldsList().map(field => (
-                <th key={field.getId()}>
-                  {g(field.getEditor()).getDisplayname()}
-                </th>
-              ))}
+              {kindSchema.getFieldsList().map(field => {
+                const editor = (field.getEditor(), new SchemaFieldEditorInfo());
+                const displayName = c(editor.getDisplayname(), field.getName());
+                return <th key={field.getId()}>{displayName}</th>;
+              })}
               <th className="w-checkbox">
                 <FontAwesomeIcon icon={faPencilAlt} />
               </th>
