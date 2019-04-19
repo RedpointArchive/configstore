@@ -130,7 +130,11 @@ const App = () => {
     content = (
       <Switch>
         <Route path="/" exact component={DashboardRoute} />
-        <Route path="/save" exact component={SaveRoute} />
+        <Route path="/save" exact>
+          {(props: RouteComponentProps<KindRouteMatch>) => (
+            <SaveRoute {...props} schema={data} />
+          )}
+        </Route>
         <Route path="/review" exact component={ReviewRoute} />
         <Route path="/kind/:kind">
           {(props: RouteComponentProps<KindRouteMatch>) => (

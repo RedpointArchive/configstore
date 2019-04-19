@@ -4,15 +4,21 @@ import {
   GetSchemaResponse,
   MetaOperation,
   Key,
-  MetaTransaction
+  MetaTransaction,
+  MetaEntity,
+  Schema,
+  SchemaKind,
+  SchemaFieldEditorInfo,
+  SchemaField,
+  ValueType
 } from "../api/meta_pb";
 import { PendingTransactionContext, PendingTransaction } from "../App";
-import { g, serializeKey, getLastKindOfKey, prettifyKey } from "../core";
+import { g, serializeKey, getLastKindOfKey, prettifyKey, c } from "../core";
 import { Link } from "react-router-dom";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
 import { grpcHost } from "../svcHost";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faSpinner, faCheck } from "@fortawesome/free-solid-svg-icons";
 
 export interface SaveRouteProps extends RouteComponentProps<{}> {
   schema: GetSchemaResponse;
@@ -80,6 +86,93 @@ function getEntityLinkForOperation(idx: number, operation: MetaOperation) {
     );
   }
   return null;
+}
+
+function renderTextValue(field: SchemaField, entity: MetaEntity) {
+  const fieldData = entity
+    .getValuesList()
+    .filter(fieldData => fieldData.getId() == field.getId())[0];
+  if (fieldData === undefined) {
+    return <>-</>;
+  }
+  switch (fieldData.getType()) {
+    case ValueType.STRING:
+      return fieldData.getStringvalue();
+    case ValueType.DOUBLE:
+      return fieldData.getDoublevalue();
+    case ValueType.INT64:
+      return fieldData.getInt64value();
+    case ValueType.UINT64:
+      return fieldData.getUint64value();
+    case ValueType.KEY:
+      const childKey = fieldData.getKeyvalue();
+      if (childKey === undefined) {
+        return "-";
+      } else {
+        return (
+          <Link
+            to={`/kind/${getLastKindOfKey(childKey)}/edit/${serializeKey(
+              g(childKey)
+            )}`}
+          >
+            {prettifyKey(childKey)}
+          </Link>
+        );
+      }
+    case ValueType.BOOLEAN:
+      return fieldData.getBooleanvalue() ? (
+        <FontAwesomeIcon icon={faCheck} fixedWidth />
+      ) : (
+        "-"
+      );
+    case ValueType.BYTES:
+      return <em>(bytes)</em>;
+    default:
+      return <>(unknown type {fieldData.getType()})</>;
+  }
+}
+
+function getDetailsOfOperation(
+  idx: number,
+  operation: MetaOperation,
+  schema: Schema
+) {
+  let entity: MetaEntity | null = null;
+  let schemaKind: SchemaKind | null = null;
+  if (operation.hasCreaterequest()) {
+    entity = g(g(operation.getCreaterequest()).getEntity());
+    schemaKind = g(
+      schema.getKindsMap().get(g(g(operation.getCreaterequest()).getKindname()))
+    );
+  }
+  if (operation.hasUpdaterequest()) {
+    entity = g(g(operation.getUpdaterequest()).getEntity());
+    schemaKind = g(
+      schema
+        .getKindsMap()
+        .get(
+          getLastKindOfKey(
+            g(g(g(operation.getUpdaterequest()).getEntity()).getKey())
+          )
+        )
+    );
+  }
+  if (entity === null || schemaKind === null) {
+    return null;
+  }
+  return (
+    <ul>
+      {schemaKind.getFieldsList().map(field => {
+        const editor = (field.getEditor(), new SchemaFieldEditorInfo());
+        const displayName = c(editor.getDisplayname(), field.getName());
+        return (
+          <li key={field.getId()}>
+            <strong>{displayName}:</strong> {renderTextValue(field, g(entity))}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 export const SaveRoute = (props: SaveRouteProps) => (
@@ -162,6 +255,7 @@ const SaveRealRoute = (
               <th>Idx</th>
               <th>Type</th>
               <th>Entity</th>
+              <th>Details</th>
             </tr>
           </thead>
           <tbody>
@@ -179,6 +273,13 @@ const SaveRealRoute = (
                 <td>{idx}</td>
                 <td>{getTypeForOperation(value)}</td>
                 <td>{getEntityLinkForOperation(idx, value)}</td>
+                <td>
+                  {getDetailsOfOperation(
+                    idx,
+                    value,
+                    g(props.schema.getSchema())
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
