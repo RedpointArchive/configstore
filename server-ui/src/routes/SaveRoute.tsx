@@ -37,10 +37,22 @@ function getTypeForOperation(operation: MetaOperation) {
   return "(Unknown)";
 }
 
-function getEntityLinkForOperation(operation: MetaOperation) {
+function getEntityLinkForOperation(idx: number, operation: MetaOperation) {
   let key: Key | null = null;
   if (operation.hasCreaterequest()) {
-    return g(operation.getCreaterequest()).getKindname();
+    return (
+      <Link
+        key={`pendingop_${idx}`}
+        style={{
+          display: "block"
+        }}
+        to={`/kind/${g(
+          operation.getCreaterequest()
+        ).getKindname()}/create/pending/${idx}`}
+      >
+        Pending {g(operation.getCreaterequest()).getKindname()}
+      </Link>
+    );
   }
   if (operation.hasDeleterequest()) {
     key = g(g(operation.getDeleterequest()).getKey());
@@ -88,6 +100,7 @@ const SaveRealRoute = (
   const save = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
+    let moved = false;
     setIsSaving(true);
     try {
       const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
@@ -99,8 +112,11 @@ const SaveRealRoute = (
       );
       props.pendingTransaction.setOperations([]);
       props.history.push(`/review`);
+      moved = true;
     } finally {
-      setIsSaving(false);
+      if (!moved) {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -162,7 +178,7 @@ const SaveRealRoute = (
               <tr key={idx}>
                 <td>{idx}</td>
                 <td>{getTypeForOperation(value)}</td>
-                <td>{getEntityLinkForOperation(value)}</td>
+                <td>{getEntityLinkForOperation(idx, value)}</td>
               </tr>
             ))}
           </tbody>

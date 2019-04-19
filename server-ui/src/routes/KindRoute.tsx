@@ -16,6 +16,11 @@ export const KindRoute = (outerProps: KindRouteProps) => {
   return (
     <>
       <Switch>
+        <Route path="/kind/:kind/create/pending/:idx">
+          {(props: RouteComponentProps<KindEditRouteMatch>) => (
+            <KindEditRoute {...props} schema={outerProps.schema} />
+          )}
+        </Route>
         <Route path="/kind/:kind/create">
           {(props: RouteComponentProps<KindEditRouteMatch>) => (
             <KindEditRoute {...props} schema={outerProps.schema} />

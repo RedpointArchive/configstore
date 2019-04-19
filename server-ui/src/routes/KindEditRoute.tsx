@@ -1,8 +1,7 @@
-import React, { useState /* useEffect */ } from "react";
+import React, { useState } from "react";
 import { RouteComponentProps } from "react-router";
 import {
   GetSchemaResponse,
-  MetaListEntitiesResponse,
   ValueType,
   MetaGetEntityRequest,
   MetaGetEntityResponse,
@@ -12,10 +11,10 @@ import {
   MetaUpdateEntityRequest,
   MetaCreateEntityRequest,
   SchemaFieldEditorInfo,
-  MetaTransaction,
-  MetaOperation
+  MetaOperation,
+  Key
 } from "../api/meta_pb";
-import { g, deserializeKey, serializeKey, prettifyKey, c } from "../core";
+import { g, deserializeKey, prettifyKey, c, serializeKey } from "../core";
 import { Link } from "react-router-dom";
 import { useAsync } from "react-async";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
@@ -23,18 +22,11 @@ import { grpcHost } from "../svcHost";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { PendingTransactionContext, PendingTransaction } from "../App";
-/*
-import { grpc } from "@improbable-eng/grpc-web";
-import { ConfigstoreMetaService } from "../api/meta_pb_service";
-import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
-import { Link } from "react-router-dom";
-*/
 
 export interface KindEditRouteMatch {
   kind: string;
   id: string;
+  idx: string;
 }
 
 export interface KindEditRouteProps
@@ -49,6 +41,70 @@ const getKind = async (props: any): Promise<MetaGetEntityResponse> => {
   req.setKey(deserializeKey(props.key));
   return await svc.metaGet(req, {});
 };
+
+function isPendingDelete(
+  pendingTransaction: PendingTransaction,
+  entity: MetaEntity
+) {
+  for (const operation of pendingTransaction.operations) {
+    if (operation.hasDeleterequest()) {
+      const deleteRequest = g(operation.getDeleterequest());
+      if (
+        serializeKey(g(deleteRequest.getKey())) ==
+        serializeKey(g(entity.getKey()))
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function getPendingUpdate(pendingTransaction: PendingTransaction, key: Key) {
+  let idx = 0;
+  for (const operation of pendingTransaction.operations) {
+    if (operation.hasUpdaterequest()) {
+      const updateRequest = g(operation.getUpdaterequest());
+      if (
+        serializeKey(g(g(updateRequest.getEntity()).getKey())) ==
+        serializeKey(key)
+      ) {
+        return {
+          id: `${idx}`,
+          entity: g(updateRequest.getEntity()),
+          operation: operation
+        };
+      }
+    }
+    idx++;
+  }
+  return null;
+}
+
+function getPendingCreate(
+  pendingTransaction: PendingTransaction,
+  idxStr: string | undefined | null
+) {
+  if (idxStr === "" || idxStr === undefined || idxStr === null) {
+    return null;
+  }
+  const targetIdx = parseInt(idxStr);
+  let idx = 0;
+  for (const operation of pendingTransaction.operations) {
+    if (operation.hasCreaterequest()) {
+      const createRequest = g(operation.getCreaterequest());
+      if (idx === targetIdx) {
+        return {
+          id: `${idx}`,
+          entity: g(createRequest.getEntity()),
+          operation: operation
+        };
+      }
+    }
+    idx++;
+  }
+  return null;
+}
 
 function getConditionalField<T>(
   entity: { value: MetaEntity },
@@ -69,7 +125,7 @@ function getConditionalField<T>(
   return grab(v);
 }
 
-function setConditionalField<T>(
+function setConditionalField(
   entity: { value: MetaEntity },
   field: SchemaField,
   value: Value
@@ -108,11 +164,20 @@ const KindEditRealRoute = (
     return <>No such kind.</>;
   }
 
+  let useDefaultValue = false;
+  if (isCreate) {
+    const pendingCreate = getPendingCreate(
+      props.pendingTransaction,
+      props.match.params.idx
+    );
+    useDefaultValue = pendingCreate === null;
+  }
+
   const [editableValue, setEditableValue] = useState<
     { value: MetaEntity } | undefined
-  >(isCreate ? { value: new MetaEntity() } : undefined);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveError, setSaveError] = useState<any | undefined>(undefined);
+  >(useDefaultValue ? { value: new MetaEntity() } : undefined);
+  const [isSaving] = useState<boolean>(false);
+  const [saveError] = useState<any | undefined>(undefined);
 
   let errorDisplay = null;
   if (saveError !== undefined) {
@@ -124,46 +189,66 @@ const KindEditRealRoute = (
   }
 
   let header = `Create Entity: ${props.match.params.kind}`;
-  if (!isCreate) {
+  if (isCreate) {
+    const pendingCreate = getPendingCreate(
+      props.pendingTransaction,
+      props.match.params.idx
+    );
+    if (pendingCreate !== null) {
+      if (editableValue === undefined) {
+        setEditableValue({ value: pendingCreate.entity });
+      }
+    }
+  } else {
     header = `Edit Entity: ${prettifyKey(
       deserializeKey(props.match.params.id)
     )}`;
-    const response = useAsync<MetaGetEntityResponse>({
-      promiseFn: getKind,
-      watch: props.match.params.kind,
-      kind: props.match.params.kind,
-      key: props.match.params.id
-    } as any);
-    if (response.isLoading) {
-      return (
-        <>
-          <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
-            <h1 className="h2">{header}</h1>
-            <div className="btn-toolbar mb-2 mb-md-0" />
-          </div>
-          {errorDisplay}
-          <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
-        </>
-      );
-    } else if (response.error !== undefined) {
-      return (
-        <>
-          <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
-            <h1 className="h2">{header}</h1>
-            <div className="btn-toolbar mb-2 mb-md-0" />
-          </div>
-          {errorDisplay}
-          {JSON.stringify(response.error)}
-        </>
-      );
-    } else if (response.data !== undefined) {
-      if (editableValue === undefined) {
-        const getEntity = response.data.getEntity();
-        if (getEntity !== undefined) {
-          setEditableValue({ value: getEntity });
-        } else {
-          setEditableValue({ value: new MetaEntity() });
+    const pendingUpdate = getPendingUpdate(
+      props.pendingTransaction,
+      deserializeKey(props.match.params.id)
+    );
+    if (pendingUpdate === null) {
+      const response = useAsync<MetaGetEntityResponse>({
+        promiseFn: getKind,
+        watch: props.match.params.kind,
+        kind: props.match.params.kind,
+        key: props.match.params.id
+      } as any);
+      if (response.isLoading) {
+        return (
+          <>
+            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+              <h1 className="h2">{header}</h1>
+              <div className="btn-toolbar mb-2 mb-md-0" />
+            </div>
+            {errorDisplay}
+            <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
+          </>
+        );
+      } else if (response.error !== undefined) {
+        return (
+          <>
+            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+              <h1 className="h2">{header}</h1>
+              <div className="btn-toolbar mb-2 mb-md-0" />
+            </div>
+            {errorDisplay}
+            {JSON.stringify(response.error)}
+          </>
+        );
+      } else if (response.data !== undefined) {
+        if (editableValue === undefined) {
+          const getEntity = response.data.getEntity();
+          if (getEntity !== undefined) {
+            setEditableValue({ value: getEntity });
+          } else {
+            setEditableValue({ value: new MetaEntity() });
+          }
         }
+      }
+    } else {
+      if (editableValue === undefined) {
+        setEditableValue({ value: pendingUpdate.entity });
       }
     }
   }
@@ -184,6 +269,39 @@ const KindEditRealRoute = (
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!isCreate) {
+      const pendingUpdate = getPendingUpdate(
+        props.pendingTransaction,
+        deserializeKey(props.match.params.id)
+      );
+      if (pendingUpdate !== null) {
+        const req = new MetaUpdateEntityRequest();
+        req.setEntity(editableValue.value);
+        pendingUpdate.operation.setUpdaterequest(req);
+        props.pendingTransaction.setOperations([
+          ...props.pendingTransaction.operations
+        ]);
+        props.history.push(`/kind/${props.match.params.kind}`);
+        return;
+      }
+    } else {
+      const pendingCreate = getPendingCreate(
+        props.pendingTransaction,
+        props.match.params.idx
+      );
+      if (pendingCreate !== null) {
+        const req = new MetaCreateEntityRequest();
+        req.setKindname(props.match.params.kind);
+        req.setEntity(editableValue.value);
+        pendingCreate.operation.setCreaterequest(req);
+        props.pendingTransaction.setOperations([
+          ...props.pendingTransaction.operations
+        ]);
+        props.history.push(`/kind/${props.match.params.kind}`);
+        return;
+      }
+    }
+
     const operation = new MetaOperation();
     if (isCreate) {
       const req = new MetaCreateEntityRequest();
@@ -203,12 +321,46 @@ const KindEditRealRoute = (
     props.history.push(`/kind/${props.match.params.kind}`);
   };
 
+  let pendingDeleteNotice = null;
+  const hasPendingDelete = isPendingDelete(
+    props.pendingTransaction,
+    editableValue.value
+  );
+  if (hasPendingDelete) {
+    const discardPendingDelete = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      props.pendingTransaction.setOperations([
+        ...props.pendingTransaction.operations.filter(
+          x =>
+            !x.hasDeleterequest() ||
+            serializeKey(g(g(x.getDeleterequest()).getKey())) !==
+              serializeKey(g(editableValue.value.getKey()))
+        )
+      ]);
+    };
+    pendingDeleteNotice = (
+      <div className="card border-danger mb-3">
+        <div className="card-body text-danger">
+          <h5 className="card-title">Pending delete</h5>
+          <p className="card-text">
+            This entity is pending deletion. To edit it instead, remove the
+            deletion operation from the pending changes.
+          </p>
+          <a onClick={discardPendingDelete} href="#" className="btn btn-dark">
+            Discard pending delete
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
         <h1 className="h2">{header}</h1>
         <div className="btn-toolbar mb-2 mb-md-0" />
       </div>
+      {pendingDeleteNotice}
       {errorDisplay}
       <form onSubmit={onSubmit}>
         <div className="form-group">
@@ -257,7 +409,9 @@ const KindEditRealRoute = (
                     className="form-control"
                     type="number"
                     value={value}
-                    readOnly={field.getReadonly() || isSaving}
+                    readOnly={
+                      field.getReadonly() || isSaving || hasPendingDelete
+                    }
                     onChange={e => {
                       if (editableValue !== undefined) {
                         const value = new Value();
@@ -296,7 +450,9 @@ const KindEditRealRoute = (
                   <input
                     className="form-control"
                     value={value}
-                    readOnly={field.getReadonly() || isSaving}
+                    readOnly={
+                      field.getReadonly() || isSaving || hasPendingDelete
+                    }
                     onChange={e => {
                       if (editableValue !== undefined) {
                         const value = new Value();
@@ -325,7 +481,9 @@ const KindEditRealRoute = (
                       false,
                       value => value.getBooleanvalue()
                     )}
-                    readOnly={field.getReadonly() || isSaving}
+                    readOnly={
+                      field.getReadonly() || isSaving || hasPendingDelete
+                    }
                     onChange={e => {
                       if (editableValue !== undefined) {
                         const value = new Value();
@@ -353,8 +511,9 @@ const KindEditRealRoute = (
                   <input
                     className="form-control"
                     type="datetime-local"
-                    value={""}
-                    readOnly={field.getReadonly() || isSaving}
+                    readOnly={
+                      field.getReadonly() || isSaving || hasPendingDelete
+                    }
                   />
                   <small className="form-text text-muted">
                     {field.getComment()}
@@ -374,7 +533,9 @@ const KindEditRealRoute = (
                   <input
                     className="form-control"
                     value={value}
-                    readOnly={field.getReadonly() || isSaving}
+                    readOnly={
+                      field.getReadonly() || isSaving || hasPendingDelete
+                    }
                     onChange={e => {
                       if (editableValue !== undefined) {
                         const value = new Value();
@@ -409,7 +570,11 @@ const KindEditRealRoute = (
               );
           }
         })}
-        <button type="submit" className="btn btn-primary" disabled={isSaving}>
+        <button
+          type="submit"
+          className="btn btn-primary mb-4"
+          disabled={isSaving || hasPendingDelete}
+        >
           {isSaving ? (
             <>
               <FontAwesomeIcon icon={faSpinner} spin />
@@ -421,8 +586,11 @@ const KindEditRealRoute = (
           Queue Changes
         </button>
         <Link
-          className="btn btn-outline-secondary ml-2"
-          to={`/kind/${props.match.params.kind}`}
+          className={
+            "btn btn-outline-secondary ml-2 mb-4" +
+            (hasPendingDelete ? " disabled" : "")
+          }
+          to={hasPendingDelete ? "#" : `/kind/${props.match.params.kind}`}
         >
           Discard Changes
         </Link>

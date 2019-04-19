@@ -77,6 +77,30 @@ function isPendingDelete(
   return false;
 }
 
+function getPendingUpdate(
+  pendingTransaction: PendingTransaction,
+  entity: MetaEntity
+) {
+  let idx = 0;
+  for (const operation of pendingTransaction.operations) {
+    if (operation.hasUpdaterequest()) {
+      const updateRequest = g(operation.getUpdaterequest());
+      if (
+        serializeKey(g(g(updateRequest.getEntity()).getKey())) ==
+        serializeKey(g(entity.getKey()))
+      ) {
+        return {
+          id: `${idx}`,
+          entity: g(updateRequest.getEntity()),
+          operation: operation
+        };
+      }
+    }
+    idx++;
+  }
+  return null;
+}
+
 const KindListRealRoute = (
   props: KindListRouteProps & { pendingTransaction: PendingTransaction }
 ) => {
@@ -142,42 +166,84 @@ const KindListRealRoute = (
     ];
   } else if (data !== undefined) {
     dataset = [];
-    for (const entity of data.getEntitiesList()) {
-      const pendingDelete = isPendingDelete(props.pendingTransaction, entity);
+    const entities: {
+      id: string;
+      selectId: string;
+      entity: MetaEntity;
+      operation: MetaOperation | null;
+    }[] = [];
+    let transactionIdx = 0;
+    for (const operation of props.pendingTransaction.operations) {
+      if (operation.hasCreaterequest()) {
+        const createRequest = g(operation.getCreaterequest());
+        if (createRequest.getKindname() === props.match.params.kind) {
+          entities.push({
+            id: `${transactionIdx}`,
+            selectId: `pendingop_${transactionIdx}`,
+            entity: g(createRequest.getEntity()),
+            operation: g(operation)
+          });
+        }
+      }
+      transactionIdx++;
+    }
+    entities.push(
+      ...data.getEntitiesList().map(x => ({
+        id: serializeKey(g(x.getKey())),
+        selectId: serializeKey(g(x.getKey())),
+        entity: g(x),
+        operation: null
+      }))
+    );
+    for (const entity of entities) {
+      const pendingDelete = isPendingDelete(
+        props.pendingTransaction,
+        entity.entity
+      );
+      const pendingUpdate = getPendingUpdate(
+        props.pendingTransaction,
+        entity.entity
+      );
+      const effectiveEntity =
+        pendingUpdate === null ? entity.entity : pendingUpdate.entity;
       dataset.push(
-        <tr
-          key={serializeKey(g(entity.getKey()))}
-          className={pendingDelete ? "strikethrough" : ""}
-        >
+        <tr key={entity.id} className={pendingDelete ? "strikethrough" : ""}>
           <td className="w-checkbox">
             <input
               type="checkbox"
-              checked={
-                selected.v.has(serializeKey(g(entity.getKey()))) &&
-                !pendingDelete
-              }
+              checked={selected.v.has(entity.selectId) && !pendingDelete}
               disabled={pendingDelete}
               onChange={e => {
                 if (e.target.checked) {
-                  selected.v.add(serializeKey(g(entity.getKey())));
+                  selected.v.add(entity.selectId);
                 } else {
-                  selected.v.delete(serializeKey(g(entity.getKey())));
+                  selected.v.delete(entity.selectId);
                 }
                 setSelected({ v: selected.v });
               }}
             />
           </td>
           <td>
-            <Link
-              to={`/kind/${props.match.params.kind}/edit/${serializeKey(
-                g(entity.getKey())
-              )}`}
-            >
-              {prettifyKey(g(entity.getKey()))}
-            </Link>
+            {entity.operation !== null ? (
+              <Link
+                to={`/kind/${props.match.params.kind}/create/pending/${
+                  entity.id
+                }`}
+              >
+                Pending {props.match.params.kind}
+              </Link>
+            ) : (
+              <Link
+                to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                  g(effectiveEntity.getKey())
+                )}`}
+              >
+                {prettifyKey(g(effectiveEntity.getKey()))}
+              </Link>
+            )}
           </td>
           {kindSchema.getFieldsList().map(field => {
-            const fieldData = entity
+            const fieldData = effectiveEntity
               .getValuesList()
               .filter(fieldData => fieldData.getId() == field.getId())[0];
             if (fieldData == undefined) {
@@ -244,13 +310,23 @@ const KindListRealRoute = (
             }
           })}
           <td className="w-checkbox">
-            <Link
-              to={`/kind/${props.match.params.kind}/edit/${serializeKey(
-                g(entity.getKey())
-              )}`}
-            >
-              <FontAwesomeIcon icon={faPencilAlt} />
-            </Link>
+            {entity.operation !== null ? (
+              <Link
+                to={`/kind/${props.match.params.kind}/create/pending/${
+                  entity.id
+                }`}
+              >
+                <FontAwesomeIcon icon={faPencilAlt} />
+              </Link>
+            ) : (
+              <Link
+                to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                  g(effectiveEntity.getKey())
+                )}`}
+              >
+                <FontAwesomeIcon icon={faPencilAlt} />
+              </Link>
+            )}
           </td>
         </tr>
       );
@@ -263,21 +339,32 @@ const KindListRealRoute = (
 
   const startDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const ops = [];
+    const pendingOpsToRemove = [];
+    const oldOps = [...props.pendingTransaction.operations];
     const arrayCopy = Array.from(selected.v);
     for (const key of arrayCopy) {
-      const operation = new MetaOperation();
-      const req = new MetaDeleteEntityRequest();
-      req.setKindname(props.match.params.kind);
-      req.setKey(deserializeKey(key));
-      operation.setDeleterequest(req);
-      ops.push(operation);
+      if (key.startsWith("pendingop_")) {
+        pendingOpsToRemove.push(parseInt(key.substr("pendingop_".length)));
+      }
     }
-
-    props.pendingTransaction.setOperations([
-      ...props.pendingTransaction.operations,
-      ...ops
-    ]);
+    pendingOpsToRemove.sort((a, b) => b - a);
+    console.log(pendingOpsToRemove);
+    for (const opId of pendingOpsToRemove) {
+      oldOps.splice(opId, 1);
+    }
+    for (const key of arrayCopy) {
+      if (!key.startsWith("pendingop_")) {
+        const operation = new MetaOperation();
+        const req = new MetaDeleteEntityRequest();
+        req.setKindname(props.match.params.kind);
+        req.setKey(deserializeKey(key));
+        operation.setDeleterequest(req);
+        ops.push(operation);
+      }
+    }
+    props.pendingTransaction.setOperations([...oldOps, ...ops]);
     setRefreshCount(refreshCount + 1);
+    setSelected({ v: new Set<string>() });
   };
 
   return (

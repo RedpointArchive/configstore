@@ -45,35 +45,41 @@ export class DashboardRoute extends React.Component<
       error: null
     });
     stream.on("error", err => {
-      this.setState({
-        error: err,
-        connected: false
-      });
-      stream.cancel();
-      // try to reconnect
-      this.connect();
+      if (this.onUnmount !== null) {
+        this.setState({
+          error: err,
+          connected: false
+        });
+        stream.cancel();
+        // try to reconnect
+        this.connect();
+      }
     });
     stream.on("data", resp => {
-      if (resp.hasInitialstate()) {
-        this.setState({
-          gotInitialState: true
-        });
-      } else if (resp.hasBatch()) {
-        let trs = [g(resp.getBatch()), ...this.state.transactions];
-        if (trs.length > 50) {
-          trs = trs.slice(0, 50);
+      if (this.onUnmount !== null) {
+        if (resp.hasInitialstate()) {
+          this.setState({
+            gotInitialState: true
+          });
+        } else if (resp.hasBatch()) {
+          let trs = [g(resp.getBatch()), ...this.state.transactions];
+          if (trs.length > 50) {
+            trs = trs.slice(0, 50);
+          }
+          this.setState({
+            transactions: trs
+          });
         }
-        this.setState({
-          transactions: trs
-        });
       }
     });
     stream.on("end", () => {
-      this.setState({
-        connected: false
-      });
-      // try to reconnect
-      this.connect();
+      if (this.onUnmount !== null) {
+        this.setState({
+          connected: false
+        });
+        // try to reconnect
+        this.connect();
+      }
     });
     this.onUnmount = () => stream.cancel();
   };

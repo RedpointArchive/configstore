@@ -36,6 +36,9 @@ export function prettifyKey(key: Key): string {
 }
 
 export function serializeKey(key: Key): string {
+  if (key === undefined) {
+    return "invalid key";
+  }
   return encodeURIComponent(
     `ns=${g(key.getPartitionid()).getNamespace()}|${key
       .getPathList()
