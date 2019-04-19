@@ -18,6 +18,7 @@ import { grpcHost } from "./svcHost";
 import { DashboardRoute } from "./routes/DashboardRoute";
 import { SaveRoute } from "./routes/SaveRoute";
 import { encode, decode } from "base64-arraybuffer";
+import { ReviewRoute } from "./routes/ReviewRoute";
 
 interface PendingTransactionInternal {
   operations: MetaOperation[];
@@ -26,6 +27,8 @@ interface PendingTransactionInternal {
 export interface PendingTransaction {
   operations: MetaOperation[];
   setOperations(operations: MetaOperation[]): void;
+  responseOriginalOperations: MetaOperation[];
+  setResponseOriginalOperations(operations: MetaOperation[]): void;
   response: MetaTransactionResult | null;
   setResponse(response: MetaTransactionResult | null): void;
 }
@@ -35,6 +38,8 @@ export const PendingTransactionContext = React.createContext<
 >({
   operations: [],
   setOperations: () => {},
+  responseOriginalOperations: [],
+  setResponseOriginalOperations: () => {},
   response: null,
   setResponse: () => {}
 });
@@ -66,10 +71,21 @@ const App = () => {
   const [transaction, setTransaction] = useState<PendingTransactionInternal>({
     operations: loadOperationsFromLocalStorage()
   });
+  const [responseOriginalOperations, setResponseOriginalOperations] = useState<
+    PendingTransactionInternal
+  >({
+    operations: []
+  });
   const [response, setResponse] = useState<MetaTransactionResult | null>(null);
   const pendingTransaction = {
     response: response,
     setResponse: setResponse,
+    responseOriginalOperations: responseOriginalOperations.operations,
+    setResponseOriginalOperations: (value: MetaOperation[]) => {
+      setResponseOriginalOperations({
+        operations: value
+      });
+    },
     operations: transaction.operations,
     setOperations: (value: MetaOperation[]) => {
       saveOperationsToLocalStorage(value);
@@ -115,6 +131,7 @@ const App = () => {
       <Switch>
         <Route path="/" exact component={DashboardRoute} />
         <Route path="/save" exact component={SaveRoute} />
+        <Route path="/review" exact component={ReviewRoute} />
         <Route path="/kind/:kind">
           {(props: RouteComponentProps<KindRouteMatch>) => (
             <KindRoute {...props} schema={data} />

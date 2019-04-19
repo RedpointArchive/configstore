@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
 import { grpcHost } from "../svcHost";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 export interface SaveRouteProps extends RouteComponentProps<{}> {
   schema: GetSchemaResponse;
@@ -70,48 +70,6 @@ function getEntityLinkForOperation(operation: MetaOperation) {
   return null;
 }
 
-function displayResult(
-  pendingTransaction: PendingTransaction,
-  idx: number,
-  value: MetaOperation
-) {
-  if (pendingTransaction.response === null) {
-    return null;
-  }
-  const results = pendingTransaction.response.getOperationresultsList();
-  if (idx >= results.length) {
-    return null;
-  }
-  const result = results[idx];
-  if (result.hasError()) {
-    return (
-      <span className="text-danger">
-        {g(result.getError()).getErrormessage()}
-      </span>
-    );
-  } else {
-    if (result.hasCreateresponse()) {
-      const key = g(g(g(result.getCreateresponse()).getEntity()).getKey());
-      return (
-        <span>
-          <FontAwesomeIcon icon={faCheck} fixedWidth />{" "}
-          <Link
-            key={serializeKey(key)}
-            style={{
-              display: "block"
-            }}
-            to={`/kind/${getLastKindOfKey(key)}/edit/${serializeKey(key)}`}
-          >
-            {prettifyKey(key)}
-          </Link>
-        </span>
-      );
-    } else {
-      return <FontAwesomeIcon icon={faCheck} fixedWidth />;
-    }
-  }
-}
-
 export const SaveRoute = (props: SaveRouteProps) => (
   <PendingTransactionContext.Consumer>
     {value => <SaveRealRoute {...props} pendingTransaction={value} />}
@@ -136,6 +94,11 @@ const SaveRealRoute = (
       const req = new MetaTransaction();
       req.setOperationsList(props.pendingTransaction.operations);
       props.pendingTransaction.setResponse(await svc.applyTransaction(req, {}));
+      props.pendingTransaction.setResponseOriginalOperations(
+        props.pendingTransaction.operations
+      );
+      props.pendingTransaction.setOperations([]);
+      props.history.push(`/review`);
     } finally {
       setIsSaving(false);
     }
@@ -150,7 +113,9 @@ const SaveRealRoute = (
             type="button"
             className={"btn btn-sm mr-2 btn-secondary"}
             onClick={discard}
-            disabled={isSaving}
+            disabled={
+              isSaving || props.pendingTransaction.operations.length === 0
+            }
           >
             Discard All Pending Changes
           </button>
@@ -158,7 +123,9 @@ const SaveRealRoute = (
             type="button"
             className={"btn btn-sm mr-2 btn-success"}
             onClick={save}
-            disabled={isSaving}
+            disabled={
+              isSaving || props.pendingTransaction.operations.length === 0
+            }
           >
             {isSaving ? (
               <>
@@ -179,16 +146,23 @@ const SaveRealRoute = (
               <th>Idx</th>
               <th>Type</th>
               <th>Entity</th>
-              <th>Result</th>
             </tr>
           </thead>
           <tbody>
+            {props.pendingTransaction.operations.length === 0 ? (
+              <>
+                <tr>
+                  <td colSpan={3} className="text-muted">
+                    You have no pending changes to be saved.
+                  </td>
+                </tr>
+              </>
+            ) : null}
             {props.pendingTransaction.operations.map((value, idx) => (
               <tr key={idx}>
                 <td>{idx}</td>
                 <td>{getTypeForOperation(value)}</td>
                 <td>{getEntityLinkForOperation(value)}</td>
-                <td>{displayResult(props.pendingTransaction, idx, value)}</td>
               </tr>
             ))}
           </tbody>
