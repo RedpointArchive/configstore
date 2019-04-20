@@ -1,14 +1,13 @@
 import { RouteComponentProps } from "react-router";
 import { MetaTransactionBatch, WatchTransactionsRequest } from "../api/meta_pb";
-import { useState, useEffect } from "react";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
-import { grpcHost } from "../svcHost";
 import { g, serializeKey, prettifyKey, getLastKindOfKey } from "../core";
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle, faStopCircle } from "@fortawesome/free-solid-svg-icons";
 import { Error } from "grpc-web";
 import { Link } from "react-router-dom";
+import { createGrpcPromiseClient } from "../svcHost";
 
 export interface DashboardRouteProps extends RouteComponentProps<{}> {}
 
@@ -37,9 +36,9 @@ export class DashboardRoute extends React.Component<
   }
 
   private connect = () => {
-    const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
+    const client = createGrpcPromiseClient(ConfigstoreMetaServicePromiseClient);
     const req = new WatchTransactionsRequest();
-    const stream = svc.watchTransactions(req, {});
+    const stream = client.svc.watchTransactions(req, client.meta);
     this.setState({
       connected: true,
       error: null

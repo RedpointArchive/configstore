@@ -18,10 +18,10 @@ import { g, deserializeKey, prettifyKey, c, serializeKey } from "../core";
 import { Link } from "react-router-dom";
 import { useAsync } from "react-async";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
-import { grpcHost } from "../svcHost";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { PendingTransactionContext, PendingTransaction } from "../App";
+import { createGrpcPromiseClient } from "../svcHost";
 
 export interface KindEditRouteMatch {
   kind: string;
@@ -35,11 +35,11 @@ export interface KindEditRouteProps
 }
 
 const getKind = async (props: any): Promise<MetaGetEntityResponse> => {
-  const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
+  const client = createGrpcPromiseClient(ConfigstoreMetaServicePromiseClient);
   const req = new MetaGetEntityRequest();
   req.setKindname(props.kind);
   req.setKey(deserializeKey(props.key));
-  return await svc.metaGet(req, {});
+  return await client.svc.metaGet(req, client.meta);
 };
 
 function isPendingDelete(

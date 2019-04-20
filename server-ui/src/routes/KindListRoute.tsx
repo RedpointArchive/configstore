@@ -27,7 +27,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
-import { grpcHost } from "../svcHost";
+import { createGrpcPromiseClient } from "../svcHost";
 import { useAsync } from "react-async";
 import { PendingTransactionContext, PendingTransaction } from "../App";
 
@@ -45,12 +45,12 @@ interface SetHolder {
 }
 
 const listKinds = async (props: any) => {
-  const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
+  const client = createGrpcPromiseClient(ConfigstoreMetaServicePromiseClient);
   const req = new MetaListEntitiesRequest();
   req.setKindname(props.kind);
   req.setStart("");
   req.setLimit(0);
-  return await svc.metaList(req, {});
+  return await client.svc.metaList(req, client.meta);
 };
 
 export const KindListRoute = (props: KindListRouteProps) => (

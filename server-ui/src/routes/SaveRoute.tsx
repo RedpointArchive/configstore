@@ -16,9 +16,9 @@ import { PendingTransactionContext, PendingTransaction } from "../App";
 import { g, serializeKey, getLastKindOfKey, prettifyKey, c } from "../core";
 import { Link } from "react-router-dom";
 import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
-import { grpcHost } from "../svcHost";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { createGrpcPromiseClient } from "../svcHost";
 
 export interface SaveRouteProps extends RouteComponentProps<{}> {
   schema: GetSchemaResponse;
@@ -196,10 +196,14 @@ const SaveRealRoute = (
     let moved = false;
     setIsSaving(true);
     try {
-      const svc = new ConfigstoreMetaServicePromiseClient(grpcHost, null, null);
+      const client = createGrpcPromiseClient(
+        ConfigstoreMetaServicePromiseClient
+      );
       const req = new MetaTransaction();
       req.setOperationsList(props.pendingTransaction.operations);
-      props.pendingTransaction.setResponse(await svc.applyTransaction(req, {}));
+      props.pendingTransaction.setResponse(
+        await client.svc.applyTransaction(req, client.meta)
+      );
       props.pendingTransaction.setResponseOriginalOperations(
         props.pendingTransaction.operations
       );
