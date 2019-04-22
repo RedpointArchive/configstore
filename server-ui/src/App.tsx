@@ -14,6 +14,7 @@ import { SaveRoute } from "./routes/SaveRoute";
 import { encode, decode } from "base64-arraybuffer";
 import { ReviewRoute } from "./routes/ReviewRoute";
 import { createGrpcPromiseClient } from "./svcHost";
+import { ApiHostContext } from "./ApiHostProvider";
 
 interface PendingTransactionInternal {
   operations: MetaOperation[];
@@ -90,7 +91,7 @@ const App = () => {
     }
   };
 
-  let kindsList = null;
+  let kindsList: React.ReactNode = null;
   let content: React.ReactNode = null;
   if (isLoading) {
     kindsList = (
@@ -155,72 +156,85 @@ const App = () => {
 
   return (
     <PendingTransactionContext.Provider value={pendingTransaction}>
-      <>
-        <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-          <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">
-            configstore
-          </a>
-        </nav>
+      <ApiHostContext.Consumer>
+        {value => (
+          <>
+            {g(value).hideTitlebar ? null : (
+              <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+                <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">
+                  configstore
+                </a>
+              </nav>
+            )}
+            <div
+              className={
+                "container-fluid" +
+                (g(value).hideTitlebar ? " no-titlebar" : "")
+              }
+            >
+              <div className="row">
+                <nav className="col-md-2 d-none d-md-block bg-light sidebar">
+                  <div className="sidebar-sticky">
+                    <>
+                      <ul className="nav flex-column">
+                        <li className="nav-item">
+                          <NavLink
+                            className="nav-link"
+                            activeClassName="active"
+                            to="/"
+                            exact
+                          >
+                            Dashboard
+                          </NavLink>
+                        </li>
+                        <li className="nav-item">
+                          <span className="nav-link">{saveLink}</span>
+                        </li>
+                      </ul>
 
-        <div className="container-fluid">
-          <div className="row">
-            <nav className="col-md-2 d-none d-md-block bg-light sidebar">
-              <div className="sidebar-sticky">
-                <>
-                  <ul className="nav flex-column">
-                    <li className="nav-item">
-                      <NavLink
-                        className="nav-link"
-                        activeClassName="active"
-                        to="/"
-                        exact
-                      >
-                        Dashboard
-                      </NavLink>
-                    </li>
-                    <li className="nav-item">
-                      <span className="nav-link">{saveLink}</span>
-                    </li>
-                  </ul>
+                      <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Kinds</span>
+                      </h6>
+                      <ul className="nav flex-column">{kindsList}</ul>
 
-                  <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>Kinds</span>
-                  </h6>
-                  <ul className="nav flex-column">{kindsList}</ul>
+                      <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>SDKs</span>
+                      </h6>
+                      <ul className="nav flex-column mb-2">
+                        <li className="nav-item">
+                          <a
+                            className="nav-link"
+                            href="/sdk/client.proto"
+                            target="_blank"
+                          >
+                            gRPC Protocol Spec
+                          </a>
+                        </li>
+                        <li className="nav-item">
+                          <a
+                            className="nav-link"
+                            href="/sdk/client.go"
+                            target="_blank"
+                          >
+                            gRPC Go Client
+                          </a>
+                        </li>
+                      </ul>
+                    </>
+                  </div>
+                </nav>
 
-                  <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>SDKs</span>
-                  </h6>
-                  <ul className="nav flex-column mb-2">
-                    <li className="nav-item">
-                      <a
-                        className="nav-link"
-                        href="/sdk/client.proto"
-                        target="_blank"
-                      >
-                        gRPC Protocol Spec
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a
-                        className="nav-link"
-                        href="/sdk/client.go"
-                        target="_blank"
-                      >
-                        gRPC Go Client
-                      </a>
-                    </li>
-                  </ul>
-                </>
+                <main
+                  role="main"
+                  className="col-sm-12 col-md-10 ml-sm-auto px-4"
+                >
+                  {content}
+                </main>
               </div>
-            </nav>
-
-            <main role="main" className="col-sm-12 col-md-10 ml-sm-auto px-4">
-              {content}
-            </main>
-          </div>
-        </div>
-      </>
+            </div>
+          </>
+        )}
+      </ApiHostContext.Consumer>
     </PendingTransactionContext.Provider>
   );
 };
