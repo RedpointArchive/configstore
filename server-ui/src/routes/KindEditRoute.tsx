@@ -22,6 +22,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { PendingTransactionContext, PendingTransaction } from "../App";
 import { createGrpcPromiseClient } from "../svcHost";
+import Datetime from "react-datetime";
+import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import moment from "moment";
 
 export interface KindEditRouteMatch {
   kind: string;
@@ -505,21 +508,141 @@ const KindEditRealRoute = (
                 </div>
               );
             case ValueType.TIMESTAMP:
-              return (
-                <div className="form-group" key={field.getId()}>
-                  <label>{displayName}</label>
-                  <input
-                    className="form-control"
-                    type="datetime-local"
-                    readOnly={
-                      field.getReadonly() || isSaving || hasPendingDelete
-                    }
-                  />
-                  <small className="form-text text-muted">
-                    {field.getComment()}
-                  </small>
-                </div>
+              const value = getConditionalField<Timestamp | undefined>(
+                editableValue,
+                field,
+                undefined,
+                value => value.getTimestampvalue()
               );
+              if (field.getReadonly() || isSaving || hasPendingDelete) {
+                return (
+                  <div className="form-group" key={field.getId()}>
+                    <label>{displayName}</label>
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <div className="input-group-text">
+                          <input
+                            type="checkbox"
+                            checked={value !== undefined}
+                            disabled={true}
+                            onChange={e => {}}
+                          />
+                        </div>
+                      </div>
+                      <input
+                        className="form-control"
+                        defaultValue={
+                          value === undefined
+                            ? ""
+                            : moment.unix(value.getSeconds()).toLocaleString()
+                        }
+                        readOnly={true}
+                      />
+                    </div>
+                    <small className="form-text text-muted">
+                      {field.getComment()}
+                    </small>
+                  </div>
+                );
+              } else if (value === undefined) {
+                return (
+                  <div className="form-group" key={field.getId()}>
+                    <label>{displayName}</label>
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <div className="input-group-text">
+                          <input
+                            type="checkbox"
+                            checked={false}
+                            disabled={
+                              field.getReadonly() ||
+                              isSaving ||
+                              hasPendingDelete
+                            }
+                            onChange={e => {
+                              if (editableValue !== undefined) {
+                                const timestamp = new Timestamp();
+                                timestamp.setSeconds(moment().unix());
+                                timestamp.setNanos(0);
+                                const value = new Value();
+                                value.setTimestampvalue(timestamp);
+                                setConditionalField(
+                                  editableValue,
+                                  field,
+                                  value
+                                );
+                                setEditableValue({
+                                  value: editableValue.value
+                                });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <input
+                        className="form-control"
+                        defaultValue={""}
+                        readOnly={true}
+                      />
+                    </div>
+                    <small className="form-text text-muted">
+                      {field.getComment()}
+                    </small>
+                  </div>
+                );
+              } else {
+                return (
+                  <div className="form-group" key={field.getId()}>
+                    <label>{displayName}</label>
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <div className="input-group-text">
+                          <input
+                            type="checkbox"
+                            checked={true}
+                            disabled={
+                              field.getReadonly() ||
+                              isSaving ||
+                              hasPendingDelete
+                            }
+                            onChange={e => {
+                              if (editableValue !== undefined) {
+                                const value = new Value();
+                                value.clearTimestampvalue();
+                                setConditionalField(
+                                  editableValue,
+                                  field,
+                                  value
+                                );
+                                setEditableValue({
+                                  value: editableValue.value
+                                });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <Datetime
+                        value={moment.unix(value.getSeconds()).toDate()}
+                        onChange={date => {
+                          if (editableValue !== undefined) {
+                            const timestamp = new Timestamp();
+                            timestamp.setSeconds(moment(date).unix());
+                            timestamp.setNanos(0);
+                            const value = new Value();
+                            value.setTimestampvalue(timestamp);
+                            setConditionalField(editableValue, field, value);
+                            setEditableValue({ value: editableValue.value });
+                          }
+                        }}
+                      />
+                    </div>
+                    <small className="form-text text-muted">
+                      {field.getComment()}
+                    </small>
+                  </div>
+                );
+              }
             case ValueType.BYTES: {
               const value = getConditionalField(
                 editableValue,

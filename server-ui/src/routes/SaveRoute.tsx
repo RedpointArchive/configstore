@@ -19,6 +19,7 @@ import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { createGrpcPromiseClient } from "../svcHost";
+import moment from "moment";
 
 export interface SaveRouteProps extends RouteComponentProps<{}> {
   schema: GetSchemaResponse;
@@ -125,6 +126,13 @@ function renderTextValue(field: SchemaField, entity: MetaEntity) {
       ) : (
         "-"
       );
+    case ValueType.TIMESTAMP:
+      const timestamp = fieldData.getTimestampvalue();
+      if (timestamp === undefined) {
+        return "-";
+      } else {
+        return moment.unix(timestamp.getSeconds()).toLocaleString();
+      }
     case ValueType.BYTES:
       return <em>(bytes)</em>;
     default:

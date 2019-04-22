@@ -30,6 +30,7 @@ import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
 import { createGrpcPromiseClient } from "../svcHost";
 import { useAsync } from "react-async";
 import { PendingTransactionContext, PendingTransaction } from "../App";
+import moment from "moment";
 
 export interface KindListRouteMatch {
   kind: string;
@@ -301,6 +302,17 @@ const KindListRealRoute = (
                     <em>(bytes)</em>
                   </td>
                 );
+              case ValueType.TIMESTAMP:
+                const timestamp = fieldData.getTimestampvalue();
+                if (timestamp === undefined) {
+                  return <td key={field.getId()}>-</td>;
+                } else {
+                  return (
+                    <td key={field.getId()}>
+                      {moment.unix(timestamp.getSeconds()).toLocaleString()}
+                    </td>
+                  );
+                }
               default:
                 return (
                   <td key={field.getId()}>
