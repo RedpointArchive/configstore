@@ -7,10 +7,9 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -34,6 +33,12 @@ type runtimeConfig struct {
 	GrpcPort                      uint16 `envconfig:"GRPC_PORT" required:"true"`
 	HTTPPort                      uint16 `envconfig:"HTTP_PORT" required:"true"`
 	SchemaPath                    string `envconfig:"SCHEMA_PATH" required:"true"`
+	AllowedOrigins                string `envconfig:"ALLOWED_ORIGINS"`
+	AuthEnabled                   bool   `envconfig:"AUTH_ENABLED"`
+	AuthSigningKey                string `envconfig:"AUTH_SIGNING_KEY"`
+	AuthRequiredScopes            string `envconfig:"AUTH_REQUIRED_SCOPES"`
+	AuthIss                       string `envconfig:"AUTH_ISS"`
+	AuthAud                       string `envconfig:"AUTH_AUD"`
 }
 
 type runMode string
@@ -46,7 +51,6 @@ const (
 func main() {
 	mode := runModeServe
 	generateFlag := flag.Bool("generate", false, "emit Go client code instead of serving traffic")
-	reverseProxyDevServerFlag := flag.Bool("enable-reverse-proxy-react-dev-server", false, "instead of serving React files from /server-ui/, reverse proxy to http://configstore-dashboard:3000/")
 	flag.Parse()
 	if *generateFlag {
 		mode = runModeGenerate
@@ -186,27 +190,6 @@ func main() {
 
 		// Start HTTP server.
 		router := mux.NewRouter()
-		/*r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// We don't use http.ServeFile here, because it tries to take the current URL into
-			// account when locating the file to serve. Since this is the 404 Not Found handler,
-			// the current URL could be anything. We just always want to serve the contents
-			// of index.html if this function is handling a request.
-			f, err := os.Open("/server-ui/index.html")
-			if err != nil {
-				http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-			defer f.Close()
-
-			d, err := f.Stat()
-			if err != nil {
-				http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-
-			http.ServeContent(w, r, d.Name(), d.ModTime(), f)
-		})*/
-
 		router.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoFile)
 		})
@@ -214,24 +197,42 @@ func main() {
 			fmt.Fprintf(w, "%s", clientProtoGoCode)
 		})
 
-		if *reverseProxyDevServerFlag {
-			fmt.Println("Enabling reverse proxy to React dev server at http://configstore-dashboard:3000/...")
-			url, _ := url.Parse("http://configstore-dashboard:3000/")
-			rp := httputil.NewSingleHostReverseProxy(url)
-			router.PathPrefix("/static").Handler(rp)
-			router.PathPrefix("/sockjs-node").Handler(rp)
-			router.PathPrefix("/").Handler(rp)
-		} else {
-			router.PathPrefix("/static").Handler(http.FileServer(http.Dir("/server-ui/")))
-			router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.ServeFile(w, r, "/server-ui/index.html")
-			})
-		}
+		router.PathPrefix("/static").Handler(http.FileServer(http.Dir("/server-ui/")))
+		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "/server-ui/index.html")
+		})
 
 		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
 
-		GrpcServe(router, grpcServer, fmt.Sprintf("0.0.0.0:%d", config.HTTPPort))
-
+		GrpcServeWithWrapper(router, grpcServer, func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if config.AuthEnabled {
+					authMiddleware(
+						h,
+						[]byte(config.AuthSigningKey),
+						strings.Split(config.AuthRequiredScopes, ","),
+						config.AuthIss,
+						config.AuthAud,
+					).ServeHTTP(w, r)
+				} else {
+					h.ServeHTTP(w, r)
+				}
+			})
+		}, fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), func(origin string) bool {
+			if config.AllowedOrigins == "" {
+				return false
+			}
+			if config.AllowedOrigins == "*" {
+				return true
+			}
+			allowedOriginsArray := strings.Split(config.AllowedOrigins, ",")
+			for _, or := range allowedOriginsArray {
+				if origin == or {
+					return true
+				}
+			}
+			return false
+		})
 	} else if mode == runModeGenerate {
 		fmt.Println(clientProtoGoCode)
 	}
@@ -253,33 +254,38 @@ func setDummyClientHeaders(resp http.ResponseWriter) {
 	resp.Header().Set("grpc-message", "")
 }
 
-// GrpcServe starts a HTTP server, with a gRPC server attached. This uses HttpServe
-// underneath, and just contains the logic for setting up the HTTP handler with gRPC
-// support.
-func GrpcServe(handler http.Handler, grpcServer *grpc.Server, addr string) {
+type wrapCall func(http.Handler) http.Handler
+
+// GrpcServeWithWrapper allows you to wrap the gRPC layer in additional HTTP handler. For example,
+// you can use this to inject an authentication layer for gRPC.
+func GrpcServeWithWrapper(handler http.Handler, grpcServer *grpc.Server, wrapper wrapCall, addr string, isAllowedOrigin func(origin string) bool) {
 	wrappedGrpc := grpcweb.WrapServer(
 		grpcServer,
 		grpcweb.WithAllowedRequestHeaders([]string{"*"}),
 		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
 		grpcweb.WithOriginFunc(func(origin string) bool {
-			return true
+			return isAllowedOrigin(origin)
 		}),
 		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
-			_, err := grpcweb.WebsocketRequestOrigin(req)
+			origin, err := grpcweb.WebsocketRequestOrigin(req)
 			if err != nil {
 				return false
 			}
-			return true
+			return isAllowedOrigin(origin)
 		}),
 		grpcweb.WithWebsockets(true),
 	)
+	doubleWrappedGrpc := wrapper(wrappedGrpc)
 	mixHandler := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		// Serve GRPC if this is a GRPC request.
+		if wrappedGrpc.IsAcceptableGrpcCorsRequest(req) {
+			wrappedGrpc.ServeHTTP(resp, req)
+			return
+		}
 		if wrappedGrpc.IsGrpcWebRequest(req) ||
-			wrappedGrpc.IsAcceptableGrpcCorsRequest(req) ||
 			wrappedGrpc.IsGrpcWebSocketRequest(req) {
 			setDummyClientHeaders(resp)
-			wrappedGrpc.ServeHTTP(resp, req)
+			doubleWrappedGrpc.ServeHTTP(resp, req)
 			return
 		}
 

@@ -159,12 +159,18 @@ func (s *transactionProcessor) processTransaction(
 		}
 
 		if len(mutatedKeys) > 0 || len(deletedKeys) > 0 {
+			authSub, ok := ctx.Value(contextSubjectKey).(string)
 			ref := s.client.Collection("Transaction").NewDoc()
 			transaction := make(map[string]interface{})
 			transaction["mutatedKeys"] = mutatedKeys
 			transaction["deletedKeys"] = deletedKeys
 			transaction["dateSubmitted"] = time.Now()
 			transaction["description"] = req.Description
+			if ok {
+				transaction["authSub"] = authSub
+			} else {
+				transaction["authSub"] = nil
+			}
 			tx.Create(ref, transaction)
 		}
 
