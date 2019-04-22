@@ -4,7 +4,8 @@
     "User": {
       "editor": {
         "singular": "User",
-        "plural": "Users"
+        "plural": "Users",
+        "renderEditorDropdownWithField": "emailAddress"
       },
       "fields": [
         {
@@ -75,7 +76,8 @@
     "Project": {
       "editor": {
         "singular": "Project",
-        "plural": "Projects"
+        "plural": "Projects",
+        "renderEditorDropdownWithField": "name"
       },
       "fields": [
         {
@@ -101,7 +103,8 @@
           "type": "key",
           "comment": "The user that has access to the project",
           "editor": {
-            "displayName": "User"
+            "displayName": "User",
+            "allowedKinds": ["User"]
           }
         },
         {
@@ -110,7 +113,8 @@
           "type": "key",
           "comment": "The project the user has access to",
           "editor": {
-            "displayName": "Project"
+            "displayName": "Project",
+            "allowedKinds": ["Project"]
           }
         }
       ]

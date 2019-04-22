@@ -65,12 +65,13 @@ message SchemaFieldEditorInfo {
     string displayName = 1;
     SchemaFieldEditorInfoType type = 2;
     bool editorReadonly = 3;
-    string foreignType = 4;
+    repeated string allowedKinds = 4;
 }
 
 message SchemaKindEditor {
     string singular = 1;
     string plural = 2;
+    string renderEditorDropdownWithField = 3;
 }
 
 message SchemaKind {

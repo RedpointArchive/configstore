@@ -14,7 +14,7 @@ import { SaveRoute } from "./routes/SaveRoute";
 import { encode, decode } from "base64-arraybuffer";
 import { ReviewRoute } from "./routes/ReviewRoute";
 import { createGrpcPromiseClient } from "./svcHost";
-import { ApiHostContext } from "./ApiHostProvider";
+import { ApiHostContext, ApiHostConfig } from "./ApiHostProvider";
 
 interface PendingTransactionInternal {
   operations: MetaOperation[];
@@ -154,6 +154,11 @@ const App = () => {
       </NavLink>
     );
 
+  const getSvcHost = () =>
+    (JSON.parse(window.localStorage.getItem(
+      "apiHostConfig"
+    ) as string) as ApiHostConfig).svcHost;
+
   return (
     <PendingTransactionContext.Provider value={pendingTransaction}>
       <ApiHostContext.Consumer>
@@ -204,7 +209,7 @@ const App = () => {
                         <li className="nav-item">
                           <a
                             className="nav-link"
-                            href="/sdk/client.proto"
+                            href={`${getSvcHost()}/sdk/client.proto`}
                             target="_blank"
                           >
                             gRPC Protocol Spec
@@ -213,7 +218,7 @@ const App = () => {
                         <li className="nav-item">
                           <a
                             className="nav-link"
-                            href="/sdk/client.go"
+                            href={`${getSvcHost()}/sdk/client.go`}
                             target="_blank"
                           >
                             gRPC Go Client

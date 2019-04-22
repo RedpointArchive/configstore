@@ -192,8 +192,10 @@ export class SchemaFieldEditorInfo extends jspb.Message {
   getEditorreadonly(): boolean;
   setEditorreadonly(value: boolean): void;
 
-  getForeigntype(): string;
-  setForeigntype(value: string): void;
+  getAllowedkindsList(): Array<string>;
+  setAllowedkindsList(value: Array<string>): void;
+  clearAllowedkindsList(): void;
+  addAllowedkinds(value: string, index?: number): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaFieldEditorInfo.AsObject;
@@ -208,7 +210,7 @@ export namespace SchemaFieldEditorInfo {
     displayname: string,
     type: SchemaFieldEditorInfoType,
     editorreadonly: boolean,
-    foreigntype: string,
+    allowedkindsList: Array<string>,
   }
 }
 
@@ -218,6 +220,9 @@ export class SchemaKindEditor extends jspb.Message {
 
   getPlural(): string;
   setPlural(value: string): void;
+
+  getRendereditordropdownwithfield(): string;
+  setRendereditordropdownwithfield(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaKindEditor.AsObject;
@@ -231,6 +236,7 @@ export namespace SchemaKindEditor {
   export type AsObject = {
     singular: string,
     plural: string,
+    rendereditordropdownwithfield: string,
   }
 }
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { KindRouteProps } from "./KindRoute";
 import { RouteComponentProps } from "react-router";
 import {
   GetSchemaResponse,
@@ -152,19 +151,6 @@ const KindListRealRoute = (
         </td>
       </tr>
     ];
-  } else if (data !== undefined && data.getEntitiesList().length == 0) {
-    dataset = [
-      <tr key="loading">
-        <td
-          colSpan={3 + kindSchema.getFieldsList().length}
-          style={{
-            textAlign: "center"
-          }}
-        >
-          There are no entities of this kind.
-        </td>
-      </tr>
-    ];
   } else if (data !== undefined) {
     dataset = [];
     const entities: {
@@ -196,152 +182,169 @@ const KindListRealRoute = (
         operation: null
       }))
     );
-    for (const entity of entities) {
-      const pendingDelete = isPendingDelete(
-        props.pendingTransaction,
-        entity.entity
-      );
-      const pendingUpdate = getPendingUpdate(
-        props.pendingTransaction,
-        entity.entity
-      );
-      const effectiveEntity =
-        pendingUpdate === null ? entity.entity : pendingUpdate.entity;
-      dataset.push(
-        <tr key={entity.id} className={pendingDelete ? "strikethrough" : ""}>
-          <td className="w-checkbox">
-            <input
-              type="checkbox"
-              checked={selected.v.has(entity.selectId) && !pendingDelete}
-              disabled={pendingDelete}
-              onChange={e => {
-                if (e.target.checked) {
-                  selected.v.add(entity.selectId);
-                } else {
-                  selected.v.delete(entity.selectId);
-                }
-                setSelected({ v: selected.v });
-              }}
-            />
-          </td>
-          <td>
-            {entity.operation !== null ? (
-              <Link
-                to={`/kind/${props.match.params.kind}/create/pending/${
-                  entity.id
-                }`}
-              >
-                Pending {props.match.params.kind}
-              </Link>
-            ) : (
-              <Link
-                to={`/kind/${props.match.params.kind}/edit/${serializeKey(
-                  g(effectiveEntity.getKey())
-                )}`}
-              >
-                {prettifyKey(g(effectiveEntity.getKey()))}
-              </Link>
-            )}
-          </td>
-          {kindSchema.getFieldsList().map(field => {
-            const fieldData = effectiveEntity
-              .getValuesList()
-              .filter(fieldData => fieldData.getId() == field.getId())[0];
-            if (fieldData == undefined) {
-              return (
-                <td key={field.getId()}>
-                  <em className="text-muted">-</em>
-                </td>
-              );
-            }
-            switch (fieldData.getType()) {
-              case ValueType.STRING:
-                return (
-                  <td key={field.getId()}>{fieldData.getStringvalue()}</td>
-                );
-              case ValueType.DOUBLE:
-                return (
-                  <td key={field.getId()}>{fieldData.getDoublevalue()}</td>
-                );
-              case ValueType.INT64:
-                return <td key={field.getId()}>{fieldData.getInt64value()}</td>;
-              case ValueType.UINT64:
-                return (
-                  <td key={field.getId()}>{fieldData.getUint64value()}</td>
-                );
-              case ValueType.KEY:
-                const childKey = fieldData.getKeyvalue();
-                if (childKey === undefined) {
-                  return <td key={field.getId()}>-</td>;
-                } else {
-                  return (
-                    <td key={field.getId()}>
-                      <Link
-                        to={`/kind/${getLastKindOfKey(
-                          childKey
-                        )}/edit/${serializeKey(g(childKey))}`}
-                      >
-                        {prettifyKey(childKey)}
-                      </Link>
-                    </td>
-                  );
-                }
-              case ValueType.BOOLEAN:
-                return (
-                  <td key={field.getId()}>
-                    {fieldData.getBooleanvalue() ? (
-                      <FontAwesomeIcon icon={faCheck} fixedWidth />
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                );
-              case ValueType.BYTES:
-                return (
-                  <td key={field.getId()}>
-                    <em>(bytes)</em>
-                  </td>
-                );
-              case ValueType.TIMESTAMP:
-                const timestamp = fieldData.getTimestampvalue();
-                if (timestamp === undefined) {
-                  return <td key={field.getId()}>-</td>;
-                } else {
-                  return (
-                    <td key={field.getId()}>
-                      {moment.unix(timestamp.getSeconds()).toLocaleString()}
-                    </td>
-                  );
-                }
-              default:
-                return (
-                  <td key={field.getId()}>
-                    (unknown type {fieldData.getType()})
-                  </td>
-                );
-            }
-          })}
-          <td className="w-checkbox">
-            {entity.operation !== null ? (
-              <Link
-                to={`/kind/${props.match.params.kind}/create/pending/${
-                  entity.id
-                }`}
-              >
-                <FontAwesomeIcon icon={faPencilAlt} />
-              </Link>
-            ) : (
-              <Link
-                to={`/kind/${props.match.params.kind}/edit/${serializeKey(
-                  g(effectiveEntity.getKey())
-                )}`}
-              >
-                <FontAwesomeIcon icon={faPencilAlt} />
-              </Link>
-            )}
+    if (entities.length === 0) {
+      dataset = [
+        <tr key="loading">
+          <td
+            colSpan={3 + kindSchema.getFieldsList().length}
+            style={{
+              textAlign: "center"
+            }}
+          >
+            There are no entities of this kind.
           </td>
         </tr>
-      );
+      ];
+    } else {
+      for (const entity of entities) {
+        const pendingDelete = isPendingDelete(
+          props.pendingTransaction,
+          entity.entity
+        );
+        const pendingUpdate = getPendingUpdate(
+          props.pendingTransaction,
+          entity.entity
+        );
+        const effectiveEntity =
+          pendingUpdate === null ? entity.entity : pendingUpdate.entity;
+        dataset.push(
+          <tr key={entity.id} className={pendingDelete ? "strikethrough" : ""}>
+            <td className="w-checkbox">
+              <input
+                type="checkbox"
+                checked={selected.v.has(entity.selectId) && !pendingDelete}
+                disabled={pendingDelete}
+                onChange={e => {
+                  if (e.target.checked) {
+                    selected.v.add(entity.selectId);
+                  } else {
+                    selected.v.delete(entity.selectId);
+                  }
+                  setSelected({ v: selected.v });
+                }}
+              />
+            </td>
+            <td>
+              {entity.operation !== null ? (
+                <Link
+                  to={`/kind/${props.match.params.kind}/create/pending/${
+                    entity.id
+                  }`}
+                >
+                  Pending {props.match.params.kind}
+                </Link>
+              ) : (
+                <Link
+                  to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                    g(effectiveEntity.getKey())
+                  )}`}
+                >
+                  {prettifyKey(g(effectiveEntity.getKey()))}
+                </Link>
+              )}
+            </td>
+            {kindSchema.getFieldsList().map(field => {
+              const fieldData = effectiveEntity
+                .getValuesList()
+                .filter(fieldData => fieldData.getId() == field.getId())[0];
+              if (fieldData == undefined) {
+                return (
+                  <td key={field.getId()}>
+                    <em className="text-muted">-</em>
+                  </td>
+                );
+              }
+              switch (fieldData.getType()) {
+                case ValueType.STRING:
+                  return (
+                    <td key={field.getId()}>{fieldData.getStringvalue()}</td>
+                  );
+                case ValueType.DOUBLE:
+                  return (
+                    <td key={field.getId()}>{fieldData.getDoublevalue()}</td>
+                  );
+                case ValueType.INT64:
+                  return (
+                    <td key={field.getId()}>{fieldData.getInt64value()}</td>
+                  );
+                case ValueType.UINT64:
+                  return (
+                    <td key={field.getId()}>{fieldData.getUint64value()}</td>
+                  );
+                case ValueType.KEY:
+                  const childKey = fieldData.getKeyvalue();
+                  if (childKey === undefined) {
+                    return <td key={field.getId()}>-</td>;
+                  } else {
+                    return (
+                      <td key={field.getId()}>
+                        <Link
+                          to={`/kind/${getLastKindOfKey(
+                            childKey
+                          )}/edit/${serializeKey(g(childKey))}`}
+                        >
+                          {prettifyKey(childKey)}
+                        </Link>
+                      </td>
+                    );
+                  }
+                case ValueType.BOOLEAN:
+                  return (
+                    <td key={field.getId()}>
+                      {fieldData.getBooleanvalue() ? (
+                        <FontAwesomeIcon icon={faCheck} fixedWidth />
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  );
+                case ValueType.BYTES:
+                  return (
+                    <td key={field.getId()}>
+                      <em>(bytes)</em>
+                    </td>
+                  );
+                case ValueType.TIMESTAMP:
+                  const timestamp = fieldData.getTimestampvalue();
+                  if (timestamp === undefined) {
+                    return <td key={field.getId()}>-</td>;
+                  } else {
+                    return (
+                      <td key={field.getId()}>
+                        {moment.unix(timestamp.getSeconds()).toLocaleString()}
+                      </td>
+                    );
+                  }
+                default:
+                  return (
+                    <td key={field.getId()}>
+                      (unknown type {fieldData.getType()})
+                    </td>
+                  );
+              }
+            })}
+            <td className="w-checkbox">
+              {entity.operation !== null ? (
+                <Link
+                  to={`/kind/${props.match.params.kind}/create/pending/${
+                    entity.id
+                  }`}
+                >
+                  <FontAwesomeIcon icon={faPencilAlt} />
+                </Link>
+              ) : (
+                <Link
+                  to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                    g(effectiveEntity.getKey())
+                  )}`}
+                >
+                  <FontAwesomeIcon icon={faPencilAlt} />
+                </Link>
+              )}
+            </td>
+          </tr>
+        );
+      }
     }
   }
 

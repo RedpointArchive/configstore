@@ -1411,12 +1411,19 @@ proto.meta.SchemaField.prototype.setReadonly = function(value) {
  * @constructor
  */
 proto.meta.SchemaFieldEditorInfo = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.meta.SchemaFieldEditorInfo.repeatedFields_, null);
 };
 goog.inherits(proto.meta.SchemaFieldEditorInfo, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
   proto.meta.SchemaFieldEditorInfo.displayName = 'proto.meta.SchemaFieldEditorInfo';
 }
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.meta.SchemaFieldEditorInfo.repeatedFields_ = [4];
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -1449,7 +1456,7 @@ proto.meta.SchemaFieldEditorInfo.toObject = function(includeInstance, msg) {
     displayname: jspb.Message.getFieldWithDefault(msg, 1, ""),
     type: jspb.Message.getFieldWithDefault(msg, 2, 0),
     editorreadonly: jspb.Message.getFieldWithDefault(msg, 3, false),
-    foreigntype: jspb.Message.getFieldWithDefault(msg, 4, "")
+    allowedkindsList: jspb.Message.getRepeatedField(msg, 4)
   };
 
   if (includeInstance) {
@@ -1500,7 +1507,7 @@ proto.meta.SchemaFieldEditorInfo.deserializeBinaryFromReader = function(msg, rea
       break;
     case 4:
       var value = /** @type {string} */ (reader.readString());
-      msg.setForeigntype(value);
+      msg.addAllowedkinds(value);
       break;
     default:
       reader.skipField();
@@ -1552,9 +1559,9 @@ proto.meta.SchemaFieldEditorInfo.serializeBinaryToWriter = function(message, wri
       f
     );
   }
-  f = message.getForeigntype();
+  f = message.getAllowedkindsList();
   if (f.length > 0) {
-    writer.writeString(
+    writer.writeRepeatedString(
       4,
       f
     );
@@ -1610,17 +1617,31 @@ proto.meta.SchemaFieldEditorInfo.prototype.setEditorreadonly = function(value) {
 
 
 /**
- * optional string foreignType = 4;
- * @return {string}
+ * repeated string allowedKinds = 4;
+ * @return {!Array<string>}
  */
-proto.meta.SchemaFieldEditorInfo.prototype.getForeigntype = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+proto.meta.SchemaFieldEditorInfo.prototype.getAllowedkindsList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 4));
 };
 
 
-/** @param {string} value */
-proto.meta.SchemaFieldEditorInfo.prototype.setForeigntype = function(value) {
-  jspb.Message.setProto3StringField(this, 4, value);
+/** @param {!Array<string>} value */
+proto.meta.SchemaFieldEditorInfo.prototype.setAllowedkindsList = function(value) {
+  jspb.Message.setField(this, 4, value || []);
+};
+
+
+/**
+ * @param {!string} value
+ * @param {number=} opt_index
+ */
+proto.meta.SchemaFieldEditorInfo.prototype.addAllowedkinds = function(value, opt_index) {
+  jspb.Message.addToRepeatedField(this, 4, value, opt_index);
+};
+
+
+proto.meta.SchemaFieldEditorInfo.prototype.clearAllowedkindsList = function() {
+  this.setAllowedkindsList([]);
 };
 
 
@@ -1672,7 +1693,8 @@ proto.meta.SchemaKindEditor.prototype.toObject = function(opt_includeInstance) {
 proto.meta.SchemaKindEditor.toObject = function(includeInstance, msg) {
   var f, obj = {
     singular: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    plural: jspb.Message.getFieldWithDefault(msg, 2, "")
+    plural: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    rendereditordropdownwithfield: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -1717,6 +1739,10 @@ proto.meta.SchemaKindEditor.deserializeBinaryFromReader = function(msg, reader) 
       var value = /** @type {string} */ (reader.readString());
       msg.setPlural(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setRendereditordropdownwithfield(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1760,6 +1786,13 @@ proto.meta.SchemaKindEditor.serializeBinaryToWriter = function(message, writer) 
       f
     );
   }
+  f = message.getRendereditordropdownwithfield();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -1790,6 +1823,21 @@ proto.meta.SchemaKindEditor.prototype.getPlural = function() {
 /** @param {string} value */
 proto.meta.SchemaKindEditor.prototype.setPlural = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string renderEditorDropdownWithField = 3;
+ * @return {string}
+ */
+proto.meta.SchemaKindEditor.prototype.getRendereditordropdownwithfield = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.SchemaKindEditor.prototype.setRendereditordropdownwithfield = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
 };
 
 

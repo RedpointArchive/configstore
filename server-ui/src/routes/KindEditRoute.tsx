@@ -25,6 +25,7 @@ import { createGrpcPromiseClient } from "../svcHost";
 import Datetime from "react-datetime";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import moment from "moment";
+import { KeySelect } from "../KeySelect";
 
 export interface KindEditRouteMatch {
   kind: string;
@@ -508,7 +509,7 @@ const KindEditRealRoute = (
                 </div>
               );
             case ValueType.TIMESTAMP:
-              const value = getConditionalField<Timestamp | undefined>(
+              const timestampValue = getConditionalField<Timestamp | undefined>(
                 editableValue,
                 field,
                 undefined,
@@ -523,7 +524,7 @@ const KindEditRealRoute = (
                         <div className="input-group-text">
                           <input
                             type="checkbox"
-                            checked={value !== undefined}
+                            checked={timestampValue !== undefined}
                             disabled={true}
                             onChange={e => {}}
                           />
@@ -532,9 +533,11 @@ const KindEditRealRoute = (
                       <input
                         className="form-control"
                         defaultValue={
-                          value === undefined
+                          timestampValue === undefined
                             ? ""
-                            : moment.unix(value.getSeconds()).toLocaleString()
+                            : moment
+                                .unix(timestampValue.getSeconds())
+                                .toLocaleString()
                         }
                         readOnly={true}
                       />
@@ -544,7 +547,7 @@ const KindEditRealRoute = (
                     </small>
                   </div>
                 );
-              } else if (value === undefined) {
+              } else if (timestampValue === undefined) {
                 return (
                   <div className="form-group" key={field.getId()}>
                     <label>{displayName}</label>
@@ -623,7 +626,9 @@ const KindEditRealRoute = (
                         </div>
                       </div>
                       <Datetime
-                        value={moment.unix(value.getSeconds()).toDate()}
+                        value={moment
+                          .unix(timestampValue.getSeconds())
+                          .toDate()}
                         onChange={date => {
                           if (editableValue !== undefined) {
                             const timestamp = new Timestamp();
@@ -637,6 +642,59 @@ const KindEditRealRoute = (
                         }}
                       />
                     </div>
+                    <small className="form-text text-muted">
+                      {field.getComment()}
+                    </small>
+                  </div>
+                );
+              }
+            case ValueType.KEY:
+              const keyValue = getConditionalField<Key | undefined>(
+                editableValue,
+                field,
+                undefined,
+                value => value.getKeyvalue()
+              );
+              if (field.getReadonly() || isSaving || hasPendingDelete) {
+                return (
+                  <div className="form-group" key={field.getId()}>
+                    <label>{displayName}</label>
+                    <input
+                      className="form-control"
+                      defaultValue={
+                        keyValue === undefined ? "" : prettifyKey(keyValue)
+                      }
+                      readOnly={true}
+                    />
+                    <small className="form-text text-muted">
+                      {field.getComment()}
+                    </small>
+                  </div>
+                );
+              } else {
+                return (
+                  <div className="form-group" key={field.getId()}>
+                    <label>{displayName}</label>
+                    <KeySelect
+                      value={keyValue}
+                      onChange={v => {
+                        if (editableValue !== undefined) {
+                          if (v === undefined) {
+                            const value = new Value();
+                            value.clearKeyvalue();
+                            setConditionalField(editableValue, field, value);
+                            setEditableValue({ value: editableValue.value });
+                          } else {
+                            const value = new Value();
+                            value.setKeyvalue(v);
+                            setConditionalField(editableValue, field, value);
+                            setEditableValue({ value: editableValue.value });
+                          }
+                        }
+                      }}
+                      schema={g(props.schema.getSchema())}
+                      field={field}
+                    />
                     <small className="form-text text-muted">
                       {field.getComment()}
                     </small>
