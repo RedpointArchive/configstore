@@ -79,6 +79,7 @@ message SchemaKind {
     SchemaKindEditor editor = 3;
     repeated SchemaIndex indexes = 4;
     repeated string ancestors = 5; // TODO: unused
+    int32 id = 6;
 }
 
 message SchemaIndex {

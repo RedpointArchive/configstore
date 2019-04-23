@@ -17,15 +17,6 @@ import (
 	"github.com/jhump/protoreflect/desc"
 )
 
-const (
-	extendedOnceCode = `
-
-`
-	extendedTemplateCode = `
-
-`
-)
-
 func lookupFieldByName(kind *SchemaKind, name string) *SchemaField {
 	for _, field := range kind.Fields {
 		if field.Name == name {
@@ -183,13 +174,13 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 
 	// replace
 	imports := []string{
-		// "\"io\"",
+		"\"io\"",
 		"\"sync\"",
 		"\"strings\"",
-		// "\"time\"",
+		"\"time\"",
 		"\"encoding/binary\"",
-		// "\"google.golang.org/grpc/status\"",
-		// "\"google.golang.org/grpc/codes\"",
+		"\"google.golang.org/grpc/status\"",
+		"\"google.golang.org/grpc/codes\"",
 		"\"hash/fnv\"",
 	}
 	if !strings.Contains(standardCode, "github.com/golang/protobuf/ptypes/timestamp") {

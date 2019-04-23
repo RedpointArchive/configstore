@@ -1900,7 +1900,8 @@ proto.meta.SchemaKind.toObject = function(includeInstance, msg) {
     editor: (f = msg.getEditor()) && proto.meta.SchemaKindEditor.toObject(includeInstance, f),
     indexesList: jspb.Message.toObjectList(msg.getIndexesList(),
     proto.meta.SchemaIndex.toObject, includeInstance),
-    ancestorsList: jspb.Message.getRepeatedField(msg, 5)
+    ancestorsList: jspb.Message.getRepeatedField(msg, 5),
+    id: jspb.Message.getFieldWithDefault(msg, 6, 0)
   };
 
   if (includeInstance) {
@@ -1955,6 +1956,10 @@ proto.meta.SchemaKind.deserializeBinaryFromReader = function(msg, reader) {
     case 5:
       var value = /** @type {string} */ (reader.readString());
       msg.addAncestors(value);
+      break;
+    case 6:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setId(value);
       break;
     default:
       reader.skipField();
@@ -2013,6 +2018,13 @@ proto.meta.SchemaKind.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeRepeatedString(
       5,
+      f
+    );
+  }
+  f = message.getId();
+  if (f !== 0) {
+    writer.writeInt32(
+      6,
       f
     );
   }
@@ -2137,6 +2149,21 @@ proto.meta.SchemaKind.prototype.addAncestors = function(value, opt_index) {
 
 proto.meta.SchemaKind.prototype.clearAncestorsList = function() {
   this.setAncestorsList([]);
+};
+
+
+/**
+ * optional int32 id = 6;
+ * @return {number}
+ */
+proto.meta.SchemaKind.prototype.getId = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+};
+
+
+/** @param {number} value */
+proto.meta.SchemaKind.prototype.setId = function(value) {
+  jspb.Message.setProto3IntField(this, 6, value);
 };
 
 

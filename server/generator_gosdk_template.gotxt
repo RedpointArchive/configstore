@@ -211,6 +211,10 @@ key
 {{ define "indexstoresupdate" }}
 	newEntity := resp.Entity
 	_ = newEntity
+	{{ template "indexstoresupdateinternal" . }}
+{{ end }}
+
+{{ define "indexstoresupdateinternal" }}
 	{{ $kind := getschemakind . -}}
 	{{- $kindName := . }}
 	{{- range $i, $index := $kind.Indexes -}}
@@ -255,6 +259,11 @@ key
 	oldEntity, ok := ref.store[s]
 	if ok {
 		_ = oldEntity
+		{{ template "indexstoresremoveinternal" . }}
+	}
+{{ end }}
+
+{{ define "indexstoresremoveinternal" }}
 	{{ $kind := getschemakind . -}}
 	{{- $kindName := . }}
 	{{- range $i, $index := $kind.Indexes -}}
@@ -293,7 +302,6 @@ key
 			{{- end -}}
 		{{- end -}}
 	{{- end }}
-	}
 {{ end }}
 
 type Configstore struct {
@@ -305,7 +313,7 @@ type Configstore struct {
 	{{ end }}
 }
 
-func ConnectToConfigstore(conn *grpc.ClientConn) *Configstore {
+func ConnectToConfigstore(conn *grpc.ClientConn) (*Configstore, error) {
 	configstore := &Configstore{
 		conn: conn,
 	}
@@ -332,30 +340,88 @@ func ConnectToConfigstore(conn *grpc.ClientConn) *Configstore {
 		{{ end }}
 	}
 	{{ end }}
-	//client := NewConfigstoreMetaServiceClient(configstore.conn)
-	// TODO: Replace with typed transaction client...
-	/*
-	watcher, err := client.Watch(ctx, &WatchTransactionsRequest{})
+	client := NewTransactionServiceClient(configstore.conn)
+	var mut sync.Mutex
+	mut.Lock()
+	watcher, err := client.Watch(ctx, &TypedWatchTransactionsRequest{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	go func() {
 		for {
 			resp, err := watcher.Recv()
 			if err == io.EOF {
-				break
+				// Retry the Watch request itself
+				watcher.CloseSend()
+				watcher, err = client.Watch(ctx, &TypedWatchTransactionsRequest{})
+				if err != nil {
+					time.Sleep(30 * time.Second)
+					continue
+				} else {
+					// Connection re-established, loop back around again to receive updates.
+				}
 			}
 			if err == nil || status.Code(err) == codes.OK {
 				if resp == nil {
 					time.Sleep(1 * time.Second)
 					continue
 				}
-				if resp.Type == WatchEventType_Created {
-					// TODO
+
+				switch b := resp.Response.(type) {
+				case *TypedWatchTransactionsResponse_InitialState:
+					// handle receiving initial state
+					configstore.mutex.Lock()
+					for _, entity := range b.InitialState.Entities {
+						switch e := entity.Entity.(type) {
+						{{ range $kindName, $kind := .Kinds }}
+						case *TypedTransactionEntity_{{ $kindName }}:
+							{
+								newEntity := e.{{ $kindName }}
+								ref := configstore.{{ $kindName }}s.(*{{ $kindName }}ImplStore)
+								s := SerializeKey(newEntity.Key)
+								{{ template "indexstoresupdateinternal" $kindName }}
+								ref.store[s] = newEntity
+							}
+						{{ end }}
+						}
+					}
+					configstore.mutex.Unlock()
+					mut.Unlock()
+				case *TypedWatchTransactionsResponse_Batch:
+					// handle receiving batch
+					configstore.mutex.Lock()
+					for _, entity := range b.Batch.MutatedEntities {
+						switch e := entity.Entity.(type) {
+						{{ range $kindName, $kind := .Kinds }}
+						case *TypedTransactionEntity_{{ $kindName }}:
+							{
+								newEntity := e.{{ $kindName }}
+								ref := configstore.{{ $kindName }}s.(*{{ $kindName }}ImplStore)
+								s := SerializeKey(newEntity.Key)
+								oldEntity, ok := ref.store[s]
+								if ok {
+									_ = oldEntity
+									{{ template "indexstoresremoveinternal" $kindName }}
+								}
+								{{ template "indexstoresupdateinternal" $kindName }}
+								ref.store[s] = newEntity
+							}
+						{{ end }}
+						}
+					}
+					for _, key := range b.Batch.DeletedKeys {
+						s := SerializeKey(key)
+						{{ range $kindName, $kind := .Kinds }}
+						delete(configstore.{{ $kindName }}s.(*{{ $kindName }}ImplStore).store, s)
+						{{ end }}
+					}
+					configstore.mutex.Unlock()
 				}
+
 			} else if status.Code(err) == codes.Unavailable {
 				// Retry the Watch request itself
-				watcher, err = client.Watch(ctx, &WatchTransactionsRequest{})
+				watcher.CloseSend()
+				watcher, err = client.Watch(ctx, &TypedWatchTransactionsRequest{})
 				if err != nil {
 					time.Sleep(30 * time.Second)
 					continue
@@ -368,8 +434,11 @@ func ConnectToConfigstore(conn *grpc.ClientConn) *Configstore {
 			}
 		}
 	}()
-	*/
-	return configstore
+
+	// wait for initial state
+	mut.Lock()
+
+	return configstore, nil
 }
 
 {{ range $kindName, $kind := .Kinds }}

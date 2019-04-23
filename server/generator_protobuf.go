@@ -64,6 +64,7 @@ type generatorResult struct {
 	ServiceMap               map[string]*builder.ServiceBuilder
 	WatchTypeEnumValues      *watchTypeEnumValues
 	CommonMessageDescriptors *commonMessageDescriptors
+	TransactionService       *builder.ServiceBuilder
 }
 
 func getMessageDescriptorFromFile(fileDescriptor *desc.FileDescriptor, name string) *desc.MessageDescriptor {
@@ -126,6 +127,7 @@ func generate(path string) (*generatorResult, error) {
 	kindMap := make(map[*builder.ServiceBuilder]*SchemaKind)
 	kindNameMap := make(map[*builder.ServiceBuilder]string)
 	messageMap := make(map[string]*desc.MessageDescriptor)
+	kindMessageMap := make(map[string]*builder.MessageBuilder)
 	serviceMap := make(map[string]*builder.ServiceBuilder)
 
 	partitionIDMessage := fileBuilder.GetMessage("PartitionId")
@@ -203,6 +205,7 @@ func generate(path string) (*generatorResult, error) {
 			)
 		}
 		messages = append(messages, message)
+		kindMessageMap[name] = message
 
 		// Build the request-response messages for the List method
 		listRequestMessage := builder.NewMessage(fmt.Sprintf("List%sRequest", name)).
@@ -296,6 +299,61 @@ func generate(path string) (*generatorResult, error) {
 		serviceMap[name] = service
 	}
 
+	// Build the typed transaction messages and transaction service.
+	var transactionService *builder.ServiceBuilder
+	{
+		entitySelect := builder.NewOneOf("entity")
+		for name, kind := range schema.Kinds {
+			entitySelect.AddChoice(
+				builder.NewField(name, builder.FieldTypeMessage(kindMessageMap[name])).SetNumber(kind.Id),
+			)
+		}
+
+		typedTransactionEntity := builder.NewMessage("TypedTransactionEntity")
+		typedTransactionEntity.AddOneOf(entitySelect)
+
+		typedTransactionBatch := builder.NewMessage("TypedTransactionBatch")
+		typedTransactionBatch.AddField(
+			builder.NewField("mutatedEntities", builder.FieldTypeMessage(typedTransactionEntity)).SetNumber(1).SetRepeated(),
+		)
+		typedTransactionBatch.AddField(
+			builder.NewField("deletedKeys", builder.FieldTypeMessage(keyMessage)).SetNumber(2).SetRepeated(),
+		)
+		typedTransactionBatch.AddField(
+			builder.NewField("description", builder.FieldTypeString()).SetNumber(3),
+		)
+		typedTransactionBatch.AddField(
+			builder.NewField("id", builder.FieldTypeString()).SetNumber(4),
+		)
+
+		typedTransactionInitialState := builder.NewMessage("TypedTransactionInitialState")
+		typedTransactionInitialState.AddField(
+			builder.NewField("entities", builder.FieldTypeMessage(typedTransactionEntity)).SetNumber(1).SetRepeated(),
+		)
+
+		typedWatchTransactionsRequest := builder.NewMessage("TypedWatchTransactionsRequest")
+
+		typedWatchTransactionsResponse := builder.NewMessage("TypedWatchTransactionsResponse")
+		typedWatchTransactionsResponse.AddOneOf(
+			builder.NewOneOf("response").
+				AddChoice(builder.NewField("batch", builder.FieldTypeMessage(typedTransactionBatch)).SetNumber(1)).
+				AddChoice(builder.NewField("initialState", builder.FieldTypeMessage(typedTransactionInitialState)).SetNumber(2)),
+		)
+
+		messages = append(messages, typedTransactionEntity)
+		messages = append(messages, typedTransactionBatch)
+		messages = append(messages, typedTransactionInitialState)
+		messages = append(messages, typedWatchTransactionsRequest)
+		messages = append(messages, typedWatchTransactionsResponse)
+
+		transactionService = builder.NewService("TransactionService").
+			AddMethod(builder.NewMethod(
+				"Watch",
+				builder.RpcTypeMessage(typedWatchTransactionsRequest, false),
+				builder.RpcTypeMessage(typedWatchTransactionsResponse, true),
+			).SetComments(builder.Comments{LeadingComment: " Watch for incoming transactions"}))
+	}
+
 	for _, message := range messages {
 		msgDesc, err := message.Build()
 		if err != nil {
@@ -313,6 +371,7 @@ func generate(path string) (*generatorResult, error) {
 	for _, service := range services {
 		fileBuilder.AddService(service)
 	}
+	fileBuilder.AddService(transactionService)
 	for _, enum := range enums {
 		fileBuilder.AddEnum(enum)
 	}
@@ -333,5 +392,6 @@ func generate(path string) (*generatorResult, error) {
 		ServiceMap:               serviceMap,
 		WatchTypeEnumValues:      watchTypeEnumValues,
 		CommonMessageDescriptors: common,
+		TransactionService:       transactionService,
 	}, nil
 }

@@ -261,6 +261,9 @@ export class SchemaKind extends jspb.Message {
   clearAncestorsList(): void;
   addAncestors(value: string, index?: number): void;
 
+  getId(): number;
+  setId(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaKind.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaKind): SchemaKind.AsObject;
@@ -275,6 +278,7 @@ export namespace SchemaKind {
     editor?: SchemaKindEditor.AsObject,
     indexesList: Array<SchemaIndex.AsObject>,
     ancestorsList: Array<string>,
+    id: number,
   }
 }
 

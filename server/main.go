@@ -164,7 +164,7 @@ func main() {
 							ServerStreams: true,
 							ClientStreams: false,
 							Handler: func(srv interface{}, stream grpc.ServerStream) error {
-								return dynamicProtobufServer.dynamicProtobufWatch(srv, ctx, stream)
+								return dynamicProtobufServer.dynamicProtobufWatch(srv, stream.Context(), stream)
 							},
 						},
 					},
@@ -173,6 +173,33 @@ func main() {
 				emptyServer,
 			)
 		}
+
+		dynamicProtobufTransactionServer := createConfigstoreDynamicProtobufTransactionServer(
+			client,
+			genResult,
+			genResult.TransactionService,
+			genResult.Schema,
+			transactionWatcher,
+		)
+		grpcServer.RegisterService(
+			&grpc.ServiceDesc{
+				ServiceName: fmt.Sprintf("%s.%s", genResult.Schema.Name, genResult.TransactionService.GetName()),
+				HandlerType: (*emptyServerInterface)(nil),
+				Methods:     nil,
+				Streams: []grpc.StreamDesc{
+					{
+						StreamName:    "Watch",
+						ServerStreams: true,
+						ClientStreams: false,
+						Handler: func(srv interface{}, stream grpc.ServerStream) error {
+							return dynamicProtobufTransactionServer.dynamicProtobufTransactionWatch(stream.Context(), srv, stream)
+						},
+					},
+				},
+				Metadata: genResult.FileBuilder.GetName(),
+			},
+			emptyServer,
+		)
 
 		// Add the metadata server.
 		RegisterConfigstoreMetaServiceServer(grpcServer, createConfigstoreMetaServiceServer(
