@@ -601,43 +601,47 @@ const KindEditRealRoute = (
                       break;
                   }
                 } else if (validator.hasFormatipaddress()) {
-                  const address4 = new Address4(value);
-                  const address6 = new Address6(value);
-                  if (!address4.isValid() && !address6.isValid()) {
-                    fieldErrors.push("Must be an IPv4 or IPv6 address.");
+                  if (value !== undefined && value !== "") {
+                    const address4 = new Address4(value);
+                    const address6 = new Address6(value);
+                    if (!address4.isValid() && !address6.isValid()) {
+                      fieldErrors.push("Must be an IPv4 or IPv6 address.");
+                    }
                   }
                 } else if (validator.hasFormatipaddressport()) {
-                  const portSplit = value.lastIndexOf(":");
-                  if (portSplit === -1) {
-                    fieldErrors.push(
-                      "Must be an IPv4 or IPv6 address, with a port number specified. Use brackets [] around an IPv6 address."
-                    );
-                  } else {
-                    let address = value.substr(0, portSplit);
-                    const portNumber = parseInt(value.substr(portSplit + 1));
-                    if (
-                      address.length > 0 &&
-                      address[0] === "[" &&
-                      address[address.length - 1] === "]"
-                    ) {
-                      address = address.substr(1, address.length - 2);
-                    }
-                    const address4 = new Address4(address);
-                    const address6 = new Address6(address);
-                    if (!address4.isValid() && !address6.isValid()) {
+                  if (value !== undefined && value !== "") {
+                    const portSplit = value.lastIndexOf(":");
+                    if (portSplit === -1) {
                       fieldErrors.push(
-                        "Must be an IPv4 or IPv6 address, with a port number specified."
+                        "Must be an IPv4 or IPv6 address, with a port number specified. Use brackets [] around an IPv6 address."
                       );
-                    }
-                    if (isNaN(portNumber)) {
-                      fieldErrors.push(
-                        "Port number could not be parsed as an integer."
-                      );
-                    }
-                    if (portNumber <= 0 || portNumber >= 65536) {
-                      fieldErrors.push(
-                        "Port number must be between 1 and 65535."
-                      );
+                    } else {
+                      let address = value.substr(0, portSplit);
+                      const portNumber = parseInt(value.substr(portSplit + 1));
+                      if (
+                        address.length > 0 &&
+                        address[0] === "[" &&
+                        address[address.length - 1] === "]"
+                      ) {
+                        address = address.substr(1, address.length - 2);
+                      }
+                      const address4 = new Address4(address);
+                      const address6 = new Address6(address);
+                      if (!address4.isValid() && !address6.isValid()) {
+                        fieldErrors.push(
+                          "Must be an IPv4 or IPv6 address, with a port number specified."
+                        );
+                      }
+                      if (isNaN(portNumber)) {
+                        fieldErrors.push(
+                          "Port number could not be parsed as an integer."
+                        );
+                      }
+                      if (portNumber <= 0 || portNumber >= 65536) {
+                        fieldErrors.push(
+                          "Port number must be between 1 and 65535."
+                        );
+                      }
                     }
                   }
                 }
