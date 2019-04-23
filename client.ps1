@@ -1,5 +1,19 @@
 param()
 
+<#
+Push-Location $PSScriptRoot\server
+try {
+  Write-Output "Building server..."
+  go.exe build -mod vendor -o server.exe .
+  if ($LastExitCode -ne 0) {
+    exit $LastExitCode
+  }
+}
+finally {
+  Pop-Location
+}
+#>
+
 Push-Location $PSScriptRoot\client
 try {
   Write-Output "Generating client..."

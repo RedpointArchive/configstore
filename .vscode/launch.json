@@ -19,6 +19,22 @@
         "CONFIGSTORE_ALLOWED_ORIGINS": "http://localhost:3000"
       },
       "args": []
+    },
+    {
+      "name": "Debug Generate",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "buildFlags": "-mod vendor",
+      "program": "${workspaceFolder}/server",
+      "env": {
+        "CONFIGSTORE_GOOGLE_CLOUD_PROJECT_ID": "configstore-test-001",
+        "CONFIGSTORE_GRPC_PORT": "13389",
+        "CONFIGSTORE_HTTP_PORT": "13390",
+        "CONFIGSTORE_SCHEMA_PATH": "schema.json",
+        "CONFIGSTORE_ALLOWED_ORIGINS": "http://localhost:3000"
+      },
+      "args": ["-generate"]
     }
   ]
 }
