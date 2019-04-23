@@ -46,6 +46,12 @@ goog.exportSymbol('proto.meta.SchemaComputedIndexFnv64aPair', null, global);
 goog.exportSymbol('proto.meta.SchemaField', null, global);
 goog.exportSymbol('proto.meta.SchemaFieldEditorInfo', null, global);
 goog.exportSymbol('proto.meta.SchemaFieldEditorInfoType', null, global);
+goog.exportSymbol('proto.meta.SchemaFieldEditorValidator', null, global);
+goog.exportSymbol('proto.meta.SchemaFieldEditorValidatorDefault', null, global);
+goog.exportSymbol('proto.meta.SchemaFieldEditorValidatorFixedLength', null, global);
+goog.exportSymbol('proto.meta.SchemaFieldEditorValidatorFormatIPAddress', null, global);
+goog.exportSymbol('proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort', null, global);
+goog.exportSymbol('proto.meta.SchemaFieldEditorValidatorRequired', null, global);
 goog.exportSymbol('proto.meta.SchemaIndex', null, global);
 goog.exportSymbol('proto.meta.SchemaIndexType', null, global);
 goog.exportSymbol('proto.meta.SchemaKind', null, global);
@@ -1422,7 +1428,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.meta.SchemaFieldEditorInfo.repeatedFields_ = [4];
+proto.meta.SchemaFieldEditorInfo.repeatedFields_ = [4,6];
 
 
 
@@ -1456,7 +1462,10 @@ proto.meta.SchemaFieldEditorInfo.toObject = function(includeInstance, msg) {
     displayname: jspb.Message.getFieldWithDefault(msg, 1, ""),
     type: jspb.Message.getFieldWithDefault(msg, 2, 0),
     editorreadonly: jspb.Message.getFieldWithDefault(msg, 3, false),
-    allowedkindsList: jspb.Message.getRepeatedField(msg, 4)
+    allowedkindsList: jspb.Message.getRepeatedField(msg, 4),
+    usefinancialvaluetonibblinsconversion: jspb.Message.getFieldWithDefault(msg, 5, false),
+    validatorsList: jspb.Message.toObjectList(msg.getValidatorsList(),
+    proto.meta.SchemaFieldEditorValidator.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -1508,6 +1517,15 @@ proto.meta.SchemaFieldEditorInfo.deserializeBinaryFromReader = function(msg, rea
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.addAllowedkinds(value);
+      break;
+    case 5:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setUsefinancialvaluetonibblinsconversion(value);
+      break;
+    case 6:
+      var value = new proto.meta.SchemaFieldEditorValidator;
+      reader.readMessage(value,proto.meta.SchemaFieldEditorValidator.deserializeBinaryFromReader);
+      msg.addValidators(value);
       break;
     default:
       reader.skipField();
@@ -1564,6 +1582,21 @@ proto.meta.SchemaFieldEditorInfo.serializeBinaryToWriter = function(message, wri
     writer.writeRepeatedString(
       4,
       f
+    );
+  }
+  f = message.getUsefinancialvaluetonibblinsconversion();
+  if (f) {
+    writer.writeBool(
+      5,
+      f
+    );
+  }
+  f = message.getValidatorsList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      6,
+      f,
+      proto.meta.SchemaFieldEditorValidator.serializeBinaryToWriter
     );
   }
 };
@@ -1642,6 +1675,1067 @@ proto.meta.SchemaFieldEditorInfo.prototype.addAllowedkinds = function(value, opt
 
 proto.meta.SchemaFieldEditorInfo.prototype.clearAllowedkindsList = function() {
   this.setAllowedkindsList([]);
+};
+
+
+/**
+ * optional bool useFinancialValueToNibblinsConversion = 5;
+ * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
+ * You should avoid comparisons like {@code val === true/false} in those cases.
+ * @return {boolean}
+ */
+proto.meta.SchemaFieldEditorInfo.prototype.getUsefinancialvaluetonibblinsconversion = function() {
+  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 5, false));
+};
+
+
+/** @param {boolean} value */
+proto.meta.SchemaFieldEditorInfo.prototype.setUsefinancialvaluetonibblinsconversion = function(value) {
+  jspb.Message.setProto3BooleanField(this, 5, value);
+};
+
+
+/**
+ * repeated SchemaFieldEditorValidator validators = 6;
+ * @return {!Array<!proto.meta.SchemaFieldEditorValidator>}
+ */
+proto.meta.SchemaFieldEditorInfo.prototype.getValidatorsList = function() {
+  return /** @type{!Array<!proto.meta.SchemaFieldEditorValidator>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.meta.SchemaFieldEditorValidator, 6));
+};
+
+
+/** @param {!Array<!proto.meta.SchemaFieldEditorValidator>} value */
+proto.meta.SchemaFieldEditorInfo.prototype.setValidatorsList = function(value) {
+  jspb.Message.setRepeatedWrapperField(this, 6, value);
+};
+
+
+/**
+ * @param {!proto.meta.SchemaFieldEditorValidator=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.meta.SchemaFieldEditorValidator}
+ */
+proto.meta.SchemaFieldEditorInfo.prototype.addValidators = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 6, opt_value, proto.meta.SchemaFieldEditorValidator, opt_index);
+};
+
+
+proto.meta.SchemaFieldEditorInfo.prototype.clearValidatorsList = function() {
+  this.setValidatorsList([]);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaFieldEditorValidator = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, proto.meta.SchemaFieldEditorValidator.oneofGroups_);
+};
+goog.inherits(proto.meta.SchemaFieldEditorValidator, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaFieldEditorValidator.displayName = 'proto.meta.SchemaFieldEditorValidator';
+}
+/**
+ * Oneof group definitions for this message. Each group defines the field
+ * numbers belonging to that group. When of these fields' value is set, all
+ * other fields in the group are cleared. During deserialization, if multiple
+ * fields are encountered for a group, only the last value seen will be kept.
+ * @private {!Array<!Array<number>>}
+ * @const
+ */
+proto.meta.SchemaFieldEditorValidator.oneofGroups_ = [[1,2,3,4,5]];
+
+/**
+ * @enum {number}
+ */
+proto.meta.SchemaFieldEditorValidator.ValidatorCase = {
+  VALIDATOR_NOT_SET: 0,
+  REQUIRED: 1,
+  FIXEDLENGTH: 2,
+  DEFAULT: 3,
+  FORMATIPADDRESS: 4,
+  FORMATIPADDRESSPORT: 5
+};
+
+/**
+ * @return {proto.meta.SchemaFieldEditorValidator.ValidatorCase}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.getValidatorCase = function() {
+  return /** @type {proto.meta.SchemaFieldEditorValidator.ValidatorCase} */(jspb.Message.computeOneofCase(this, proto.meta.SchemaFieldEditorValidator.oneofGroups_[0]));
+};
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaFieldEditorValidator.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaFieldEditorValidator} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidator.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    required: (f = msg.getRequired()) && proto.meta.SchemaFieldEditorValidatorRequired.toObject(includeInstance, f),
+    fixedlength: (f = msg.getFixedlength()) && proto.meta.SchemaFieldEditorValidatorFixedLength.toObject(includeInstance, f),
+    pb_default: (f = msg.getDefault()) && proto.meta.SchemaFieldEditorValidatorDefault.toObject(includeInstance, f),
+    formatipaddress: (f = msg.getFormatipaddress()) && proto.meta.SchemaFieldEditorValidatorFormatIPAddress.toObject(includeInstance, f),
+    formatipaddressport: (f = msg.getFormatipaddressport()) && proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaFieldEditorValidator}
+ */
+proto.meta.SchemaFieldEditorValidator.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaFieldEditorValidator;
+  return proto.meta.SchemaFieldEditorValidator.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaFieldEditorValidator} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaFieldEditorValidator}
+ */
+proto.meta.SchemaFieldEditorValidator.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto.meta.SchemaFieldEditorValidatorRequired;
+      reader.readMessage(value,proto.meta.SchemaFieldEditorValidatorRequired.deserializeBinaryFromReader);
+      msg.setRequired(value);
+      break;
+    case 2:
+      var value = new proto.meta.SchemaFieldEditorValidatorFixedLength;
+      reader.readMessage(value,proto.meta.SchemaFieldEditorValidatorFixedLength.deserializeBinaryFromReader);
+      msg.setFixedlength(value);
+      break;
+    case 3:
+      var value = new proto.meta.SchemaFieldEditorValidatorDefault;
+      reader.readMessage(value,proto.meta.SchemaFieldEditorValidatorDefault.deserializeBinaryFromReader);
+      msg.setDefault(value);
+      break;
+    case 4:
+      var value = new proto.meta.SchemaFieldEditorValidatorFormatIPAddress;
+      reader.readMessage(value,proto.meta.SchemaFieldEditorValidatorFormatIPAddress.deserializeBinaryFromReader);
+      msg.setFormatipaddress(value);
+      break;
+    case 5:
+      var value = new proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort;
+      reader.readMessage(value,proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.deserializeBinaryFromReader);
+      msg.setFormatipaddressport(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaFieldEditorValidator.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaFieldEditorValidator} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidator.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getRequired();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto.meta.SchemaFieldEditorValidatorRequired.serializeBinaryToWriter
+    );
+  }
+  f = message.getFixedlength();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto.meta.SchemaFieldEditorValidatorFixedLength.serializeBinaryToWriter
+    );
+  }
+  f = message.getDefault();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto.meta.SchemaFieldEditorValidatorDefault.serializeBinaryToWriter
+    );
+  }
+  f = message.getFormatipaddress();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto.meta.SchemaFieldEditorValidatorFormatIPAddress.serializeBinaryToWriter
+    );
+  }
+  f = message.getFormatipaddressport();
+  if (f != null) {
+    writer.writeMessage(
+      5,
+      f,
+      proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional SchemaFieldEditorValidatorRequired required = 1;
+ * @return {?proto.meta.SchemaFieldEditorValidatorRequired}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.getRequired = function() {
+  return /** @type{?proto.meta.SchemaFieldEditorValidatorRequired} */ (
+    jspb.Message.getWrapperField(this, proto.meta.SchemaFieldEditorValidatorRequired, 1));
+};
+
+
+/** @param {?proto.meta.SchemaFieldEditorValidatorRequired|undefined} value */
+proto.meta.SchemaFieldEditorValidator.prototype.setRequired = function(value) {
+  jspb.Message.setOneofWrapperField(this, 1, proto.meta.SchemaFieldEditorValidator.oneofGroups_[0], value);
+};
+
+
+proto.meta.SchemaFieldEditorValidator.prototype.clearRequired = function() {
+  this.setRequired(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.hasRequired = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional SchemaFieldEditorValidatorFixedLength fixedLength = 2;
+ * @return {?proto.meta.SchemaFieldEditorValidatorFixedLength}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.getFixedlength = function() {
+  return /** @type{?proto.meta.SchemaFieldEditorValidatorFixedLength} */ (
+    jspb.Message.getWrapperField(this, proto.meta.SchemaFieldEditorValidatorFixedLength, 2));
+};
+
+
+/** @param {?proto.meta.SchemaFieldEditorValidatorFixedLength|undefined} value */
+proto.meta.SchemaFieldEditorValidator.prototype.setFixedlength = function(value) {
+  jspb.Message.setOneofWrapperField(this, 2, proto.meta.SchemaFieldEditorValidator.oneofGroups_[0], value);
+};
+
+
+proto.meta.SchemaFieldEditorValidator.prototype.clearFixedlength = function() {
+  this.setFixedlength(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.hasFixedlength = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional SchemaFieldEditorValidatorDefault default = 3;
+ * @return {?proto.meta.SchemaFieldEditorValidatorDefault}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.getDefault = function() {
+  return /** @type{?proto.meta.SchemaFieldEditorValidatorDefault} */ (
+    jspb.Message.getWrapperField(this, proto.meta.SchemaFieldEditorValidatorDefault, 3));
+};
+
+
+/** @param {?proto.meta.SchemaFieldEditorValidatorDefault|undefined} value */
+proto.meta.SchemaFieldEditorValidator.prototype.setDefault = function(value) {
+  jspb.Message.setOneofWrapperField(this, 3, proto.meta.SchemaFieldEditorValidator.oneofGroups_[0], value);
+};
+
+
+proto.meta.SchemaFieldEditorValidator.prototype.clearDefault = function() {
+  this.setDefault(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.hasDefault = function() {
+  return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional SchemaFieldEditorValidatorFormatIPAddress formatIPAddress = 4;
+ * @return {?proto.meta.SchemaFieldEditorValidatorFormatIPAddress}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.getFormatipaddress = function() {
+  return /** @type{?proto.meta.SchemaFieldEditorValidatorFormatIPAddress} */ (
+    jspb.Message.getWrapperField(this, proto.meta.SchemaFieldEditorValidatorFormatIPAddress, 4));
+};
+
+
+/** @param {?proto.meta.SchemaFieldEditorValidatorFormatIPAddress|undefined} value */
+proto.meta.SchemaFieldEditorValidator.prototype.setFormatipaddress = function(value) {
+  jspb.Message.setOneofWrapperField(this, 4, proto.meta.SchemaFieldEditorValidator.oneofGroups_[0], value);
+};
+
+
+proto.meta.SchemaFieldEditorValidator.prototype.clearFormatipaddress = function() {
+  this.setFormatipaddress(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.hasFormatipaddress = function() {
+  return jspb.Message.getField(this, 4) != null;
+};
+
+
+/**
+ * optional SchemaFieldEditorValidatorFormatIPAddressPort formatIPAddressPort = 5;
+ * @return {?proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.getFormatipaddressport = function() {
+  return /** @type{?proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort} */ (
+    jspb.Message.getWrapperField(this, proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort, 5));
+};
+
+
+/** @param {?proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort|undefined} value */
+proto.meta.SchemaFieldEditorValidator.prototype.setFormatipaddressport = function(value) {
+  jspb.Message.setOneofWrapperField(this, 5, proto.meta.SchemaFieldEditorValidator.oneofGroups_[0], value);
+};
+
+
+proto.meta.SchemaFieldEditorValidator.prototype.clearFormatipaddressport = function() {
+  this.setFormatipaddressport(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaFieldEditorValidator.prototype.hasFormatipaddressport = function() {
+  return jspb.Message.getField(this, 5) != null;
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaFieldEditorValidatorRequired = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.SchemaFieldEditorValidatorRequired, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaFieldEditorValidatorRequired.displayName = 'proto.meta.SchemaFieldEditorValidatorRequired';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaFieldEditorValidatorRequired.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaFieldEditorValidatorRequired.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaFieldEditorValidatorRequired} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorRequired.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaFieldEditorValidatorRequired}
+ */
+proto.meta.SchemaFieldEditorValidatorRequired.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaFieldEditorValidatorRequired;
+  return proto.meta.SchemaFieldEditorValidatorRequired.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaFieldEditorValidatorRequired} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaFieldEditorValidatorRequired}
+ */
+proto.meta.SchemaFieldEditorValidatorRequired.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaFieldEditorValidatorRequired.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaFieldEditorValidatorRequired.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaFieldEditorValidatorRequired} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorRequired.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.SchemaFieldEditorValidatorFixedLength, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaFieldEditorValidatorFixedLength.displayName = 'proto.meta.SchemaFieldEditorValidatorFixedLength';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaFieldEditorValidatorFixedLength.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaFieldEditorValidatorFixedLength} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    length: jspb.Message.getFieldWithDefault(msg, 1, 0)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaFieldEditorValidatorFixedLength}
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaFieldEditorValidatorFixedLength;
+  return proto.meta.SchemaFieldEditorValidatorFixedLength.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaFieldEditorValidatorFixedLength} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaFieldEditorValidatorFixedLength}
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {number} */ (reader.readUint32());
+      msg.setLength(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaFieldEditorValidatorFixedLength.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaFieldEditorValidatorFixedLength} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getLength();
+  if (f !== 0) {
+    writer.writeUint32(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional uint32 length = 1;
+ * @return {number}
+ */
+proto.meta.SchemaFieldEditorValidatorFixedLength.prototype.getLength = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/** @param {number} value */
+proto.meta.SchemaFieldEditorValidatorFixedLength.prototype.setLength = function(value) {
+  jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaFieldEditorValidatorDefault = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.SchemaFieldEditorValidatorDefault, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaFieldEditorValidatorDefault.displayName = 'proto.meta.SchemaFieldEditorValidatorDefault';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaFieldEditorValidatorDefault.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaFieldEditorValidatorDefault} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    value: (f = msg.getValue()) && proto.meta.Value.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaFieldEditorValidatorDefault}
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaFieldEditorValidatorDefault;
+  return proto.meta.SchemaFieldEditorValidatorDefault.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaFieldEditorValidatorDefault} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaFieldEditorValidatorDefault}
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto.meta.Value;
+      reader.readMessage(value,proto.meta.Value.deserializeBinaryFromReader);
+      msg.setValue(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaFieldEditorValidatorDefault.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaFieldEditorValidatorDefault} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getValue();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto.meta.Value.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional Value value = 1;
+ * @return {?proto.meta.Value}
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.prototype.getValue = function() {
+  return /** @type{?proto.meta.Value} */ (
+    jspb.Message.getWrapperField(this, proto.meta.Value, 1));
+};
+
+
+/** @param {?proto.meta.Value|undefined} value */
+proto.meta.SchemaFieldEditorValidatorDefault.prototype.setValue = function(value) {
+  jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+proto.meta.SchemaFieldEditorValidatorDefault.prototype.clearValue = function() {
+  this.setValue(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaFieldEditorValidatorDefault.prototype.hasValue = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddress = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.SchemaFieldEditorValidatorFormatIPAddress, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaFieldEditorValidatorFormatIPAddress.displayName = 'proto.meta.SchemaFieldEditorValidatorFormatIPAddress';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddress.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaFieldEditorValidatorFormatIPAddress.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaFieldEditorValidatorFormatIPAddress} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddress.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaFieldEditorValidatorFormatIPAddress}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddress.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaFieldEditorValidatorFormatIPAddress;
+  return proto.meta.SchemaFieldEditorValidatorFormatIPAddress.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaFieldEditorValidatorFormatIPAddress} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaFieldEditorValidatorFormatIPAddress}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddress.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddress.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaFieldEditorValidatorFormatIPAddress.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaFieldEditorValidatorFormatIPAddress} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddress.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.displayName = 'proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort;
+  return proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaFieldEditorValidatorFormatIPAddressPort.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
 };
 
 

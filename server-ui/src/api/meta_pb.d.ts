@@ -197,6 +197,14 @@ export class SchemaFieldEditorInfo extends jspb.Message {
   clearAllowedkindsList(): void;
   addAllowedkinds(value: string, index?: number): void;
 
+  getUsefinancialvaluetonibblinsconversion(): boolean;
+  setUsefinancialvaluetonibblinsconversion(value: boolean): void;
+
+  getValidatorsList(): Array<SchemaFieldEditorValidator>;
+  setValidatorsList(value: Array<SchemaFieldEditorValidator>): void;
+  clearValidatorsList(): void;
+  addValidators(value?: SchemaFieldEditorValidator, index?: number): SchemaFieldEditorValidator;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaFieldEditorInfo.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaFieldEditorInfo): SchemaFieldEditorInfo.AsObject;
@@ -211,6 +219,148 @@ export namespace SchemaFieldEditorInfo {
     type: SchemaFieldEditorInfoType,
     editorreadonly: boolean,
     allowedkindsList: Array<string>,
+    usefinancialvaluetonibblinsconversion: boolean,
+    validatorsList: Array<SchemaFieldEditorValidator.AsObject>,
+  }
+}
+
+export class SchemaFieldEditorValidator extends jspb.Message {
+  getRequired(): SchemaFieldEditorValidatorRequired | undefined;
+  setRequired(value?: SchemaFieldEditorValidatorRequired): void;
+  hasRequired(): boolean;
+  clearRequired(): void;
+  hasRequired(): boolean;
+
+  getFixedlength(): SchemaFieldEditorValidatorFixedLength | undefined;
+  setFixedlength(value?: SchemaFieldEditorValidatorFixedLength): void;
+  hasFixedlength(): boolean;
+  clearFixedlength(): void;
+  hasFixedlength(): boolean;
+
+  getDefault(): SchemaFieldEditorValidatorDefault | undefined;
+  setDefault(value?: SchemaFieldEditorValidatorDefault): void;
+  hasDefault(): boolean;
+  clearDefault(): void;
+  hasDefault(): boolean;
+
+  getFormatipaddress(): SchemaFieldEditorValidatorFormatIPAddress | undefined;
+  setFormatipaddress(value?: SchemaFieldEditorValidatorFormatIPAddress): void;
+  hasFormatipaddress(): boolean;
+  clearFormatipaddress(): void;
+  hasFormatipaddress(): boolean;
+
+  getFormatipaddressport(): SchemaFieldEditorValidatorFormatIPAddressPort | undefined;
+  setFormatipaddressport(value?: SchemaFieldEditorValidatorFormatIPAddressPort): void;
+  hasFormatipaddressport(): boolean;
+  clearFormatipaddressport(): void;
+  hasFormatipaddressport(): boolean;
+
+  getValidatorCase(): SchemaFieldEditorValidator.ValidatorCase;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaFieldEditorValidator.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaFieldEditorValidator): SchemaFieldEditorValidator.AsObject;
+  static serializeBinaryToWriter(message: SchemaFieldEditorValidator, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorValidator;
+  static deserializeBinaryFromReader(message: SchemaFieldEditorValidator, reader: jspb.BinaryReader): SchemaFieldEditorValidator;
+}
+
+export namespace SchemaFieldEditorValidator {
+  export type AsObject = {
+    required?: SchemaFieldEditorValidatorRequired.AsObject,
+    fixedlength?: SchemaFieldEditorValidatorFixedLength.AsObject,
+    pb_default?: SchemaFieldEditorValidatorDefault.AsObject,
+    formatipaddress?: SchemaFieldEditorValidatorFormatIPAddress.AsObject,
+    formatipaddressport?: SchemaFieldEditorValidatorFormatIPAddressPort.AsObject,
+  }
+
+  export enum ValidatorCase { 
+    VALIDATOR_NOT_SET = 0,
+    REQUIRED = 1,
+    FIXEDLENGTH = 2,
+    DEFAULT = 3,
+    FORMATIPADDRESS = 4,
+    FORMATIPADDRESSPORT = 5,
+  }
+}
+
+export class SchemaFieldEditorValidatorRequired extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaFieldEditorValidatorRequired.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaFieldEditorValidatorRequired): SchemaFieldEditorValidatorRequired.AsObject;
+  static serializeBinaryToWriter(message: SchemaFieldEditorValidatorRequired, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorValidatorRequired;
+  static deserializeBinaryFromReader(message: SchemaFieldEditorValidatorRequired, reader: jspb.BinaryReader): SchemaFieldEditorValidatorRequired;
+}
+
+export namespace SchemaFieldEditorValidatorRequired {
+  export type AsObject = {
+  }
+}
+
+export class SchemaFieldEditorValidatorFixedLength extends jspb.Message {
+  getLength(): number;
+  setLength(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaFieldEditorValidatorFixedLength.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaFieldEditorValidatorFixedLength): SchemaFieldEditorValidatorFixedLength.AsObject;
+  static serializeBinaryToWriter(message: SchemaFieldEditorValidatorFixedLength, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorValidatorFixedLength;
+  static deserializeBinaryFromReader(message: SchemaFieldEditorValidatorFixedLength, reader: jspb.BinaryReader): SchemaFieldEditorValidatorFixedLength;
+}
+
+export namespace SchemaFieldEditorValidatorFixedLength {
+  export type AsObject = {
+    length: number,
+  }
+}
+
+export class SchemaFieldEditorValidatorDefault extends jspb.Message {
+  getValue(): Value | undefined;
+  setValue(value?: Value): void;
+  hasValue(): boolean;
+  clearValue(): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaFieldEditorValidatorDefault.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaFieldEditorValidatorDefault): SchemaFieldEditorValidatorDefault.AsObject;
+  static serializeBinaryToWriter(message: SchemaFieldEditorValidatorDefault, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorValidatorDefault;
+  static deserializeBinaryFromReader(message: SchemaFieldEditorValidatorDefault, reader: jspb.BinaryReader): SchemaFieldEditorValidatorDefault;
+}
+
+export namespace SchemaFieldEditorValidatorDefault {
+  export type AsObject = {
+    value?: Value.AsObject,
+  }
+}
+
+export class SchemaFieldEditorValidatorFormatIPAddress extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaFieldEditorValidatorFormatIPAddress.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaFieldEditorValidatorFormatIPAddress): SchemaFieldEditorValidatorFormatIPAddress.AsObject;
+  static serializeBinaryToWriter(message: SchemaFieldEditorValidatorFormatIPAddress, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorValidatorFormatIPAddress;
+  static deserializeBinaryFromReader(message: SchemaFieldEditorValidatorFormatIPAddress, reader: jspb.BinaryReader): SchemaFieldEditorValidatorFormatIPAddress;
+}
+
+export namespace SchemaFieldEditorValidatorFormatIPAddress {
+  export type AsObject = {
+  }
+}
+
+export class SchemaFieldEditorValidatorFormatIPAddressPort extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaFieldEditorValidatorFormatIPAddressPort.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaFieldEditorValidatorFormatIPAddressPort): SchemaFieldEditorValidatorFormatIPAddressPort.AsObject;
+  static serializeBinaryToWriter(message: SchemaFieldEditorValidatorFormatIPAddressPort, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaFieldEditorValidatorFormatIPAddressPort;
+  static deserializeBinaryFromReader(message: SchemaFieldEditorValidatorFormatIPAddressPort, reader: jspb.BinaryReader): SchemaFieldEditorValidatorFormatIPAddressPort;
+}
+
+export namespace SchemaFieldEditorValidatorFormatIPAddressPort {
+  export type AsObject = {
   }
 }
 

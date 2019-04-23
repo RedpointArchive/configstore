@@ -428,3 +428,11 @@ td.rdtYear:hover {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
+
+.key-select .is-valid div {
+  border-color: #28a745;
+}
+
+.key-select .is-invalid div {
+  border-color: #dc3545;
+}

@@ -66,6 +66,35 @@ message SchemaFieldEditorInfo {
     SchemaFieldEditorInfoType type = 2;
     bool editorReadonly = 3;
     repeated string allowedKinds = 4;
+    bool useFinancialValueToNibblinsConversion = 5;
+    repeated SchemaFieldEditorValidator validators = 6;
+}
+
+message SchemaFieldEditorValidator {
+    oneof validator {
+        SchemaFieldEditorValidatorRequired required = 1; 
+        SchemaFieldEditorValidatorFixedLength fixedLength = 2;
+        SchemaFieldEditorValidatorDefault default = 3;
+        SchemaFieldEditorValidatorFormatIPAddress formatIPAddress = 4;
+        SchemaFieldEditorValidatorFormatIPAddressPort formatIPAddressPort = 5;
+    }
+}
+
+message SchemaFieldEditorValidatorRequired {
+}
+
+message SchemaFieldEditorValidatorFixedLength {
+    uint32 length = 1;
+}
+
+message SchemaFieldEditorValidatorDefault {
+    Value value = 1;
+}
+
+message SchemaFieldEditorValidatorFormatIPAddress {
+}
+
+message SchemaFieldEditorValidatorFormatIPAddressPort {
 }
 
 message SchemaKindEditor {

@@ -18,6 +18,7 @@ export interface KeySelectProps {
   onChange(value: Key | undefined): void;
   schema: Schema;
   field: SchemaField;
+  className?: string;
 }
 
 async function getUnfilteredOptionsMap(props: {
@@ -139,6 +140,7 @@ export const KeySelect = (props: KeySelectProps) => {
       <AsyncSelect
         key="loading"
         defaultValue={undefined}
+        className={props.className}
         isLoading={true}
         cacheOptions
         defaultOptions
@@ -164,6 +166,7 @@ export const KeySelect = (props: KeySelectProps) => {
     <AsyncSelect
       isClearable
       key={"loaded"}
+      className={props.className}
       value={value}
       onChange={(selectedOption: any) => {
         if (

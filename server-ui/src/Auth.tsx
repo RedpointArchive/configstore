@@ -135,7 +135,7 @@ const AuthComponent = withRouter(
 
         // make sure we clear any existing settings (like expiry) before
         // proceeding
-        // this.logout();
+        window.localStorage.removeItem("loginState");
 
         this.getAuth0Instance().authorize();
         return <>Please wait...</>;

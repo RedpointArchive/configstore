@@ -287,6 +287,137 @@
           "type": "timestamp"
         }
       ]
+    },
+    "ValidatorTest": {
+      "id": 8,
+      "editor": {
+        "singular": "ValidatorTest",
+        "plural": "ValidatorTests"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "requiredString",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "required": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 3,
+          "name": "requiredInt64",
+          "type": "int64",
+          "editor": {
+            "validators": [
+              {
+                "required": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 4,
+          "name": "defaultString",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "default": {
+                  "value": {
+                    "type": "string",
+                    "stringValue": "root"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 5,
+          "name": "defaultInt64",
+          "type": "int64",
+          "editor": {
+            "validators": [
+              {
+                "default": {
+                  "value": {
+                    "type": "int64",
+                    "int64Value": "22"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 6,
+          "name": "ipAddress",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "formatIPAddress": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 7,
+          "name": "ipAddressPort",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "formatIPAddressPort": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 8,
+          "name": "fixedLengthBytes",
+          "type": "bytes",
+          "editor": {
+            "validators": [
+              {
+                "fixedLength": {
+                  "length": 32
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 9,
+          "name": "requiredKey",
+          "type": "key",
+          "editor": {
+            "validators": [
+              {
+                "required": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 10,
+          "name": "fixedLengthString",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "fixedLength": {
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ]
     }
   }
 }

@@ -26,6 +26,7 @@ import Datetime from "react-datetime";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import moment from "moment";
 import { KeySelect } from "../KeySelect";
+import { Address4, Address6 } from "ip-address";
 
 export interface KindEditRouteMatch {
   kind: string;
@@ -75,7 +76,9 @@ function getPendingUpdate(pendingTransaction: PendingTransaction, key: Key) {
       ) {
         return {
           id: `${idx}`,
-          entity: g(updateRequest.getEntity()),
+          entity: MetaEntity.deserializeBinary(
+            g(updateRequest.getEntity()).serializeBinary()
+          ),
           operation: operation
         };
       }
@@ -100,7 +103,9 @@ function getPendingCreate(
       if (idx === targetIdx) {
         return {
           id: `${idx}`,
-          entity: g(createRequest.getEntity()),
+          entity: MetaEntity.deserializeBinary(
+            g(createRequest.getEntity()).serializeBinary()
+          ),
           operation: operation
         };
       }
@@ -192,6 +197,8 @@ const KindEditRealRoute = (
     );
   }
 
+  let isValid = true;
+
   let header = `Create Entity: ${props.match.params.kind}`;
   if (isCreate) {
     const pendingCreate = getPendingCreate(
@@ -272,6 +279,84 @@ const KindEditRealRoute = (
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!isValid) {
+      // prevent submit if form not valid
+      return;
+    }
+
+    // Automatically fill in default values.
+    for (const field of kindSchema.getFieldsList()) {
+      const editor = c(field.getEditor(), new SchemaFieldEditorInfo());
+      switch (field.getType()) {
+        case ValueType.DOUBLE:
+        case ValueType.INT64:
+        case ValueType.UINT64:
+          {
+            const value = getConditionalField(
+              editableValue,
+              field,
+              undefined,
+              value => {
+                switch (field.getType()) {
+                  case ValueType.DOUBLE:
+                    return value.getDoublevalue();
+                  case ValueType.INT64:
+                    return value.getInt64value();
+                  case ValueType.UINT64:
+                    return value.getUint64value();
+                  default:
+                    return undefined;
+                }
+              }
+            );
+            for (const validator of editor.getValidatorsList()) {
+              if (validator.hasDefault()) {
+                const def = g(validator.getDefault());
+                const defValue = g(def.getValue());
+                switch (defValue.getType()) {
+                  case ValueType.DOUBLE:
+                  case ValueType.INT64:
+                  case ValueType.UINT64:
+                    if (value === undefined) {
+                      setConditionalField(editableValue, field, defValue);
+                    }
+                    break;
+                }
+              }
+            }
+          }
+          break;
+        case ValueType.STRING:
+          const value = getConditionalField(
+            editableValue,
+            field,
+            undefined,
+            value => {
+              switch (field.getType()) {
+                case ValueType.STRING:
+                  return value.getStringvalue();
+                default:
+                  return undefined;
+              }
+            }
+          );
+          for (const validator of editor.getValidatorsList()) {
+            if (validator.hasDefault()) {
+              const def = g(validator.getDefault());
+              const defValue = g(def.getValue());
+              switch (defValue.getType()) {
+                case ValueType.STRING:
+                  if (value === undefined) {
+                    setConditionalField(editableValue, field, defValue);
+                  }
+                  break;
+              }
+            }
+          }
+          break;
+      }
+    }
 
     if (!isCreate) {
       const pendingUpdate = getPendingUpdate(
@@ -392,7 +477,7 @@ const KindEditRealRoute = (
               const value = getConditionalField(
                 editableValue,
                 field,
-                0,
+                undefined,
                 value => {
                   switch (field.getType()) {
                     case ValueType.DOUBLE:
@@ -402,17 +487,53 @@ const KindEditRealRoute = (
                     case ValueType.UINT64:
                       return value.getUint64value();
                     default:
-                      return 0;
+                      return undefined;
                   }
                 }
               );
+              let fieldErrors = [];
+              let placeholder = "";
+              for (const validator of editor.getValidatorsList()) {
+                if (validator.hasRequired()) {
+                  if (value === 0 || value === undefined || isNaN(value)) {
+                    fieldErrors.push("A non-zero value is required.");
+                  }
+                } else if (validator.hasFixedlength()) {
+                  // Not applied.
+                } else if (validator.hasDefault()) {
+                  // Applied at save.
+                  const def = g(validator.getDefault());
+                  const defValue = g(def.getValue());
+                  switch (defValue.getType()) {
+                    case ValueType.DOUBLE:
+                      placeholder = g(defValue.getDoublevalue()).toString();
+                      break;
+                    case ValueType.INT64:
+                      placeholder = g(defValue.getInt64value()).toString();
+                      break;
+                    case ValueType.UINT64:
+                      placeholder = g(defValue.getUint64value()).toString();
+                      break;
+                  }
+                } else if (validator.hasFormatipaddress()) {
+                  // Not applied.
+                } else if (validator.hasFormatipaddressport()) {
+                  // Not applied.
+                }
+              }
+              if (fieldErrors.length > 0) {
+                isValid = false;
+              }
               return (
                 <div className="form-group" key={field.getId()}>
                   <label>{displayName}</label>
                   <input
-                    className="form-control"
+                    className={`form-control ${
+                      fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                    }`}
                     type="number"
                     value={value}
+                    placeholder={placeholder}
                     readOnly={
                       field.getReadonly() || isSaving || hasPendingDelete
                     }
@@ -435,6 +556,11 @@ const KindEditRealRoute = (
                       }
                     }}
                   />
+                  {fieldErrors.map((err, idx) => (
+                    <div className="invalid-feedback" key={idx}>
+                      {err}
+                    </div>
+                  ))}
                   <small className="form-text text-muted">
                     {field.getComment()}
                   </small>
@@ -448,12 +574,86 @@ const KindEditRealRoute = (
                 "",
                 value => value.getStringvalue()
               );
+              let fieldErrors = [];
+              let placeholder = "";
+              for (const validator of editor.getValidatorsList()) {
+                if (validator.hasRequired()) {
+                  if (value === undefined || value.trim() === "") {
+                    fieldErrors.push("A non-empty value is required.");
+                  }
+                } else if (validator.hasFixedlength()) {
+                  if (
+                    value.length !== g(validator.getFixedlength()).getLength()
+                  ) {
+                    fieldErrors.push(
+                      `Must be exactly ${g(
+                        validator.getFixedlength()
+                      ).getLength()} characters long.`
+                    );
+                  }
+                } else if (validator.hasDefault()) {
+                  // Applied at save.
+                  const def = g(validator.getDefault());
+                  const defValue = g(def.getValue());
+                  switch (defValue.getType()) {
+                    case ValueType.STRING:
+                      placeholder = g(defValue.getStringvalue());
+                      break;
+                  }
+                } else if (validator.hasFormatipaddress()) {
+                  const address4 = new Address4(value);
+                  const address6 = new Address6(value);
+                  if (!address4.isValid() && !address6.isValid()) {
+                    fieldErrors.push("Must be an IPv4 or IPv6 address.");
+                  }
+                } else if (validator.hasFormatipaddressport()) {
+                  const portSplit = value.lastIndexOf(":");
+                  if (portSplit === -1) {
+                    fieldErrors.push(
+                      "Must be an IPv4 or IPv6 address, with a port number specified. Use brackets [] around an IPv6 address."
+                    );
+                  } else {
+                    let address = value.substr(0, portSplit);
+                    const portNumber = parseInt(value.substr(portSplit + 1));
+                    if (
+                      address.length > 0 &&
+                      address[0] === "[" &&
+                      address[address.length - 1] === "]"
+                    ) {
+                      address = address.substr(1, address.length - 2);
+                    }
+                    const address4 = new Address4(address);
+                    const address6 = new Address6(address);
+                    if (!address4.isValid() && !address6.isValid()) {
+                      fieldErrors.push(
+                        "Must be an IPv4 or IPv6 address, with a port number specified."
+                      );
+                    }
+                    if (isNaN(portNumber)) {
+                      fieldErrors.push(
+                        "Port number could not be parsed as an integer."
+                      );
+                    }
+                    if (portNumber <= 0 || portNumber >= 65536) {
+                      fieldErrors.push(
+                        "Port number must be between 1 and 65535."
+                      );
+                    }
+                  }
+                }
+              }
+              if (fieldErrors.length > 0) {
+                isValid = false;
+              }
               return (
                 <div className="form-group" key={field.getId()}>
                   <label>{displayName}</label>
                   <input
-                    className="form-control"
+                    className={`form-control ${
+                      fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                    }`}
                     value={value}
+                    placeholder={placeholder}
                     readOnly={
                       field.getReadonly() || isSaving || hasPendingDelete
                     }
@@ -466,6 +666,11 @@ const KindEditRealRoute = (
                       }
                     }}
                   />
+                  {fieldErrors.map((err, idx) => (
+                    <div className="invalid-feedback" key={idx}>
+                      {err}
+                    </div>
+                  ))}
                   <small className="form-text text-muted">
                     {field.getComment()}
                   </small>
@@ -655,17 +860,37 @@ const KindEditRealRoute = (
                 undefined,
                 value => value.getKeyvalue()
               );
+              let fieldErrors = [];
+              if (fieldErrors.length === 0) {
+                for (const validator of editor.getValidatorsList()) {
+                  if (validator.hasRequired()) {
+                    if (keyValue === undefined) {
+                      fieldErrors.push("You must select a key for this field.");
+                    }
+                  }
+                }
+              }
+              if (fieldErrors.length > 0) {
+                isValid = false;
+              }
               if (field.getReadonly() || isSaving || hasPendingDelete) {
                 return (
                   <div className="form-group" key={field.getId()}>
                     <label>{displayName}</label>
                     <input
-                      className="form-control"
+                      className={`form-control ${
+                        fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                      }`}
                       defaultValue={
                         keyValue === undefined ? "" : prettifyKey(keyValue)
                       }
                       readOnly={true}
                     />
+                    {fieldErrors.map((err, idx) => (
+                      <div className="invalid-feedback" key={idx}>
+                        {err}
+                      </div>
+                    ))}
                     <small className="form-text text-muted">
                       {field.getComment()}
                     </small>
@@ -673,9 +898,12 @@ const KindEditRealRoute = (
                 );
               } else {
                 return (
-                  <div className="form-group" key={field.getId()}>
+                  <div className="form-group key-select" key={field.getId()}>
                     <label>{displayName}</label>
                     <KeySelect
+                      className={`${
+                        fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                      }`}
                       value={keyValue}
                       onChange={v => {
                         if (editableValue !== undefined) {
@@ -695,6 +923,11 @@ const KindEditRealRoute = (
                       schema={g(props.schema.getSchema())}
                       field={field}
                     />
+                    {fieldErrors.map((err, idx) => (
+                      <div className="invalid-feedback" key={idx}>
+                        {err}
+                      </div>
+                    ))}
                     <small className="form-text text-muted">
                       {field.getComment()}
                     </small>
@@ -708,24 +941,76 @@ const KindEditRealRoute = (
                 "",
                 value => value.getBytesvalue_asB64()
               );
+              let fieldErrors = [];
+              try {
+                atob(value);
+              } catch (err) {
+                fieldErrors.push("A valid base64-encoded value is required");
+              }
+              if (fieldErrors.length === 0) {
+                for (const validator of editor.getValidatorsList()) {
+                  if (validator.hasRequired()) {
+                    const b = atob(value);
+                    if (b === "") {
+                      fieldErrors.push("A non-empty value is required.");
+                    }
+                  } else if (validator.hasFixedlength()) {
+                    const b = atob(value);
+                    if (
+                      b.length !== g(validator.getFixedlength()).getLength()
+                    ) {
+                      fieldErrors.push(
+                        `Must be exactly ${g(
+                          validator.getFixedlength()
+                        ).getLength()} bytes long.`
+                      );
+                    }
+                  } else if (validator.hasDefault()) {
+                    // Not applied.
+                  } else if (validator.hasFormatipaddress()) {
+                    // Not applied.
+                  } else if (validator.hasFormatipaddressport()) {
+                    // Not applied.
+                  }
+                }
+              }
+              if (fieldErrors.length > 0) {
+                isValid = false;
+              }
               return (
                 <div className="form-group" key={field.getId()}>
                   <label>{displayName}</label>
                   <input
-                    className="form-control"
+                    className={`form-control ${
+                      fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                    }`}
                     value={value}
+                    placeholder="Copy and paste a base64-encoded value into this field."
                     readOnly={
                       field.getReadonly() || isSaving || hasPendingDelete
                     }
                     onChange={e => {
                       if (editableValue !== undefined) {
                         const value = new Value();
-                        value.setBytesvalue(e.target.value);
+                        let base64Value = "";
+                        try {
+                          base64Value = atob(e.target.value);
+                        } catch {
+                          return;
+                        }
+                        value.setBytesvalue(
+                          Uint8Array.from(base64Value, c => c.charCodeAt(0))
+                        );
                         setConditionalField(editableValue, field, value);
                         setEditableValue({ value: editableValue.value });
                       }
                     }}
                   />
+                  {fieldErrors.map((err, idx) => (
+                    <div className="invalid-feedback" key={idx}>
+                      {err}
+                    </div>
+                  ))}
                   <small className="form-text text-muted">
                     {field.getComment()}
                   </small>
@@ -754,7 +1039,7 @@ const KindEditRealRoute = (
         <button
           type="submit"
           className="btn btn-primary mb-4"
-          disabled={isSaving || hasPendingDelete}
+          disabled={isSaving || hasPendingDelete || !isValid}
         >
           {isSaving ? (
             <>
