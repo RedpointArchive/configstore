@@ -1,0 +1,361 @@
+func Fnv64a(val string) uint64 {
+	hash := fnv.New64a()
+	hash.Write(([]byte)(val))
+	return hash.Sum64()
+}
+
+func Fnv64aPair(a uint64, b uint64) uint64 {
+	hash := fnv.New64a()
+	if a > b {
+		tmp := a
+		a = b
+		b = tmp
+	}
+	key := make([]byte, 16)
+	binary.LittleEndian.PutUint64(key, a)
+	binary.LittleEndian.PutUint64(key[8:], b)
+	hash.Write(key)
+	return hash.Sum64()
+}
+
+func CreateTopLevelKey(partitionId *PartitionId, pathElement *PathElement) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{pathElement},
+	}
+}
+
+func CreateIncompleteTopLevelKey(partitionId *PartitionId, kind string) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: kind,
+			},
+		},
+	}
+}
+
+func CreateDescendantKey(parent *Key, pathElement *PathElement) *Key {
+	newKey := &Key{
+		PartitionId: &PartitionId{
+			Namespace: parent.PartitionId.Namespace,
+		},
+		Path: nil,
+	}
+	for _, elem := range parent.Path {
+		switch elem.IdType.(type) {
+		case *PathElement_Id:
+			newKey.Path = append(newKey.Path, &PathElement{
+				Kind: elem.Kind,
+				IdType: &PathElement_Id{
+					Id: elem.GetId(),
+				},
+			})
+			break
+		case *PathElement_Name:
+			newKey.Path = append(newKey.Path, &PathElement{
+				Kind: elem.Kind,
+				IdType: &PathElement_Name{
+					Name: elem.GetName(),
+				},
+			})
+			break
+		}
+	}
+	switch pathElement.IdType.(type) {
+	case *PathElement_Id:
+		newKey.Path = append(newKey.Path, &PathElement{
+			Kind: pathElement.Kind,
+			IdType: &PathElement_Id{
+				Id: pathElement.GetId(),
+			},
+		})
+		break
+	case *PathElement_Name:
+		newKey.Path = append(newKey.Path, &PathElement{
+			Kind: pathElement.Kind,
+			IdType: &PathElement_Name{
+				Name: pathElement.GetName(),
+			},
+		})
+		break
+	}
+	return newKey
+}
+
+func SerializeTimestamp(ts *timestamp.Timestamp) string {
+	if ts == nil {
+		return ""
+	}
+
+	return ts.String()
+}
+
+func SerializeKey(key *Key) string {
+	if key == nil {
+		return ""
+	}
+
+	var elements []string
+	for _, pathElement := range key.Path {
+		if _, ok := pathElement.IdType.(*PathElement_Id); ok {
+			elements = append(elements, fmt.Sprintf("%s:id=%d", pathElement.GetKind(), pathElement.GetId()))
+		} else if _, ok := pathElement.IdType.(*PathElement_Name); ok {
+			elements = append(elements, fmt.Sprintf("%s:name=%s", pathElement.GetKind(), pathElement.GetName()))
+		} else {
+			elements = append(elements, fmt.Sprintf("%s:unset", pathElement.GetKind()))
+		}
+	}
+	return fmt.Sprintf("ns=%s|%s", key.PartitionId.Namespace, strings.Join(elements, "|"))
+}
+
+func CompareKeys(a *Key, b *Key) bool {
+	return SerializeKey(a) == SerializeKey(b)
+}
+
+{{ range $kindName, $kind := .Kinds }}
+func CreateTopLevel_{{ $kindName }}_NameKey(partitionId *PartitionId, name string) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: "{{ $kindName }}",
+				IdType: &PathElement_Name{
+					Name: name,
+				},
+			},
+		},
+	}
+}
+
+func CreateTopLevel_{{ $kindName }}_IdKey(partitionId *PartitionId, id int64) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: "{{ $kindName }}",
+				IdType: &PathElement_Id{
+				  Id: id,
+				},
+			},
+		},
+	}
+}
+
+func CreateTopLevel_{{ $kindName }}_IncompleteKey(partitionId *PartitionId) *Key {
+	return &Key{
+		PartitionId: partitionId,
+		Path: []*PathElement{
+			&PathElement{
+				Kind: "{{ $kindName }}",
+				IdType: nil,
+			},
+		},
+	}
+}
+{{ end }}
+
+{{ define "indexkeytype" }}
+{{ if eq .Type 1 }}
+float64
+{{ else if eq .Type 2 }}
+int64
+{{ else if eq .Type 8 }}
+uint64
+{{ else if eq .Type 4 }}
+string
+{{ else if eq .Type 6 }}
+string
+{{ else if eq .Type 7 }}
+string
+{{ else if eq .Type 5 }}
+bool
+{{ else if eq .Type 3 }}
+string
+{{ end }}
+{{ end }}
+
+{{ define "indexorigtype" }}
+{{ if eq .Type 1 }}
+float64
+{{ else if eq .Type 2 }}
+int64
+{{ else if eq .Type 8 }}
+uint64
+{{ else if eq .Type 4 }}
+*timestamp.Timestamp
+{{ else if eq .Type 6 }}
+[]byte
+{{ else if eq .Type 7 }}
+*Key
+{{ else if eq .Type 5 }}
+bool
+{{ else if eq .Type 3 }}
+string
+{{ end }}
+{{ end }}
+
+{{ define "indexserializetotype" }}
+{{ if eq .Type 4 }}
+SerializeTimestamp(key)
+{{ else if eq .Type 6 }}
+string(key)
+{{ else if eq .Type 7 }}
+SerializeKey(key)
+{{ else }}
+key
+{{ end }}
+{{ end }}
+
+type Configstore struct {
+	conn *grpc.ClientConn
+	mutex sync.RWMutex
+
+	{{ range $kindName, $kind := .Kinds }}
+	{{ $kindName }}s *{{ $kindName }}Store
+	{{ end }}
+}
+
+func ConnectToConfigstore(conn *grpc.ClientConn) *Configstore {
+	configstore := &Configstore{
+		conn: conn,
+	}
+	{{ range $kindName, $kind := .Kinds }}
+	configstore.{{ $kindName }}s = &{{ $kindName }}ImplStore{
+		configstore: configstore,
+		client:   New{{ $kindName }}ServiceClient(configstore.conn),
+		store:    make(map[string]*{{ $kindName }}),
+		{{ range $i, $index := $kind.Indexes }}
+		indexstore_{{ $index.Name }}: make(map[{{ template "indexkeytype" (getfield $kindName $index) }}]*{{ $kindName }}),
+		{{ end }}
+	}
+	{{ end }}
+	client := NewConfigstoreMetaServiceClient(configstore.conn)
+	watcher, err := client.Watch(ctx, &WatchTransactionsRequest{})
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			resp, err := watcher.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err == nil || status.Code(err) == codes.OK {
+				if resp == nil {
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				if resp.Type == WatchEventType_Created {
+					// TODO
+				}
+			} else if status.Code(err) == codes.Unavailable {
+				// Retry the Watch request itself
+				watcher, err = client.Watch(ctx, &WatchTransactionsRequest{})
+				if err != nil {
+					time.Sleep(30 * time.Second)
+					continue
+				} else {
+					// Connection re-established, loop back around again to receive updates.
+				}
+			} else {
+				time.Sleep(1 * time.Second)
+				continue
+			}
+		}
+	}()
+}
+
+{{ range $kindName, $kind := .Kinds }}
+type {{ $kindName }}ImplStore struct {
+	configstore *Configstore
+	client {{ $kindName }}ServiceClient
+	store map[string]*{{ $kindName }}
+	{{ range $i, $index := $kind.Indexes }}
+	indexstore_{{ $index.Name }} map[{{ template "indexkeytype" (getfield $kindName $index) }}]*{{ $kindName }}
+	{{ end }}
+}
+
+type {{ $kindName }}Store interface {
+	Create(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error)
+	Update(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error)
+	Delete(ctx context.Context, key *Key) (*{{ $kindName }}, error)
+	GetAndCheck(key *Key) (*{{ $kindName }}, bool)
+	Get(key *Key) *{{ $kindName }}
+	GetKeys() []*Key
+	{{ range $i, $index := $kind.Indexes }}
+	GetBy{{ $index.Name }}(key {{ template "indexorigtype" (getfield $kindName $index) }}) *{{ $kindName }}
+	GetAndCheckBy{{ $index.Name }}(key {{ template "indexorigtype" (getfield $kindName $index) }}) (*{{ $kindName }}, bool)
+	{{ end }}
+}
+
+func (c *{{ $kindName }}ImplStore) GetKeys() []*Key {
+	keys := make([]*Key, len(c.store))
+	i := 0
+	for _, entity := range c.store {
+		keys[i] = entity.Key
+		i += 1
+	}
+	return keys
+}
+
+func (c *{{ $kindName }}ImplStore) Get(key *Key) *{{ $kindName }} {
+	c.RLock()
+	defer c.RUnlock()
+	return c.store[SerializeKey(key)]
+}
+
+func (c *{{ $kindName }}ImplStore) GetAndCheck(key *Key) (*{{ $kindName }}, bool) {
+	c.RLock()
+	defer c.RUnlock()
+	val, ok := c.store[SerializeKey(key)]
+	return val, ok
+}
+
+func (ref *{{ $kindName }}ImplStore) Create(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error) {
+	resp, err := ref.client.Create(ctx, &Create{{ $kindName }}Request{
+		Entity: entity,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s := SerializeKey(resp.Entity.Key)
+	ref.Lock()
+	// <INDEXSTORESUPDATE>
+	ref.store[s] = resp.Entity
+	ref.Unlock()
+	return resp.Entity, nil
+}
+
+func (ref *{{ $kindName }}ImplStore) Update(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error) {
+	resp, err := ref.client.Update(ctx, &Update{{ $kindName }}Request{
+		Entity: entity,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s := SerializeKey(resp.Entity.Key)
+	ref.Lock()
+	// <INDEXSTORESREMOVE>
+	// <INDEXSTORESUPDATE>
+	ref.store[s] = resp.Entity
+	ref.Unlock()
+	return resp.Entity, nil
+}
+
+func (ref *{{ $kindName }}ImplStore) Delete(ctx context.Context, key *Key) (*{{ $kindName }}, error) {
+	resp, err := ref.client.Delete(ctx, &Delete{{ $kindName }}Request{
+		Key: key,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s := SerializeKey(resp.Entity.Key)
+	ref.Lock()
+	// <INDEXSTORESREMOVE>
+	delete(ref.store, s)
+	ref.Unlock()
+	return resp.Entity, nil
+}
+{{ end }}
