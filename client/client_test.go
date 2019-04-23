@@ -328,3 +328,55 @@ func TestCreateThenDeleteThenGet(t *testing.T) {
 	assert.Assert(t, err != nil)
 	assert.Assert(t, strings.Contains(fmt.Sprintf("%v", err), "code = NotFound"))
 }
+
+func TestSnapshot(t *testing.T) {
+	user, err := configstore.Users.Create(ctx, &User{
+		Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
+		EmailAddress: "hello@example.com",
+		PasswordHash: "v",
+	})
+	assert.NilError(t, err)
+
+	userSnapshot := &UserSnapshot{}
+	configstore.TakeSnapshots(userSnapshot)
+
+	_, err = configstore.Users.Delete(ctx, user.Key)
+	assert.NilError(t, err)
+
+	_, ok := userSnapshot.GetAndCheck(user.Key)
+	assert.Equal(t, ok, true)
+}
+
+func TestSnapshotMulti(t *testing.T) {
+	user, err := configstore.Users.Create(ctx, &User{
+		Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
+		EmailAddress: "hello@example.com",
+		PasswordHash: "v",
+	})
+	assert.NilError(t, err)
+
+	nilKey, err := configstore.NilKeyTests.Create(ctx, &NilKeyTest{
+		Key:        CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{}),
+		NilKeyTest: nil,
+	})
+	assert.NilError(t, err)
+
+	userSnapshot := &UserSnapshot{}
+	nilKeySnapshot := &NilKeyTestSnapshot{}
+	configstore.TakeSnapshots(userSnapshot, nilKeySnapshot)
+
+	_, err = configstore.Users.Delete(ctx, user.Key)
+	assert.NilError(t, err)
+
+	nilKey.NilKeyTest = CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{})
+
+	_, err = configstore.NilKeyTests.Update(ctx, nilKey)
+	assert.NilError(t, err)
+
+	_, ok := userSnapshot.GetAndCheck(user.Key)
+	assert.Equal(t, ok, true)
+
+	oldNilKey, ok := nilKeySnapshot.GetAndCheck(nilKey.Key)
+	assert.Equal(t, ok, true)
+	assert.Assert(t, oldNilKey.NilKeyTest == nil, "nil key test was not nil")
+}

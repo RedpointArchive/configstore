@@ -154,6 +154,13 @@ func CreateTopLevel_{{ $kindName }}_IncompleteKey(partitionId *PartitionId) *Key
 		},
 	}
 }
+
+func (src *{{ $kindName }}) Copy() *{{ $kindName }} {
+	// NOTE: This doesn't deep copy keys or timestamps, because we don't
+	// expect those to be mutated in-place...
+	dest := *src
+	return &dest
+}
 {{ end }}
 
 {{- define "fieldindexkeytype" -}}
@@ -311,6 +318,70 @@ type Configstore struct {
 	{{ range $kindName, $kind := .Kinds }}
 	{{ $kindName }}s {{ $kindName }}Store
 	{{ end }}
+}
+
+{{ range $kindName, $kind := .Kinds }}
+type {{ $kindName }}Snapshot struct {
+	{{ $kindName }}s map[string]*{{ $kindName }}
+	{{ range $i, $index := $kind.Indexes -}}
+		{{- if isinmemoryindex $index -}}
+			{{- if isfieldindex $index -}}
+				{{- $field := getfieldforindex $kindName $index -}}
+				{{- if $field }}
+	{{ $kindName }}s_By{{ $index.Name }} map[{{ template "fieldindexkeytype" $field }}]*{{ $kindName }}
+				{{ end -}}
+			{{- else if iscomputedindex $index -}}
+				{{- if iscomputedfnv64aindex $index }}
+	{{ $kindName }}s_By{{ $index.Name }} map[uint64]*{{ $kindName }}
+				{{ else if iscomputedfnv64apairindex $index }}
+	{{ $kindName }}s_By{{ $index.Name }} map[uint64]*{{ $kindName }}
+				{{ end -}}
+			{{- end -}}
+		{{- end -}}
+	{{- end -}}
+}
+{{ end }}
+
+func (configstore *Configstore) TakeSnapshots(snapshots ...interface{}) {
+	configstore.mutex.RLock()
+	for _, snapshot := range snapshots {
+		switch s := snapshot.(type) {
+{{ range $kindName, $kind := .Kinds }}
+		case *{{ $kindName }}Snapshot:
+			src := configstore.{{ $kindName }}s.(*{{ $kindName }}ImplStore)
+			s.{{ $kindName }}s = make(map[string]*{{ $kindName }})
+			for k, v := range src.store {
+				s.{{ $kindName }}s[k] = v.Copy()
+			}
+	{{ range $i, $index := $kind.Indexes -}}
+		{{- if isinmemoryindex $index -}}
+			{{- if isfieldindex $index -}}
+				{{- $field := getfieldforindex $kindName $index -}}
+				{{- if $field }}
+			s.{{ $kindName }}s_By{{ $index.Name }} = make(map[{{ template "fieldindexkeytype" $field }}]*{{ $kindName }})
+			for k, v := range src.indexstore_{{ $index.Name }} {
+				s.{{ $kindName }}s_By{{ $index.Name }}[k] = v.Copy()
+			}
+				{{ end -}}
+			{{- else if iscomputedindex $index -}}
+				{{- if iscomputedfnv64aindex $index }}
+			s.{{ $kindName }}s_By{{ $index.Name }} = make(map[uint64]*{{ $kindName }})
+			for k, v := range src.indexstore_{{ $index.Name }} {
+				s.{{ $kindName }}s_By{{ $index.Name }}[k] = v.Copy()
+			}
+				{{ else if iscomputedfnv64apairindex $index }}
+			s.{{ $kindName }}s_By{{ $index.Name }} = make(map[uint64]*{{ $kindName }})
+			for k, v := range src.indexstore_{{ $index.Name }} {
+				s.{{ $kindName }}s_By{{ $index.Name }}[k] = v.Copy()
+			}
+				{{ end -}}
+			{{- end -}}
+		{{- end -}}
+	{{- end -}}
+{{ end }}
+		}
+	}
+	configstore.mutex.RUnlock()
 }
 
 func ConnectToConfigstore(conn *grpc.ClientConn) (*Configstore, error) {
@@ -514,6 +585,15 @@ func (c *{{ $kindName }}ImplStore) GetAndCheckBy{{ $index.Name }}(key {{ templat
 	val, ok := c.indexstore_{{ $index.Name }}[{{ template "fieldindexserializetotype" $field }}]
 	return val, ok
 }
+
+func (c *{{ $kindName }}Snapshot) GetBy{{ $index.Name }}(key {{ template "fieldindexorigtype" $field }}) *{{ $kindName }} {
+	return c.{{ $kindName }}s_By{{ $index.Name }}[{{ template "fieldindexserializetotype" $field }}]
+}
+
+func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key {{ template "fieldindexorigtype" $field }}) (*{{ $kindName }}, bool) {
+	val, ok := c.{{ $kindName }}s_By{{ $index.Name }}[{{ template "fieldindexserializetotype" $field }}]
+	return val, ok
+}
 			{{- end -}}
 		{{- else if iscomputedindex $index -}}
 			{{- if iscomputedfnv64aindex $index }}
@@ -529,6 +609,15 @@ func (c *{{ $kindName }}ImplStore) GetAndCheckBy{{ $index.Name }}(key uint64) (*
 	val, ok := c.indexstore_{{ $index.Name }}[key]
 	return val, ok
 }
+
+func (c *{{ $kindName }}Snapshot) GetBy{{ $index.Name }}(key uint64) *{{ $kindName }} {
+	return c.{{ $kindName }}s_By{{ $index.Name }}[key]
+}
+
+func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key uint64) (*{{ $kindName }}, bool) {
+	val, ok := c.{{ $kindName }}s_By{{ $index.Name }}[key]
+	return val, ok
+}
 			{{ else if iscomputedfnv64apairindex $index }}
 func (c *{{ $kindName }}ImplStore) GetBy{{ $index.Name }}(key uint64) *{{ $kindName }} {
 	c.configstore.mutex.RLock()
@@ -540,6 +629,15 @@ func (c *{{ $kindName }}ImplStore) GetAndCheckBy{{ $index.Name }}(key uint64) (*
 	c.configstore.mutex.RLock()
 	defer c.configstore.mutex.RUnlock()
 	val, ok := c.indexstore_{{ $index.Name }}[key]
+	return val, ok
+}
+
+func (c *{{ $kindName }}Snapshot) GetBy{{ $index.Name }}(key uint64) *{{ $kindName }} {
+	return c.{{ $kindName }}s_By{{ $index.Name }}[key]
+}
+
+func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key uint64) (*{{ $kindName }}, bool) {
+	val, ok := c.{{ $kindName }}s_By{{ $index.Name }}[key]
 	return val, ok
 }
 			{{- end -}}
@@ -567,6 +665,25 @@ func (c *{{ $kindName }}ImplStore) GetAndCheck(key *Key) (*{{ $kindName }}, bool
 	c.configstore.mutex.RLock()
 	defer c.configstore.mutex.RUnlock()
 	val, ok := c.store[SerializeKey(key)]
+	return val, ok
+}
+
+func (c *{{ $kindName }}Snapshot) GetKeys() []*Key {
+	keys := make([]*Key, len(c.{{ $kindName }}s))
+	i := 0
+	for _, entity := range c.{{ $kindName }}s {
+		keys[i] = entity.Key
+		i += 1
+	}
+	return keys
+}
+
+func (c *{{ $kindName }}Snapshot) Get(key *Key) *{{ $kindName }} {
+	return c.{{ $kindName }}s[SerializeKey(key)]
+}
+
+func (c *{{ $kindName }}Snapshot) GetAndCheck(key *Key) (*{{ $kindName }}, bool) {
+	val, ok := c.{{ $kindName }}s[SerializeKey(key)]
 	return val, ok
 }
 
