@@ -136,14 +136,18 @@ func (s *configstoreDynamicProtobufTransactionService) dynamicProtobufTransactio
 					return err
 				}
 				transactionEntity := messageFactory.NewDynamicMessage(s.genResult.MessageMap["TypedTransactionEntity"])
-				transactionEntity.SetFieldByNumber(
+				err = transactionEntity.TrySetFieldByNumber(
 					int(kind.Id),
 					typedMutatedEntity,
 				)
-				mutatedEntities = append(
-					mutatedEntities,
-					transactionEntity,
-				)
+				if err != nil {
+					fmt.Printf("error: unable to send entity with kind '%s' in transaction batch: the id of the kind (%d) is not valid, things are probably broken\n", kindName, kind.Id)
+				} else {
+					mutatedEntities = append(
+						mutatedEntities,
+						transactionEntity,
+					)
+				}
 			}
 
 			batch := messageFactory.NewDynamicMessage(s.genResult.MessageMap["TypedTransactionBatch"])

@@ -384,7 +384,7 @@ func (configstore *Configstore) TakeSnapshots(snapshots ...interface{}) {
 	configstore.mutex.RUnlock()
 }
 
-func ConnectToConfigstore(conn *grpc.ClientConn) (*Configstore, error) {
+func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configstore, error) {
 	configstore := &Configstore{
 		conn: conn,
 	}
@@ -643,7 +643,7 @@ func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key uint64) (*{
 			{{- end -}}
 		{{- end -}}
 	{{- end -}}
-{{- end -}}
+{{- end }}
 
 func (c *{{ $kindName }}ImplStore) GetKeys() []*Key {
 	keys := make([]*Key, len(c.store))

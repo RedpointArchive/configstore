@@ -26,6 +26,22 @@ WORKDIR /workdir_go/
 RUN ls /workdir_go/ && /protoc/bin/protoc --go_out=plugins=grpc:. meta.proto
 RUN sed -i 's/package meta/package main/' /workdir_go/meta.pb.go
 
+# install Go
+FROM ubuntu:18.04 AS go_install
+
+ENV GOROOT=/usr/local/go
+ENV GOPATH=/go
+ENV PATH="/go/bin:/usr/local/go/bin:${PATH}"
+
+RUN apt update
+RUN apt install -y wget
+RUN apt install -y git
+
+RUN cd /tmp && \
+  wget https://dl.google.com/go/go1.12.linux-amd64.tar.gz && \
+  tar -xvf go1.12.linux-amd64.tar.gz && \
+  mv go /usr/local
+
 # build server
 FROM ubuntu:18.04 AS build_server
 
@@ -40,7 +56,7 @@ COPY server /src
 COPY --from=protocol_build /workdir_go/meta.pb.go /src/meta.pb.go
 WORKDIR /src
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -mod vendor -o /server
-RUN cp /src/server/generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
+RUN cp generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
 
 # prerun client
 FROM ubuntu:18.04 AS prerun_client
@@ -50,6 +66,7 @@ ENV CONFIGSTORE_GRPC_PORT="13389"
 ENV CONFIGSTORE_HTTP_PORT="13390"
 ENV CONFIGSTORE_SCHEMA_PATH="/schema.json"
 
+COPY --from=build_server /generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
 COPY --from=build_server /server /server
 COPY server/schema.json /schema.json
 RUN /server -generate > /client.go

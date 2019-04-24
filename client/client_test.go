@@ -31,13 +31,13 @@ func TestMain(m *testing.M) {
 	defer conn.Close()
 
 	ctx = context.Background()
-	configstore, err = ConnectToConfigstore(conn)
+	configstore, err = ConnectToConfigstore(ctx, conn)
 	if err != nil {
 		fmt.Printf("%v", err)
 		fmt.Println()
 		return
 	}
-	configstore2, err = ConnectToConfigstore(conn)
+	configstore2, err = ConnectToConfigstore(ctx, conn)
 	if err != nil {
 		fmt.Printf("%v", err)
 		fmt.Println()

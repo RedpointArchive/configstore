@@ -21,14 +21,26 @@ func (s *operationProcessor) operationListRead(ctx context.Context, schema *Sche
 	}
 
 	var snapshots []*firestore.DocumentSnapshot
-	if (req.Limit == 0) && start == nil {
-		snapshots, err = s.tx.Documents(s.client.Collection(req.KindName)).GetAll()
-	} else if req.Limit == 0 {
-		snapshots, err = s.tx.Documents(s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string))).GetAll()
-	} else if start == nil {
-		snapshots, err = s.tx.Documents(s.client.Collection(req.KindName).Limit(int(req.Limit))).GetAll()
+	if runWithoutFirestoreTransactionalQueries() {
+		if (req.Limit == 0) && start == nil {
+			snapshots, err = s.client.Collection(req.KindName).Documents(ctx).GetAll()
+		} else if req.Limit == 0 {
+			snapshots, err = s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Documents(ctx).GetAll()
+		} else if start == nil {
+			snapshots, err = s.client.Collection(req.KindName).Limit(int(req.Limit)).Documents(ctx).GetAll()
+		} else {
+			snapshots, err = s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Limit(int(req.Limit)).Documents(ctx).GetAll()
+		}
 	} else {
-		snapshots, err = s.tx.Documents(s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Limit(int(req.Limit))).GetAll()
+		if (req.Limit == 0) && start == nil {
+			snapshots, err = s.tx.Documents(s.client.Collection(req.KindName)).GetAll()
+		} else if req.Limit == 0 {
+			snapshots, err = s.tx.Documents(s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string))).GetAll()
+		} else if start == nil {
+			snapshots, err = s.tx.Documents(s.client.Collection(req.KindName).Limit(int(req.Limit))).GetAll()
+		} else {
+			snapshots, err = s.tx.Documents(s.client.Collection(req.KindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Limit(int(req.Limit))).GetAll()
+		}
 	}
 
 	if err != nil {

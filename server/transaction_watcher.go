@@ -335,22 +335,36 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 		}()
 	}
 
-	err := client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+	if runWithoutFirestoreTransactionalQueries() {
 		// for each kind, fill in the current entities
 		for kindName := range schema.Kinds {
-			documents, err := tx.Documents(watcher.client.Collection(kindName)).GetAll()
+			documents, err := watcher.client.Collection(kindName).Documents(ctx).GetAll()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			for _, document := range documents {
 				watcher.initialReadTimeByKind[kindName] = document.ReadTime
 				watcher.currentEntities[serializeRef(document.Ref)] = document
 			}
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
+	} else {
+		err := client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+			// for each kind, fill in the current entities
+			for kindName := range schema.Kinds {
+				documents, err := tx.Documents(watcher.client.Collection(kindName)).GetAll()
+				if err != nil {
+					return err
+				}
+				for _, document := range documents {
+					watcher.initialReadTimeByKind[kindName] = document.ReadTime
+					watcher.currentEntities[serializeRef(document.Ref)] = document
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// listen for new transactions coming in

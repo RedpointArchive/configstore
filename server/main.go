@@ -59,7 +59,7 @@ func main() {
 	config := &runtimeConfig{}
 	err := envconfig.Process("CONFIGSTORE", config)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Errorf("can't read configuration from environment: %v", err))
 	}
 
 	ctx := context.Background()
@@ -67,7 +67,7 @@ func main() {
 	// Generate the schema and gRPC types based on schema.json
 	genResult, err := generate(config.SchemaPath)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Errorf("can't generate protobufs: %v", err))
 	}
 
 	// Emit the testclient protobuf specification
@@ -86,24 +86,24 @@ func main() {
 		conf := &firebase.Config{ProjectID: config.GoogleCloudProjectID}
 		app, err := firebase.NewApp(ctx, conf)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln(fmt.Errorf("can't connect to Firebase: %v", err))
 		}
 		client, err := app.Firestore(ctx)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln(fmt.Errorf("can't connect to Firestore: %v", err))
 		}
 		defer client.Close()
 
 		// Start the transaction watcher
 		transactionWatcher, err := createTransactionWatcher(ctx, client, genResult.Schema)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln(fmt.Errorf("can't create transaction watcher: %v", err))
 		}
 
 		// Serve the configstore gRPC server
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.GrpcPort))
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln(fmt.Errorf("can't serve the gRPC server: %v", err))
 		}
 		grpcServer := grpc.NewServer()
 		emptyServer := new(emptyServerInterface)
@@ -202,7 +202,52 @@ func main() {
 		)
 
 		// Add the metadata server.
-		RegisterConfigstoreMetaServiceServer(grpcServer, createConfigstoreMetaServiceServer(
+		grpcServer.RegisterService(&grpc.ServiceDesc{
+			ServiceName: fmt.Sprintf("%s.%s", genResult.Schema.Name, "ConfigstoreMetaService"),
+			HandlerType: (*ConfigstoreMetaServiceServer)(nil),
+			Methods: []grpc.MethodDesc{
+				{
+					MethodName: "GetSchema",
+					Handler:    _ConfigstoreMetaService_GetSchema_Handler,
+				},
+				{
+					MethodName: "MetaList",
+					Handler:    _ConfigstoreMetaService_MetaList_Handler,
+				},
+				{
+					MethodName: "MetaGet",
+					Handler:    _ConfigstoreMetaService_MetaGet_Handler,
+				},
+				{
+					MethodName: "MetaUpdate",
+					Handler:    _ConfigstoreMetaService_MetaUpdate_Handler,
+				},
+				{
+					MethodName: "MetaCreate",
+					Handler:    _ConfigstoreMetaService_MetaCreate_Handler,
+				},
+				{
+					MethodName: "MetaDelete",
+					Handler:    _ConfigstoreMetaService_MetaDelete_Handler,
+				},
+				{
+					MethodName: "GetDefaultPartitionId",
+					Handler:    _ConfigstoreMetaService_GetDefaultPartitionId_Handler,
+				},
+				{
+					MethodName: "ApplyTransaction",
+					Handler:    _ConfigstoreMetaService_ApplyTransaction_Handler,
+				},
+			},
+			Streams: []grpc.StreamDesc{
+				{
+					StreamName:    "WatchTransactions",
+					Handler:       _ConfigstoreMetaService_WatchTransactions_Handler,
+					ServerStreams: true,
+				},
+			},
+			Metadata: "meta.proto",
+		}, createConfigstoreMetaServiceServer(
 			client,
 			genResult.Schema,
 			createTransactionProcessor(client),
