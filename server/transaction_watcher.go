@@ -32,6 +32,8 @@ type transactionWatcher struct {
 	initialReadTimeByKind map[string]time.Time
 
 	isConsistent bool
+
+	waitTransactionCount int
 }
 
 func (watcher *transactionWatcher) CurrentEntitiesTakeReadLock() {
@@ -137,6 +139,15 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 				if !ok {
 					// we don't have this entity's snapshot yet
 					fmt.Printf("%s: can't process transaction, waiting on entity snapshot with key: %s\n", transaction.Id, mks)
+					watcher.waitTransactionCount++
+					if watcher.waitTransactionCount > 30 {
+						// we aren't making progress - we've stalled for some reason (race condition, etc.)
+						// this indicates a bug in configstore, but we need to make sure applications using configstore
+						// can recover while the issue gets resolved, so what we do is panic() here and expect the
+						// orchestrator (such as Kubernetes) to restart the pod. since you should also be deploying
+						// configstore with more than 1 replica, this should result in no downtime for applications
+						panic(fmt.Sprintf("panic! %s: unable to make progress on transaction, still waiting on entity snapshot with key: %s\n", transaction.Id, mks))
+					}
 					return false
 				}
 			}
@@ -198,6 +209,7 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 
 	// push the batch out
 	watcher.outboundChanges <- batch
+	watcher.waitTransactionCount = 0
 
 	// the transaction has been applied and can be removed from the transaction list
 	fmt.Printf("%s: finished processing transaction (%d transactions left to process)\n", transaction.Id, len(watcher.transactions)-1)

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jhump/protoreflect/desc/protoprint"
 	"github.com/kelseyhightower/envconfig"
@@ -63,6 +64,14 @@ func main() {
 	}
 
 	ctx := context.Background()
+
+	// HACK: Workaround Auth0 timestamp issues
+	jwt.TimeFunc = func() time.Time {
+		// Pretend we're 1 minute in the future because Auth0 can sometimes issue
+		// tokens in the future, and that prevents us from ever authenticating correctly,
+		// even if the token is only like 2 seconds in the future.
+		return time.Now().Add(time.Minute * 1)
+	}
 
 	// Generate the schema and gRPC types based on schema.json
 	genResult, err := generate(config.SchemaPath)
@@ -202,6 +211,13 @@ func main() {
 		)
 
 		// Add the metadata server.
+		metaServer := createConfigstoreMetaServiceServer(
+			client,
+			genResult.Schema,
+			createTransactionProcessor(client),
+			transactionWatcher,
+		)
+		RegisterConfigstoreMetaServiceServer(grpcServer, metaServer)
 		grpcServer.RegisterService(&grpc.ServiceDesc{
 			ServiceName: fmt.Sprintf("%s.%s", genResult.Schema.Name, "ConfigstoreMetaService"),
 			HandlerType: (*ConfigstoreMetaServiceServer)(nil),
@@ -247,12 +263,7 @@ func main() {
 				},
 			},
 			Metadata: "meta.proto",
-		}, createConfigstoreMetaServiceServer(
-			client,
-			genResult.Schema,
-			createTransactionProcessor(client),
-			transactionWatcher,
-		))
+		}, metaServer)
 
 		// Start gRPC server.
 		go func() {
