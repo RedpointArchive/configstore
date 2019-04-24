@@ -40,6 +40,7 @@ COPY server /src
 COPY --from=protocol_build /workdir_go/meta.pb.go /src/meta.pb.go
 WORKDIR /src
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -mod vendor -o /server
+RUN cp /src/server/generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
 
 # prerun client
 FROM ubuntu:18.04 AS prerun_client
@@ -116,6 +117,7 @@ RUN go get -v \
   "google.golang.org/grpc" \
   "gotest.tools/assert"
 COPY --from=build_server /server /server
+COPY --from=build_server /generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
 COPY --from=prerun_client /schema.json /schema.json
 COPY --from=prerun_client /client-src /client-src
 COPY extra/adc.json /adc.json
@@ -128,5 +130,6 @@ RUN gcloud beta emulators firestore start --host-port=127.0.0.1:8432 & \
 FROM scratch AS final
 
 COPY --from=test /server /server
+COPY --from=test /generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
 COPY --from=build_server_ui /src/build /server-ui
 ENTRYPOINT [ "/server" ]

@@ -250,8 +250,8 @@ key
 					{{- $field2 := getcomputedfnv64apairfield2forindex $kindName $index -}}
 					{{- if and $field1 $field2 }}
 {
-	field1 := newEntity.{{- camelcase $field.Name }}
-	field2 := newEntity.{{- camelcase $field.Name }}
+	field1 := newEntity.{{- camelcase $field1.Name }}
+	field2 := newEntity.{{- camelcase $field2.Name }}
 	idx := Fnv64aPair(field1, field2)
 	ref.indexstore_{{- $index.Name -}}[idx] = newEntity
 }
@@ -299,8 +299,8 @@ key
 					{{- $field2 := getcomputedfnv64apairfield2forindex $kindName $index -}}
 					{{- if and $field1 $field2 }}
 {
-	field1 := oldEntity.{{- camelcase $field.Name }}
-	field2 := oldEntity.{{- camelcase $field.Name }}
+	field1 := oldEntity.{{- camelcase $field1.Name }}
+	field2 := oldEntity.{{- camelcase $field2.Name }}
 	idx := Fnv64aPair(field1, field2)
 	delete(ref.indexstore_{{- $index.Name -}}, idx)
 }
