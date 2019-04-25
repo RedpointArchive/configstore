@@ -147,4 +147,5 @@ FROM scratch AS final
 COPY --from=test /server /server
 COPY --from=test /generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
 COPY --from=build_server_ui /src/build /server-ui
+COPY --from=busybox /bin/sh /bin/sh
 ENTRYPOINT [ "/server" ]
