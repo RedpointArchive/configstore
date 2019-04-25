@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -55,15 +54,7 @@ func WrapServer(server *grpc.Server, options ...Option) *WrappedGrpcServer {
 	})
 	websocketOriginFunc := opts.websocketOriginFunc
 	if websocketOriginFunc == nil {
-		websocketOriginFunc = func(req *http.Request) bool {
-			origin := req.Header.Get("Origin")
-			parsedUrl, err := url.ParseRequestURI(origin)
-			if err != nil {
-				grpclog.Warningf("Unable to parse url for grpc-websocket origin check: %s. error: %v", origin, err)
-				return false
-			}
-			return parsedUrl.Host == req.Host
-		}
+		websocketOriginFunc = defaultWebsocketOriginFunc
 	}
 	return &WrappedGrpcServer{
 		server:              server,
@@ -234,5 +225,19 @@ func hackIntoNormalGrpcRequest(req *http.Request) (*http.Request, bool) {
 	}
 	req.Header.Set("content-type", strings.Replace(contentType, incomingContentType, grpcContentType, 1))
 
+	// Remove content-length header since it represents http1.1 payload size, not the sum of the h2
+	// DATA frame payload lengths. https://http2.github.io/http2-spec/#malformed This effectively
+	// switches to chunked encoding which is the default for h2
+	req.Header.Del("content-length")
+
 	return req, isTextFormat
+}
+
+func defaultWebsocketOriginFunc(req *http.Request) bool {
+	origin, err := WebsocketRequestOrigin(req)
+	if err != nil {
+		grpclog.Warning(err)
+		return false
+	}
+	return origin == req.Host
 }

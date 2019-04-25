@@ -7,14 +7,20 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 
-	"cloud.google.com/go/firestore"
-
+	"github.com/dgrijalva/jwt-go"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jhump/protoreflect/desc/protoprint"
-	"github.com/jhump/protoreflect/dynamic"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
+
+	"time"
+
+	"github.com/gorilla/mux"
 
 	firebase "firebase.google.com/go"
 )
@@ -28,6 +34,12 @@ type runtimeConfig struct {
 	GrpcPort                      uint16 `envconfig:"GRPC_PORT" required:"true"`
 	HTTPPort                      uint16 `envconfig:"HTTP_PORT" required:"true"`
 	SchemaPath                    string `envconfig:"SCHEMA_PATH" required:"true"`
+	AllowedOrigins                string `envconfig:"ALLOWED_ORIGINS"`
+	AuthEnabled                   bool   `envconfig:"AUTH_ENABLED"`
+	AuthSigningKey                string `envconfig:"AUTH_SIGNING_KEY"`
+	AuthRequiredScopes            string `envconfig:"AUTH_REQUIRED_SCOPES"`
+	AuthIss                       string `envconfig:"AUTH_ISS"`
+	AuthAud                       string `envconfig:"AUTH_AUD"`
 }
 
 type runMode string
@@ -36,8 +48,6 @@ const (
 	runModeServe    runMode = "serve"
 	runModeGenerate runMode = "generate"
 )
-
-var client *firestore.Client
 
 func main() {
 	mode := runModeServe
@@ -50,15 +60,23 @@ func main() {
 	config := &runtimeConfig{}
 	err := envconfig.Process("CONFIGSTORE", config)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Errorf("can't read configuration from environment: %v", err))
 	}
 
 	ctx := context.Background()
 
+	// HACK: Workaround Auth0 timestamp issues
+	jwt.TimeFunc = func() time.Time {
+		// Pretend we're 1 minute in the future because Auth0 can sometimes issue
+		// tokens in the future, and that prevents us from ever authenticating correctly,
+		// even if the token is only like 2 seconds in the future.
+		return time.Now().Add(time.Minute * 1)
+	}
+
 	// Generate the schema and gRPC types based on schema.json
 	genResult, err := generate(config.SchemaPath)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Errorf("can't generate protobufs: %v", err))
 	}
 
 	// Emit the testclient protobuf specification
@@ -77,24 +95,36 @@ func main() {
 		conf := &firebase.Config{ProjectID: config.GoogleCloudProjectID}
 		app, err := firebase.NewApp(ctx, conf)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln(fmt.Errorf("can't connect to Firebase: %v", err))
 		}
-		client, err = app.Firestore(ctx)
+		client, err := app.Firestore(ctx)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln(fmt.Errorf("can't connect to Firestore: %v", err))
 		}
 		defer client.Close()
+
+		// Start the transaction watcher
+		transactionWatcher, err := createTransactionWatcher(ctx, client, genResult.Schema)
+		if err != nil {
+			log.Fatalln(fmt.Errorf("can't create transaction watcher: %v", err))
+		}
 
 		// Serve the configstore gRPC server
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.GrpcPort))
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln(fmt.Errorf("can't serve the gRPC server: %v", err))
 		}
 		grpcServer := grpc.NewServer()
 		emptyServer := new(emptyServerInterface)
 		for _, service := range genResult.Services {
-			// kindSchema := kindMap[service]
-			kindName := genResult.KindNameMap[service]
+			dynamicProtobufServer := createConfigstoreDynamicProtobufServer(
+				client,
+				genResult,
+				service,
+				genResult.KindNameMap[service],
+				genResult.Schema,
+				transactionWatcher,
+			)
 
 			grpcServer.RegisterService(
 				&grpc.ServiceDesc{
@@ -104,293 +134,36 @@ func main() {
 						{
 							MethodName: "List",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								messageFactory := dynamic.NewMessageFactoryWithDefaults()
-
-								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("List%sRequest", kindName)]
-								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
-								if err := dec(in); err != nil {
-									return nil, err
-								}
-
-								startBytes, err := in.TryGetFieldByName("start")
-								if err != nil {
-									return nil, err
-								}
-								limit, err := in.TryGetFieldByName("limit")
-								if err != nil {
-									return nil, err
-								}
-
-								var start interface{}
-								if startBytes != nil {
-									if len(startBytes.([]byte)[:]) > 0 {
-										start = string(startBytes.([]byte)[:])
-									}
-								}
-
-								var snapshots []*firestore.DocumentSnapshot
-								if (limit == nil || limit.(uint32) == 0) && start == nil {
-									snapshots, err = client.Collection(kindName).Documents(ctx).GetAll()
-								} else if limit == nil || limit.(uint32) == 0 {
-									snapshots, err = client.Collection(kindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Documents(ctx).GetAll()
-								} else if start == nil {
-									snapshots, err = client.Collection(kindName).Limit(int(limit.(uint32))).Documents(ctx).GetAll()
-								} else {
-									snapshots, err = client.Collection(kindName).OrderBy(firestore.DocumentID, firestore.Asc).StartAfter(start.(string)).Limit(int(limit.(uint32))).Documents(ctx).GetAll()
-								}
-
-								if err != nil {
-									return nil, err
-								}
-
-								var entities []*dynamic.Message
-								for _, snapshot := range snapshots {
-									entity, err := convertSnapshotToDynamicMessage(
-										messageFactory,
-										genResult.MessageMap[kindName],
-										snapshot,
-										genResult.CommonMessageDescriptors,
-									)
-									if err != nil {
-										return nil, err
-									}
-									entities = append(entities, entity)
-								}
-
-								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("List%sResponse", kindName)]
-								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
-								out.SetFieldByName("entities", entities)
-
-								if !(limit == nil || limit.(uint32) == 0) {
-									if uint32(len(entities)) < limit.(uint32) {
-										out.SetFieldByName("moreResults", false)
-									} else {
-										// TODO: query to see if there really are more results, to make this behave like datastore
-										out.SetFieldByName("moreResults", true)
-										last := snapshots[len(snapshots)-1]
-										out.SetFieldByName("next", []byte(last.Ref.ID))
-									}
-								} else {
-									out.SetFieldByName("moreResults", false)
-								}
-
-								return out, nil
+								out, err := dynamicProtobufServer.dynamicProtobufList(srv, ctx, dec, interceptor)
+								return out, err
 							},
 						},
 						{
 							MethodName: "Get",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								messageFactory := dynamic.NewMessageFactoryWithDefaults()
-
-								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Get%sRequest", kindName)]
-								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
-								if err := dec(in); err != nil {
-									return nil, err
-								}
-
-								key, err := in.TryGetFieldByName("key")
-								if err != nil {
-									return nil, err
-								}
-
-								keyV, ok := key.(*dynamic.Message)
-								if !ok {
-									return nil, fmt.Errorf("unable to read key")
-								}
-
-								ref, err := convertKeyToDocumentRef(
-									client,
-									keyV,
-								)
-								if err != nil {
-									return nil, err
-								}
-
-								// TODO: Validate that the last component of Kind in the DocumentRef
-								// matches our expected type.
-
-								snapshot, err := ref.Get(ctx)
-								if err != nil {
-									return nil, err
-								}
-
-								entity, err := convertSnapshotToDynamicMessage(
-									messageFactory,
-									genResult.MessageMap[kindName],
-									snapshot,
-									genResult.CommonMessageDescriptors,
-								)
-								if err != nil {
-									return nil, err
-								}
-
-								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Get%sResponse", kindName)]
-								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
-								out.SetFieldByName("entity", entity)
-
-								return out, nil
+								out, err := dynamicProtobufServer.dynamicProtobufGet(srv, ctx, dec, interceptor)
+								return out, err
 							},
 						},
 						{
 							MethodName: "Update",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								messageFactory := dynamic.NewMessageFactoryWithDefaults()
-
-								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Update%sRequest", kindName)]
-								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
-								if err := dec(in); err != nil {
-									return nil, err
-								}
-
-								entity, err := in.TryGetFieldByName("entity")
-								if err != nil {
-									return nil, err
-								}
-
-								if entity == nil {
-									return nil, fmt.Errorf("entity must not be nil")
-								}
-
-								ref, data, err := convertDynamicMessageIntoRefAndDataMap(
-									client,
-									messageFactory,
-									genResult.MessageMap[kindName],
-									entity.(*dynamic.Message),
-								)
-								if err != nil {
-									return nil, err
-								}
-
-								if ref == nil {
-									return nil, fmt.Errorf("entity must be set")
-								}
-
-								_, err = ref.Set(ctx, data)
-								if err != nil {
-									return nil, err
-								}
-
-								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Update%sResponse", kindName)]
-								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
-								out.SetFieldByName("entity", entity)
-
-								return out, nil
+								out, err := dynamicProtobufServer.dynamicProtobufUpdate(srv, ctx, dec, interceptor)
+								return out, err
 							},
 						},
 						{
 							MethodName: "Create",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								messageFactory := dynamic.NewMessageFactoryWithDefaults()
-
-								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Create%sRequest", kindName)]
-								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
-								if err := dec(in); err != nil {
-									return nil, err
-								}
-
-								entity, err := in.TryGetFieldByName("entity")
-								if err != nil {
-									return nil, err
-								}
-
-								if entity == nil {
-									return nil, fmt.Errorf("entity must not be nil")
-								}
-
-								ref, data, err := convertDynamicMessageIntoRefAndDataMap(
-									client,
-									messageFactory,
-									genResult.MessageMap[kindName],
-									entity.(*dynamic.Message),
-								)
-								if err != nil {
-									return nil, err
-								}
-
-								if ref.ID == "" {
-									ref, _, err = ref.Parent.Add(ctx, data)
-								} else {
-									_, err = ref.Create(ctx, data)
-								}
-								if err != nil {
-									return nil, err
-								}
-
-								key, err := convertDocumentRefToKey(
-									messageFactory,
-									ref,
-									genResult.CommonMessageDescriptors,
-								)
-								if err != nil {
-									return nil, err
-								}
-
-								// set the ID back
-								entity.(*dynamic.Message).SetFieldByName("key", key)
-
-								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Create%sResponse", kindName)]
-								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
-								out.SetFieldByName("entity", entity)
-
-								return out, nil
+								out, err := dynamicProtobufServer.dynamicProtobufCreate(srv, ctx, dec, interceptor)
+								return out, err
 							},
 						},
 						{
 							MethodName: "Delete",
 							Handler: func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-								messageFactory := dynamic.NewMessageFactoryWithDefaults()
-
-								requestMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Delete%sRequest", kindName)]
-								in := messageFactory.NewDynamicMessage(requestMessageDescriptor)
-								if err := dec(in); err != nil {
-									return nil, err
-								}
-
-								key, err := in.TryGetFieldByName("key")
-								if err != nil {
-									return nil, err
-								}
-
-								keyV, ok := key.(*dynamic.Message)
-								if !ok {
-									return nil, fmt.Errorf("unable to read key")
-								}
-
-								ref, err := convertKeyToDocumentRef(
-									client,
-									keyV,
-								)
-								if err != nil {
-									return nil, err
-								}
-
-								// TODO: Validate ref is of the correct kind
-
-								snapshot, err := ref.Get(ctx)
-								if err != nil {
-									return nil, err
-								}
-
-								entity, err := convertSnapshotToDynamicMessage(
-									messageFactory,
-									genResult.MessageMap[kindName],
-									snapshot,
-									genResult.CommonMessageDescriptors,
-								)
-								if err != nil {
-									return nil, err
-								}
-
-								_, err = ref.Delete(ctx)
-								if err != nil {
-									return nil, err
-								}
-
-								responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Delete%sResponse", kindName)]
-								out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
-								out.SetFieldByName("entity", entity)
-
-								return out, nil
+								out, err := dynamicProtobufServer.dynamicProtobufDelete(srv, ctx, dec, interceptor)
+								return out, err
 							},
 						},
 					},
@@ -400,44 +173,7 @@ func main() {
 							ServerStreams: true,
 							ClientStreams: false,
 							Handler: func(srv interface{}, stream grpc.ServerStream) error {
-								messageFactory := dynamic.NewMessageFactoryWithDefaults()
-
-								snapshots := client.Collection(kindName).Snapshots(ctx)
-								for true {
-									snapshot, err := snapshots.Next()
-									if err != nil {
-										return err
-									}
-									for _, change := range snapshot.Changes {
-										entity, err := convertSnapshotToDynamicMessage(
-											messageFactory,
-											genResult.MessageMap[kindName],
-											change.Doc,
-											genResult.CommonMessageDescriptors,
-										)
-										if err != nil {
-											return err
-										}
-
-										responseMessageDescriptor := genResult.MessageMap[fmt.Sprintf("Watch%sEvent", kindName)]
-										out := messageFactory.NewDynamicMessage(responseMessageDescriptor)
-										switch change.Kind {
-										case firestore.DocumentAdded:
-											out.SetFieldByName("type", genResult.WatchTypeEnumValues.Created.GetNumber())
-										case firestore.DocumentModified:
-											out.SetFieldByName("type", genResult.WatchTypeEnumValues.Updated.GetNumber())
-										case firestore.DocumentRemoved:
-											out.SetFieldByName("type", genResult.WatchTypeEnumValues.Deleted.GetNumber())
-										}
-										out.SetFieldByName("entity", entity)
-										out.SetFieldByName("oldIndex", change.OldIndex)
-										out.SetFieldByName("newIndex", change.NewIndex)
-
-										stream.SendMsg(out)
-									}
-								}
-
-								return nil
+								return dynamicProtobufServer.dynamicProtobufWatch(srv, stream.Context(), stream)
 							},
 						},
 					},
@@ -447,9 +183,87 @@ func main() {
 			)
 		}
 
-		RegisterConfigstoreMetaServiceServer(grpcServer, &configstoreMetaServiceServer{
-			schema: genResult.Schema,
-		})
+		dynamicProtobufTransactionServer := createConfigstoreDynamicProtobufTransactionServer(
+			client,
+			genResult,
+			genResult.TransactionService,
+			genResult.Schema,
+			transactionWatcher,
+		)
+		grpcServer.RegisterService(
+			&grpc.ServiceDesc{
+				ServiceName: fmt.Sprintf("%s.%s", genResult.Schema.Name, genResult.TransactionService.GetName()),
+				HandlerType: (*emptyServerInterface)(nil),
+				Methods:     nil,
+				Streams: []grpc.StreamDesc{
+					{
+						StreamName:    "Watch",
+						ServerStreams: true,
+						ClientStreams: false,
+						Handler: func(srv interface{}, stream grpc.ServerStream) error {
+							return dynamicProtobufTransactionServer.dynamicProtobufTransactionWatch(stream.Context(), srv, stream)
+						},
+					},
+				},
+				Metadata: genResult.FileBuilder.GetName(),
+			},
+			emptyServer,
+		)
+
+		// Add the metadata server.
+		metaServer := createConfigstoreMetaServiceServer(
+			client,
+			genResult.Schema,
+			createTransactionProcessor(client),
+			transactionWatcher,
+		)
+		RegisterConfigstoreMetaServiceServer(grpcServer, metaServer)
+		grpcServer.RegisterService(&grpc.ServiceDesc{
+			ServiceName: fmt.Sprintf("%s.%s", genResult.Schema.Name, "ConfigstoreMetaService"),
+			HandlerType: (*ConfigstoreMetaServiceServer)(nil),
+			Methods: []grpc.MethodDesc{
+				{
+					MethodName: "GetSchema",
+					Handler:    _ConfigstoreMetaService_GetSchema_Handler,
+				},
+				{
+					MethodName: "MetaList",
+					Handler:    _ConfigstoreMetaService_MetaList_Handler,
+				},
+				{
+					MethodName: "MetaGet",
+					Handler:    _ConfigstoreMetaService_MetaGet_Handler,
+				},
+				{
+					MethodName: "MetaUpdate",
+					Handler:    _ConfigstoreMetaService_MetaUpdate_Handler,
+				},
+				{
+					MethodName: "MetaCreate",
+					Handler:    _ConfigstoreMetaService_MetaCreate_Handler,
+				},
+				{
+					MethodName: "MetaDelete",
+					Handler:    _ConfigstoreMetaService_MetaDelete_Handler,
+				},
+				{
+					MethodName: "GetDefaultPartitionId",
+					Handler:    _ConfigstoreMetaService_GetDefaultPartitionId_Handler,
+				},
+				{
+					MethodName: "ApplyTransaction",
+					Handler:    _ConfigstoreMetaService_ApplyTransaction_Handler,
+				},
+			},
+			Streams: []grpc.StreamDesc{
+				{
+					StreamName:    "WatchTransactions",
+					Handler:       _ConfigstoreMetaService_WatchTransactions_Handler,
+					ServerStreams: true,
+				},
+			},
+			Metadata: "meta.proto",
+		}, metaServer)
 
 		// Start gRPC server.
 		go func() {
@@ -458,28 +272,145 @@ func main() {
 		}()
 
 		// Start HTTP server.
-		http.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
+		router := mux.NewRouter()
+		router.HandleFunc("/sdk/client.proto", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoFile)
 		})
-		http.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
+		router.HandleFunc("/sdk/client.go", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s", clientProtoGoCode)
 		})
+
+		router.PathPrefix("/static").Handler(http.FileServer(http.Dir("/server-ui/")))
+		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "/server-ui/index.html")
+		})
+
 		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
-		wrappedGrpc := grpcweb.WrapServer(grpcServer)
-		http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			resp.Header().Set("Access-Control-Allow-Origin", "*")
-			resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-			resp.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, x-grpc-web")
-			if req.Method == "OPTIONS" {
-				return
+
+		GrpcServeWithWrapper(router, grpcServer, func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if config.AuthEnabled {
+					authMiddleware(
+						h,
+						[]byte(config.AuthSigningKey),
+						strings.Split(config.AuthRequiredScopes, ","),
+						config.AuthIss,
+						config.AuthAud,
+					).ServeHTTP(w, r)
+				} else {
+					h.ServeHTTP(w, r)
+				}
+			})
+		}, fmt.Sprintf("0.0.0.0:%d", config.HTTPPort), func(origin string) bool {
+			if config.AllowedOrigins == "" {
+				return false
 			}
-			if wrappedGrpc.IsGrpcWebRequest(req) {
-				wrappedGrpc.ServeHTTP(resp, req)
-				return
+			if config.AllowedOrigins == "*" {
+				return true
 			}
-			http.DefaultServeMux.ServeHTTP(resp, req)
-		}))
+			allowedOriginsArray := strings.Split(config.AllowedOrigins, ",")
+			for _, or := range allowedOriginsArray {
+				if origin == or {
+					return true
+				}
+			}
+			return false
+		})
 	} else if mode == runModeGenerate {
 		fmt.Println(clientProtoGoCode)
+	}
+}
+
+// setDummyClientHeaders sets two empty headers "grpc-status" and "grpc-message", which
+// the JS client tries to read on responses. We don't actually populate them with anything
+// but the server-side gRPC handler looks at the headers that were sent by the server
+// to determine what value to set in Access-Control-Expose-Headers. Since prior to this
+// change we didn't send them at all, they wouldn't be included in Access-Control-Expose-Headers
+// and thus when the JS client tried to read them it would log errors in the Chrome console
+// (and those error counts add up pretty fast when we're repeatedly polling endpoints).
+//
+// These headers are apparently only used for streaming requests, and we don't use those
+// yet (and ideally, they should get overwritten by the server-side gRPC if they need to be
+// set).
+func setDummyClientHeaders(resp http.ResponseWriter) {
+	resp.Header().Set("grpc-status", "")
+	resp.Header().Set("grpc-message", "")
+}
+
+type wrapCall func(http.Handler) http.Handler
+
+// GrpcServeWithWrapper allows you to wrap the gRPC layer in additional HTTP handler. For example,
+// you can use this to inject an authentication layer for gRPC.
+func GrpcServeWithWrapper(handler http.Handler, grpcServer *grpc.Server, wrapper wrapCall, addr string, isAllowedOrigin func(origin string) bool) {
+	wrappedGrpc := grpcweb.WrapServer(
+		grpcServer,
+		grpcweb.WithAllowedRequestHeaders([]string{"*"}),
+		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+		grpcweb.WithOriginFunc(func(origin string) bool {
+			return isAllowedOrigin(origin)
+		}),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+			origin, err := grpcweb.WebsocketRequestOrigin(req)
+			if err != nil {
+				return false
+			}
+			return isAllowedOrigin(origin)
+		}),
+		grpcweb.WithWebsockets(true),
+	)
+	doubleWrappedGrpc := wrapper(wrappedGrpc)
+	mixHandler := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		// Serve GRPC if this is a GRPC request.
+		if wrappedGrpc.IsAcceptableGrpcCorsRequest(req) {
+			wrappedGrpc.ServeHTTP(resp, req)
+			return
+		}
+		if wrappedGrpc.IsGrpcWebRequest(req) ||
+			wrappedGrpc.IsGrpcWebSocketRequest(req) {
+			setDummyClientHeaders(resp)
+			doubleWrappedGrpc.ServeHTTP(resp, req)
+			return
+		}
+
+		// Otherwise, fallback to the specified HTTP handler.
+		handler.ServeHTTP(resp, req)
+	})
+	HttpServe(mixHandler, addr)
+}
+
+// HttpServe starts a HTTP server using the given HTTP handler and listening
+// on the specified address.
+func HttpServe(handler http.Handler, addr string) {
+	server := &http.Server{
+		Addr:         addr,
+		WriteTimeout: time.Second * 15,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+		Handler:      handler,
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			fmt.Printf("http server error: %v", err)
+			os.Exit(1)
+		}
+	}()
+
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, syscall.SIGTERM, syscall.SIGINT)
+
+	<-signalChannel
+
+	if os.Getenv("DEV") != "1" {
+		fmt.Printf("gracefully shutting down...\n")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		if err.Error() != "http: Server closed" { // ignore this "error"
+			fmt.Printf("could not gracefully shut down server: %v\n", err)
+		}
 	}
 }

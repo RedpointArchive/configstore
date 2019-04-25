@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package meta;
 
+import "google/protobuf/timestamp.proto";
+
 message PartitionId {
     string namespace = 1;
 }
@@ -20,14 +22,15 @@ message Key {
 }
 
 enum ValueType {
-    TypeDouble = 0;
-    TypeInt64 = 1;
-    TypeString = 2;
-    TypeTimestamp = 3;
-    TypeBoolean = 4;
-    TypeBytes = 5;
-    TypeKey = 6;
-    TypeUInt64 = 7;
+    unknown = 0;
+    double = 1;
+    int64 = 2;
+    string = 3;
+    timestamp = 4;
+    boolean = 5;
+    bytes = 6;
+    key = 7;
+    uint64 = 8;
 }
 
 message Value {
@@ -36,48 +39,111 @@ message Value {
     double doubleValue = 3;
     int64 int64Value = 4;
     string stringValue = 5;
-    bytes timestampValue = 6;
+    google.protobuf.Timestamp timestampValue = 6;
     bool booleanValue = 7;
     bytes bytesValue = 8;
     Key keyValue = 9;
     uint64 uint64Value = 10;
 }
 
-message Field {
+message SchemaField {
     int32 id = 1;
     string name = 2;
     ValueType type = 3;
     string comment = 4;
-    FieldEditorInfo editor = 5;
+    SchemaFieldEditorInfo editor = 5;
+    bool readonly = 6;
 }
 
-enum FieldEditorInfoType {
-    Default = 0;
-    Password = 1;
-    Lookup = 2;
+enum SchemaFieldEditorInfoType {
+    default = 0;
+    password = 1;
+    lookup = 2;
 }
 
-message FieldEditorInfo {
+message SchemaFieldEditorInfo {
     string displayName = 1;
-    FieldEditorInfoType type = 2;
-    bool readonly = 3;
-    string foreignType = 4;
+    SchemaFieldEditorInfoType type = 2;
+    bool editorReadonly = 3;
+    repeated string allowedKinds = 4;
+    bool useFinancialValueToNibblinsConversion = 5;
+    repeated SchemaFieldEditorValidator validators = 6;
 }
 
-message KindEditor {
+message SchemaFieldEditorValidator {
+    oneof validator {
+        SchemaFieldEditorValidatorRequired required = 1; 
+        SchemaFieldEditorValidatorFixedLength fixedLength = 2;
+        SchemaFieldEditorValidatorDefault default = 3;
+        SchemaFieldEditorValidatorFormatIPAddress formatIPAddress = 4;
+        SchemaFieldEditorValidatorFormatIPAddressPort formatIPAddressPort = 5;
+    }
+}
+
+message SchemaFieldEditorValidatorRequired {
+}
+
+message SchemaFieldEditorValidatorFixedLength {
+    uint32 length = 1;
+}
+
+message SchemaFieldEditorValidatorDefault {
+    Value value = 1;
+}
+
+message SchemaFieldEditorValidatorFormatIPAddress {
+}
+
+message SchemaFieldEditorValidatorFormatIPAddressPort {
+}
+
+message SchemaKindEditor {
     string singular = 1;
     string plural = 2;
+    string renderEditorDropdownWithField = 3;
 }
 
-message Kind {
+message SchemaKind {
+    repeated SchemaField fields = 2;
+    SchemaKindEditor editor = 3;
+    repeated SchemaIndex indexes = 4;
+    repeated string ancestors = 5; // TODO: unused
+    int32 id = 6;
+}
+
+message SchemaIndex {
     string name = 1;
-    repeated Field fields = 2;
-    KindEditor editor = 3;
+    SchemaIndexType type = 2;
+    oneof value {
+        SchemaComputedIndex computed = 3;
+        string field = 4;
+    }
+}
+
+enum SchemaIndexType {
+    unspecified = 0;
+    memory = 1;
+}
+
+message SchemaComputedIndex {
+    oneof algorithm {
+        SchemaComputedIndexFnv64a fnv64a = 1;
+        SchemaComputedIndexFnv64aPair fnv64a_pair = 2;
+    }
+}
+
+message SchemaComputedIndexFnv64a {
+    string field = 1;
+}
+
+message SchemaComputedIndexFnv64aPair {
+    string field1 = 1;
+    string field2 = 2;
 }
 
 message Schema {
     string name = 1;
-    repeated Kind kinds = 2;
+    map<string, SchemaKind> kinds = 2;
 }
 
 message GetSchemaRequest {
@@ -89,6 +155,7 @@ message GetSchemaResponse {
 
 message MetaListEntitiesRequest {
     bytes start = 1;
+    // a limit of 0 or lower indicates no limit to the number of entities returned
     uint32 limit = 2;
     string kindName = 3;
 }
@@ -104,7 +171,123 @@ message MetaEntity {
     repeated Value values = 2;
 }
 
+message GetDefaultPartitionIdRequest {
+}
+
+message GetDefaultPartitionIdResponse {
+    string namespace = 1;
+}
+
+message MetaGetEntityRequest {
+    Key key = 1;
+    string kindName = 2;
+}
+
+message MetaGetEntityResponse {
+    MetaEntity entity = 1;
+}
+
+message MetaUpdateEntityRequest {
+    MetaEntity entity = 1;
+}
+
+message MetaUpdateEntityResponse {
+    MetaEntity entity = 1;
+}
+
+message MetaCreateEntityRequest {
+    MetaEntity entity = 1;
+    string kindName = 2;
+}
+
+message MetaCreateEntityResponse {
+    MetaEntity entity = 1;
+}
+
+message MetaDeleteEntityRequest {
+    Key key = 1;
+    string kindName = 2;
+}
+
+message MetaDeleteEntityResponse {
+    MetaEntity entity = 1;
+}
+
 service ConfigstoreMetaService {
     rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse);
     rpc MetaList(MetaListEntitiesRequest) returns (MetaListEntitiesResponse);
+    rpc MetaGet(MetaGetEntityRequest) returns (MetaGetEntityResponse);
+    rpc MetaUpdate(MetaUpdateEntityRequest) returns (MetaUpdateEntityResponse);
+    rpc MetaCreate(MetaCreateEntityRequest) returns (MetaCreateEntityResponse);
+    rpc MetaDelete(MetaDeleteEntityRequest) returns (MetaDeleteEntityResponse);
+    rpc GetDefaultPartitionId(GetDefaultPartitionIdRequest) returns (GetDefaultPartitionIdResponse);
+    rpc ApplyTransaction(MetaTransaction) returns (MetaTransactionResult);
+    rpc WatchTransactions(WatchTransactionsRequest) returns (stream WatchTransactionsResponse);
+}
+
+// =======
+
+message MetaTransaction {
+    repeated MetaOperation operations = 1;
+    string description = 2;
+}
+
+message MetaOperation {
+    oneof operation {
+        MetaListEntitiesRequest listRequest = 1;
+        MetaGetEntityRequest getRequest = 2;
+        MetaUpdateEntityRequest updateRequest = 3;
+        MetaCreateEntityRequest createRequest = 4;
+        MetaDeleteEntityRequest deleteRequest = 5;
+    }
+}
+
+message MetaTransactionResult {
+    repeated MetaOperationResult operationResults = 1;
+}
+
+message MetaOperationResultError {
+    string errorMessage = 1;
+}
+
+message MetaOperationResult {
+    MetaOperationResultError error = 1;
+    oneof operation {
+        MetaListEntitiesResponse listResponse = 2;
+        MetaGetEntityResponse getResponse = 3;
+        MetaUpdateEntityResponse updateResponse = 4;
+        MetaCreateEntityResponse createResponse = 5;
+        MetaDeleteEntityResponse deleteResponse = 6;
+    }
+}
+
+message WatchTransactionsRequest {
+
+}
+
+message WatchTransactionsResponse {
+    oneof response {
+        MetaTransactionBatch batch = 1;
+        MetaTransactionInitialState initialState = 2;
+    }
+}
+
+message MetaTransactionRecord {
+    repeated Key mutatedKeys = 1;
+    repeated Key deletedKeys = 2;
+    google.protobuf.Timestamp dateSubmitted = 3;
+    google.protobuf.Timestamp dateCreated = 4;
+    string description = 5;
+    string id = 6;
+}
+
+message MetaTransactionBatch {
+    repeated MetaEntity mutatedEntities = 1;
+    repeated Key deletedKeys = 2;
+    string description = 3;
+    string id = 4;
+}
+
+message MetaTransactionInitialState {
+    repeated MetaEntity entities = 1;
 }

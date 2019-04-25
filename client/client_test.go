@@ -18,9 +18,8 @@ import (
 )
 
 var ctx context.Context
-var client UserServiceClient
-var intTestClient IntegerTestServiceClient
-var nilKeyTestClient NilKeyTestServiceClient
+var configstore *Configstore
+var configstore2 *Configstore
 
 func TestMain(m *testing.M) {
 	conn, err := grpc.Dial("127.0.0.1:13389", grpc.WithInsecure())
@@ -32,14 +31,23 @@ func TestMain(m *testing.M) {
 	defer conn.Close()
 
 	ctx = context.Background()
-	client = NewUserServiceClient(conn)
-	intTestClient = NewIntegerTestServiceClient(conn)
-	nilKeyTestClient = NewNilKeyTestServiceClient(conn)
+	configstore, err = ConnectToConfigstore(ctx, conn)
+	if err != nil {
+		fmt.Printf("%v", err)
+		fmt.Println()
+		return
+	}
+	configstore2, err = ConnectToConfigstore(ctx, conn)
+	if err != nil {
+		fmt.Printf("%v", err)
+		fmt.Println()
+		return
+	}
 	os.Exit(m.Run())
 }
 
 func TestUInt64Storage(t *testing.T) {
-	resp, err := intTestClient.Create(ctx, &CreateIntegerTestRequest{
+	resp, err := configstore.IntegerTests.Client().Create(ctx, &CreateIntegerTestRequest{
 		Entity: &IntegerTest{
 			Key:         CreateTopLevel_IntegerTest_IncompleteKey(&PartitionId{}),
 			UnsignedInt: uint64(18446744073709551615),
@@ -49,7 +57,7 @@ func TestUInt64Storage(t *testing.T) {
 	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Equal(t, resp.Entity.UnsignedInt, uint64(18446744073709551615))
 
-	resp2, err := intTestClient.Get(ctx, &GetIntegerTestRequest{
+	resp2, err := configstore.IntegerTests.Client().Get(ctx, &GetIntegerTestRequest{
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
@@ -58,7 +66,7 @@ func TestUInt64Storage(t *testing.T) {
 }
 
 func TestNilKeyStorage(t *testing.T) {
-	resp, err := nilKeyTestClient.Create(ctx, &CreateNilKeyTestRequest{
+	resp, err := configstore.NilKeyTests.Client().Create(ctx, &CreateNilKeyTestRequest{
 		Entity: &NilKeyTest{
 			Key:        CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{}),
 			NilKeyTest: nil,
@@ -68,7 +76,7 @@ func TestNilKeyStorage(t *testing.T) {
 	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Assert(t, resp.Entity.NilKeyTest == nil)
 
-	resp2, err := nilKeyTestClient.Get(ctx, &GetNilKeyTestRequest{
+	resp2, err := configstore.NilKeyTests.Client().Get(ctx, &GetNilKeyTestRequest{
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
@@ -77,7 +85,7 @@ func TestNilKeyStorage(t *testing.T) {
 }
 
 func TestKeyStorage(t *testing.T) {
-	resp, err := nilKeyTestClient.Create(ctx, &CreateNilKeyTestRequest{
+	resp, err := configstore.NilKeyTests.Client().Create(ctx, &CreateNilKeyTestRequest{
 		Entity: &NilKeyTest{
 			Key:        CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{}),
 			NilKeyTest: CreateTopLevel_NilKeyTest_NameKey(&PartitionId{}, "Hello World"),
@@ -87,16 +95,46 @@ func TestKeyStorage(t *testing.T) {
 	assert.Assert(t, resp.Entity.Key.Path[0].GetName() != "")
 	assert.Assert(t, resp.Entity.NilKeyTest.Path[0].GetName() != "")
 
-	resp2, err := nilKeyTestClient.Get(ctx, &GetNilKeyTestRequest{
+	resp2, err := configstore.NilKeyTests.Client().Get(ctx, &GetNilKeyTestRequest{
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
+	assert.Assert(t, resp2.Entity.Key != nil, "entity key was nil")
+	assert.Assert(t, resp2.Entity.Key.Path != nil, "entity key path was nil")
+	assert.Assert(t, resp2.Entity.Key.Path[0] != nil, "entity key path[0] was nil")
 	assert.Equal(t, resp2.Entity.Key.Path[0].GetName(), resp.Entity.Key.Path[0].GetName())
+	assert.Assert(t, resp2.Entity.NilKeyTest != nil, "entity nilkeytest was nil")
+	assert.Assert(t, resp2.Entity.NilKeyTest.Path != nil, "entity nilkeytest path was nil")
+	assert.Assert(t, resp2.Entity.NilKeyTest.Path[0] != nil, "entity nilkeytest path[0] was nil")
 	assert.Equal(t, resp2.Entity.NilKeyTest.Path[0].GetName(), resp.Entity.NilKeyTest.Path[0].GetName())
 }
 
+func TestIndexFetch(t *testing.T) {
+	testID := xid.New()
+
+	resp, err := configstore.IndexTests.Create(context.Background(), &IndexTest{
+		Key:            CreateTopLevel_IndexTest_IncompleteKey(&PartitionId{}),
+		StringField:    testID.String(),
+		Int64Field:     int64(1),
+		Uint64Field:    uint64(1),
+		BooleanField:   true,
+		DoubleField:    float64(0.2),
+		TimestampField: nil,
+		BytesField:     nil,
+		KeyField:       nil,
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, resp.Key.Path[0].GetName() != "")
+
+	o2 := configstore.IndexTests.GetByString(testID.String())
+	assert.Assert(t, resp == o2)
+
+	o2 = configstore.IndexTests.GetByStringFnv(Fnv64a(testID.String()))
+	assert.Assert(t, resp == o2)
+}
+
 func TestCreate(t *testing.T) {
-	resp, err := client.Create(ctx, &CreateUserRequest{
+	resp, err := configstore.Users.Client().Create(ctx, &CreateUserRequest{
 		Entity: &User{
 			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
@@ -110,7 +148,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateWithTimestamp(t *testing.T) {
-	resp, err := client.Create(ctx, &CreateUserRequest{
+	resp, err := configstore.Users.Client().Create(ctx, &CreateUserRequest{
 		Entity: &User{
 			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
@@ -130,14 +168,14 @@ func TestCreateWithTimestamp(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	_, err := client.List(ctx, &ListUserRequest{
+	_, err := configstore.Users.Client().List(ctx, &ListUserRequest{
 		Limit: 10,
 	})
 	assert.NilError(t, err)
 }
 
 func TestCreateThenGet(t *testing.T) {
-	resp, err := client.Create(ctx, &CreateUserRequest{
+	resp, err := configstore.Users.Client().Create(ctx, &CreateUserRequest{
 		Entity: &User{
 			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
@@ -149,7 +187,7 @@ func TestCreateThenGet(t *testing.T) {
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 
-	resp2, err := client.Get(ctx, &GetUserRequest{
+	resp2, err := configstore.Users.Client().Get(ctx, &GetUserRequest{
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
@@ -159,7 +197,7 @@ func TestCreateThenGet(t *testing.T) {
 }
 
 func TestWatchThenCreate(t *testing.T) {
-	watcher, err := client.Watch(ctx, &WatchUserRequest{})
+	watcher, err := configstore.Users.Client().Watch(ctx, &WatchUserRequest{})
 	assert.NilError(t, err)
 
 	mutex := make(chan bool, 1)
@@ -184,7 +222,7 @@ func TestWatchThenCreate(t *testing.T) {
 		}
 	}()
 
-	resp, err := client.Create(ctx, &CreateUserRequest{
+	resp, err := configstore.Users.Client().Create(ctx, &CreateUserRequest{
 		Entity: &User{
 			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
@@ -210,13 +248,7 @@ func TestWatchThenCreate(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	store1, err := NewUserStore(ctx, client)
-	assert.NilError(t, err)
-
-	store2, err := NewUserStore(ctx, client)
-	assert.NilError(t, err)
-
-	user, err := store1.Create(ctx, &User{
+	user, err := configstore.Users.Create(ctx, &User{
 		Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 		EmailAddress: "hello@example.com",
 		PasswordHash: "v",
@@ -225,20 +257,20 @@ func TestStore(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	_, ok := store2.GetAndCheck(user.Key)
+	_, ok := configstore2.Users.GetAndCheck(user.Key)
 	assert.Equal(t, ok, true)
 
-	_, err = store1.Delete(ctx, user.Key)
+	_, err = configstore.Users.Delete(ctx, user.Key)
 	assert.NilError(t, err)
 
 	time.Sleep(1 * time.Second)
 
-	_, ok = store2.GetAndCheck(user.Key)
+	_, ok = configstore2.Users.GetAndCheck(user.Key)
 	assert.Equal(t, ok, false)
 }
 
 func TestCreateThenUpdateThenGet(t *testing.T) {
-	resp, err := client.Create(ctx, &CreateUserRequest{
+	resp, err := configstore.Users.Client().Create(ctx, &CreateUserRequest{
 		Entity: &User{
 			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
@@ -252,7 +284,7 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 
 	resp.Entity.EmailAddress = "update@example.com"
 
-	resp2, err := client.Update(ctx, &UpdateUserRequest{
+	resp2, err := configstore.Users.Client().Update(ctx, &UpdateUserRequest{
 		Entity: resp.Entity,
 	})
 	assert.NilError(t, err)
@@ -260,7 +292,7 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 	assert.Equal(t, resp2.Entity.EmailAddress, "update@example.com")
 	assert.Equal(t, resp2.Entity.PasswordHash, "what")
 
-	resp3, err := client.Get(ctx, &GetUserRequest{
+	resp3, err := configstore.Users.Client().Get(ctx, &GetUserRequest{
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
@@ -270,7 +302,7 @@ func TestCreateThenUpdateThenGet(t *testing.T) {
 }
 
 func TestCreateThenDeleteThenGet(t *testing.T) {
-	resp, err := client.Create(ctx, &CreateUserRequest{
+	resp, err := configstore.Users.Client().Create(ctx, &CreateUserRequest{
 		Entity: &User{
 			Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
 			EmailAddress: "hello@example.com",
@@ -282,7 +314,7 @@ func TestCreateThenDeleteThenGet(t *testing.T) {
 	assert.Equal(t, resp.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp.Entity.PasswordHash, "what")
 
-	resp2, err := client.Delete(ctx, &DeleteUserRequest{
+	resp2, err := configstore.Users.Client().Delete(ctx, &DeleteUserRequest{
 		Key: resp.Entity.Key,
 	})
 	assert.NilError(t, err)
@@ -290,9 +322,61 @@ func TestCreateThenDeleteThenGet(t *testing.T) {
 	assert.Equal(t, resp2.Entity.EmailAddress, "hello@example.com")
 	assert.Equal(t, resp2.Entity.PasswordHash, "what")
 
-	_, err = client.Get(ctx, &GetUserRequest{
+	_, err = configstore.Users.Client().Get(ctx, &GetUserRequest{
 		Key: resp.Entity.Key,
 	})
 	assert.Assert(t, err != nil)
 	assert.Assert(t, strings.Contains(fmt.Sprintf("%v", err), "code = NotFound"))
+}
+
+func TestSnapshot(t *testing.T) {
+	user, err := configstore.Users.Create(ctx, &User{
+		Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
+		EmailAddress: "hello@example.com",
+		PasswordHash: "v",
+	})
+	assert.NilError(t, err)
+
+	userSnapshot := &UserSnapshot{}
+	configstore.TakeSnapshots(userSnapshot)
+
+	_, err = configstore.Users.Delete(ctx, user.Key)
+	assert.NilError(t, err)
+
+	_, ok := userSnapshot.GetAndCheck(user.Key)
+	assert.Equal(t, ok, true)
+}
+
+func TestSnapshotMulti(t *testing.T) {
+	user, err := configstore.Users.Create(ctx, &User{
+		Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
+		EmailAddress: "hello@example.com",
+		PasswordHash: "v",
+	})
+	assert.NilError(t, err)
+
+	nilKey, err := configstore.NilKeyTests.Create(ctx, &NilKeyTest{
+		Key:        CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{}),
+		NilKeyTest: nil,
+	})
+	assert.NilError(t, err)
+
+	userSnapshot := &UserSnapshot{}
+	nilKeySnapshot := &NilKeyTestSnapshot{}
+	configstore.TakeSnapshots(userSnapshot, nilKeySnapshot)
+
+	_, err = configstore.Users.Delete(ctx, user.Key)
+	assert.NilError(t, err)
+
+	nilKey.NilKeyTest = CreateTopLevel_NilKeyTest_IncompleteKey(&PartitionId{})
+
+	_, err = configstore.NilKeyTests.Update(ctx, nilKey)
+	assert.NilError(t, err)
+
+	_, ok := userSnapshot.GetAndCheck(user.Key)
+	assert.Equal(t, ok, true)
+
+	oldNilKey, ok := nilKeySnapshot.GetAndCheck(nilKey.Key)
+	assert.Equal(t, ok, true)
+	assert.Assert(t, oldNilKey.NilKeyTest == nil, "nil key test was not nil")
 }

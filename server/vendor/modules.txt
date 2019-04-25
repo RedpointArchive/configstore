@@ -18,7 +18,10 @@ firebase.google.com/go/iid
 firebase.google.com/go/internal
 firebase.google.com/go/messaging
 firebase.google.com/go/storage
-# github.com/golang/protobuf v1.2.0
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
+# github.com/golang/protobuf v1.3.1
+github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/protoc-gen-go/generator
@@ -26,15 +29,23 @@ github.com/golang/protobuf/protoc-gen-go/grpc
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/wrappers
+github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
 github.com/golang/protobuf/protoc-gen-go/plugin
-github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/empty
-github.com/golang/protobuf/ptypes/struct
+# github.com/google/go-cmp v0.2.0
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/googleapis/gax-go/v2 v2.0.3
 github.com/googleapis/gax-go/v2
+# github.com/gorilla/handlers v1.4.0
+github.com/gorilla/handlers
+# github.com/gorilla/mux v1.7.0
+github.com/gorilla/mux
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
 # github.com/improbable-eng/grpc-web v0.0.0-20190208103255-801c4995c859
@@ -48,6 +59,8 @@ github.com/jhump/protoreflect/desc/internal
 github.com/jhump/protoreflect/internal
 # github.com/kelseyhightower/envconfig v1.3.0
 github.com/kelseyhightower/envconfig
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
 # github.com/rs/cors v1.6.0
 github.com/rs/cors
 # go.opencensus.io v0.18.0
@@ -67,9 +80,9 @@ go.opencensus.io/stats/internal
 go.opencensus.io/internal/tagencoding
 go.opencensus.io
 # golang.org/x/net v0.0.0-20181106065722-10aee1819953
-golang.org/x/net/context
 golang.org/x/net/http2
 golang.org/x/net/trace
+golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
@@ -155,3 +168,9 @@ google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/credentials/oauth
+# gotest.tools v2.2.0+incompatible
+gotest.tools/assert
+gotest.tools/assert/cmp
+gotest.tools/internal/format
+gotest.tools/internal/source
+gotest.tools/internal/difflib

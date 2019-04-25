@@ -1,18 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { KindRouteProps } from "./KindRoute";
 import { RouteComponentProps } from "react-router";
 import {
   GetSchemaResponse,
   MetaListEntitiesResponse,
-  MetaListEntitiesRequest
+  MetaListEntitiesRequest,
+  MetaDeleteEntityRequest,
+  ValueType,
+  SchemaFieldEditorInfo,
+  MetaOperation,
+  MetaEntity
 } from "../api/meta_pb";
-import { g, serializeKey } from "../core";
-import { grpc } from "@improbable-eng/grpc-web";
-import { ConfigstoreMetaService } from "../api/meta_pb_service";
-import { UnaryOutput } from "@improbable-eng/grpc-web/dist/typings/unary";
+import {
+  g,
+  serializeKey,
+  deserializeKey,
+  prettifyKey,
+  getLastKindOfKey,
+  c
+} from "../core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faSpinner,
+  faPencilAlt,
+  faCheck
+} from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
+import { ConfigstoreMetaServicePromiseClient } from "../api/meta_grpc_web_pb";
+import { createGrpcPromiseClient } from "../svcHost";
+import { useAsync } from "react-async";
+import { PendingTransactionContext, PendingTransaction } from "../App";
+import moment from "moment";
 
 export interface KindListRouteMatch {
   kind: string;
@@ -27,52 +44,88 @@ interface SetHolder {
   v: Set<string>;
 }
 
-export const KindListRoute = (props: KindListRouteProps) => {
-  const [data, setData] = useState<MetaListEntitiesResponse | null>(null);
+const listKinds = async (props: any) => {
+  const client = createGrpcPromiseClient(ConfigstoreMetaServicePromiseClient);
+  const req = new MetaListEntitiesRequest();
+  req.setKindname(props.kind);
+  req.setStart("");
+  req.setLimit(0);
+  return await client.svc.metaList(req, client.meta);
+};
+
+export const KindListRoute = (props: KindListRouteProps) => (
+  <PendingTransactionContext.Consumer>
+    {value => <KindListRealRoute {...props} pendingTransaction={value} />}
+  </PendingTransactionContext.Consumer>
+);
+
+function isPendingDelete(
+  pendingTransaction: PendingTransaction,
+  entity: MetaEntity
+) {
+  for (const operation of pendingTransaction.operations) {
+    if (operation.hasDeleterequest()) {
+      const deleteRequest = g(operation.getDeleterequest());
+      if (
+        serializeKey(g(deleteRequest.getKey())) ==
+        serializeKey(g(entity.getKey()))
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function getPendingUpdate(
+  pendingTransaction: PendingTransaction,
+  entity: MetaEntity
+) {
+  let idx = 0;
+  for (const operation of pendingTransaction.operations) {
+    if (operation.hasUpdaterequest()) {
+      const updateRequest = g(operation.getUpdaterequest());
+      if (
+        serializeKey(g(g(updateRequest.getEntity()).getKey())) ==
+        serializeKey(g(entity.getKey()))
+      ) {
+        return {
+          id: `${idx}`,
+          entity: g(updateRequest.getEntity()),
+          operation: operation
+        };
+      }
+    }
+    idx++;
+  }
+  return null;
+}
+
+const KindListRealRoute = (
+  props: KindListRouteProps & { pendingTransaction: PendingTransaction }
+) => {
+  const [refreshCount, setRefreshCount] = useState<number>(0);
+  const { data, error, isLoading } = useAsync<MetaListEntitiesResponse>({
+    promiseFn: listKinds,
+    watch: refreshCount + "_" + props.match.params.kind,
+    kind: props.match.params.kind
+  } as any);
   const [selected, setSelected] = useState<SetHolder>({ v: new Set<string>() });
 
-  useEffect(() => {
-    setData(null);
-    selected.v.clear();
-    setSelected({ v: selected.v });
-    const req = new MetaListEntitiesRequest();
-    req.setKindname(props.match.params.kind);
-    req.setStart("");
-    req.setLimit(0);
-    grpc.unary(ConfigstoreMetaService.MetaList, {
-      request: req,
-      host: "http://localhost:13390",
-      onEnd: (res: UnaryOutput<MetaListEntitiesResponse>) => {
-        const { status, statusMessage, headers, message, trailers } = res;
-        if (status === grpc.Code.OK && message) {
-          setData(message);
-        }
-      }
-    });
-  }, [props.match.params.kind]);
-
   const kindSchema = g(props.schema.getSchema())
-    .getKindsList()
-    .filter(kind => kind.getName() == props.match.params.kind)[0];
+    .getKindsMap()
+    .get(props.match.params.kind);
+  if (kindSchema === undefined) {
+    return <>No such kind.</>;
+  }
 
   const kindDisplay =
     selected.v.size == 1
       ? g(kindSchema.getEditor()).getSingular()
       : g(kindSchema.getEditor()).getPlural();
 
-  let dataset = [
-    <tr key="loading">
-      <td
-        colSpan={3 + kindSchema.getFieldsList().length}
-        style={{
-          textAlign: "center"
-        }}
-      >
-        <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
-      </td>
-    </tr>
-  ];
-  if (data !== null && data.getEntitiesList().length == 0) {
+  let dataset: React.ReactNode[] = [];
+  if (isLoading) {
     dataset = [
       <tr key="loading">
         <td
@@ -81,64 +134,253 @@ export const KindListRoute = (props: KindListRouteProps) => {
             textAlign: "center"
           }}
         >
-          There are no entities of this kind.
+          <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
         </td>
       </tr>
     ];
-  } else if (data !== null) {
+  } else if (error) {
+    dataset = [
+      <tr key="loading">
+        <td
+          colSpan={3 + kindSchema.getFieldsList().length}
+          style={{
+            textAlign: "center"
+          }}
+        >
+          {JSON.stringify(error)}
+        </td>
+      </tr>
+    ];
+  } else if (data !== undefined) {
     dataset = [];
-    for (const entity of data.getEntitiesList()) {
-      dataset.push(
-        <tr key={serializeKey(g(entity.getKey()))}>
-          <td className="w-checkbox">
-            <input
-              type="checkbox"
-              checked={selected.v.has(serializeKey(g(entity.getKey())))}
-              onChange={e => {
-                if (e.target.checked) {
-                  selected.v.add(serializeKey(g(entity.getKey())));
-                } else {
-                  selected.v.delete(serializeKey(g(entity.getKey())));
-                }
-                setSelected({ v: selected.v });
-              }}
-            />
-          </td>
-          <td>
-            <Link
-              to={`/kind/${props.match.params.kind}/edit/${serializeKey(
-                g(entity.getKey())
-              )}`}
-            >
-              {serializeKey(g(entity.getKey()))}
-            </Link>
-          </td>
-          {kindSchema.getFieldsList().map(field => {
-            const fieldData = entity
-              .getValuesList()
-              .filter(fieldData => fieldData.getId() == field.getId())[0];
-            if (fieldData == undefined) {
-              return (
-                <td key={field.getId()}>
-                  <em className="text-muted">-</em>
-                </td>
-              );
-            }
-            return <td key={field.getId()}>{fieldData.getStringvalue()}</td>;
-          })}
-          <td className="w-checkbox">
-            <Link
-              to={`/kind/${props.match.params.kind}/edit/${serializeKey(
-                g(entity.getKey())
-              )}`}
-            >
-              <FontAwesomeIcon icon={faPencilAlt} />
-            </Link>
+    const entities: {
+      id: string;
+      selectId: string;
+      entity: MetaEntity;
+      operation: MetaOperation | null;
+    }[] = [];
+    let transactionIdx = 0;
+    for (const operation of props.pendingTransaction.operations) {
+      if (operation.hasCreaterequest()) {
+        const createRequest = g(operation.getCreaterequest());
+        if (createRequest.getKindname() === props.match.params.kind) {
+          entities.push({
+            id: `${transactionIdx}`,
+            selectId: `pendingop_${transactionIdx}`,
+            entity: g(createRequest.getEntity()),
+            operation: g(operation)
+          });
+        }
+      }
+      transactionIdx++;
+    }
+    entities.push(
+      ...data.getEntitiesList().map(x => ({
+        id: serializeKey(g(x.getKey())),
+        selectId: serializeKey(g(x.getKey())),
+        entity: g(x),
+        operation: null
+      }))
+    );
+    if (entities.length === 0) {
+      dataset = [
+        <tr key="loading">
+          <td
+            colSpan={3 + kindSchema.getFieldsList().length}
+            style={{
+              textAlign: "center"
+            }}
+          >
+            There are no entities of this kind.
           </td>
         </tr>
-      );
+      ];
+    } else {
+      for (const entity of entities) {
+        const pendingDelete = isPendingDelete(
+          props.pendingTransaction,
+          entity.entity
+        );
+        const pendingUpdate = getPendingUpdate(
+          props.pendingTransaction,
+          entity.entity
+        );
+        const effectiveEntity =
+          pendingUpdate === null ? entity.entity : pendingUpdate.entity;
+        dataset.push(
+          <tr key={entity.id} className={pendingDelete ? "strikethrough" : ""}>
+            <td className="w-checkbox">
+              <input
+                type="checkbox"
+                checked={selected.v.has(entity.selectId) && !pendingDelete}
+                disabled={pendingDelete}
+                onChange={e => {
+                  if (e.target.checked) {
+                    selected.v.add(entity.selectId);
+                  } else {
+                    selected.v.delete(entity.selectId);
+                  }
+                  setSelected({ v: selected.v });
+                }}
+              />
+            </td>
+            <td>
+              {entity.operation !== null ? (
+                <Link
+                  to={`/kind/${props.match.params.kind}/create/pending/${
+                    entity.id
+                  }`}
+                >
+                  Pending {props.match.params.kind}
+                </Link>
+              ) : (
+                <Link
+                  to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                    g(effectiveEntity.getKey())
+                  )}`}
+                >
+                  {prettifyKey(g(effectiveEntity.getKey()))}
+                </Link>
+              )}
+            </td>
+            {kindSchema.getFieldsList().map(field => {
+              const fieldData = effectiveEntity
+                .getValuesList()
+                .filter(fieldData => fieldData.getId() == field.getId())[0];
+              if (fieldData == undefined) {
+                return (
+                  <td key={field.getId()}>
+                    <em className="text-muted">-</em>
+                  </td>
+                );
+              }
+              switch (fieldData.getType()) {
+                case ValueType.STRING:
+                  return (
+                    <td key={field.getId()}>{fieldData.getStringvalue()}</td>
+                  );
+                case ValueType.DOUBLE:
+                  return (
+                    <td key={field.getId()}>{fieldData.getDoublevalue()}</td>
+                  );
+                case ValueType.INT64:
+                  return (
+                    <td key={field.getId()}>{fieldData.getInt64value()}</td>
+                  );
+                case ValueType.UINT64:
+                  return (
+                    <td key={field.getId()}>{fieldData.getUint64value()}</td>
+                  );
+                case ValueType.KEY:
+                  const childKey = fieldData.getKeyvalue();
+                  if (childKey === undefined) {
+                    return <td key={field.getId()}>-</td>;
+                  } else {
+                    return (
+                      <td key={field.getId()}>
+                        <Link
+                          to={`/kind/${getLastKindOfKey(
+                            childKey
+                          )}/edit/${serializeKey(g(childKey))}`}
+                        >
+                          {prettifyKey(childKey)}
+                        </Link>
+                      </td>
+                    );
+                  }
+                case ValueType.BOOLEAN:
+                  return (
+                    <td key={field.getId()}>
+                      {fieldData.getBooleanvalue() ? (
+                        <FontAwesomeIcon icon={faCheck} fixedWidth />
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  );
+                case ValueType.BYTES:
+                  return (
+                    <td key={field.getId()}>
+                      <em>(bytes)</em>
+                    </td>
+                  );
+                case ValueType.TIMESTAMP:
+                  const timestamp = fieldData.getTimestampvalue();
+                  if (timestamp === undefined) {
+                    return <td key={field.getId()}>-</td>;
+                  } else {
+                    return (
+                      <td key={field.getId()}>
+                        {moment.unix(timestamp.getSeconds()).toLocaleString()}
+                      </td>
+                    );
+                  }
+                default:
+                  return (
+                    <td key={field.getId()}>
+                      (unknown type {fieldData.getType()})
+                    </td>
+                  );
+              }
+            })}
+            <td className="w-checkbox">
+              {entity.operation !== null ? (
+                <Link
+                  to={`/kind/${props.match.params.kind}/create/pending/${
+                    entity.id
+                  }`}
+                >
+                  <FontAwesomeIcon icon={faPencilAlt} />
+                </Link>
+              ) : (
+                <Link
+                  to={`/kind/${props.match.params.kind}/edit/${serializeKey(
+                    g(effectiveEntity.getKey())
+                  )}`}
+                >
+                  <FontAwesomeIcon icon={faPencilAlt} />
+                </Link>
+              )}
+            </td>
+          </tr>
+        );
+      }
     }
   }
+
+  const doRefresh = () => {
+    setRefreshCount(refreshCount + 1);
+  };
+
+  const startDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const ops = [];
+    const pendingOpsToRemove = [];
+    const oldOps = [...props.pendingTransaction.operations];
+    const arrayCopy = Array.from(selected.v);
+    for (const key of arrayCopy) {
+      if (key.startsWith("pendingop_")) {
+        pendingOpsToRemove.push(parseInt(key.substr("pendingop_".length)));
+      }
+    }
+    pendingOpsToRemove.sort((a, b) => b - a);
+    console.log(pendingOpsToRemove);
+    for (const opId of pendingOpsToRemove) {
+      oldOps.splice(opId, 1);
+    }
+    for (const key of arrayCopy) {
+      if (!key.startsWith("pendingop_")) {
+        const operation = new MetaOperation();
+        const req = new MetaDeleteEntityRequest();
+        req.setKindname(props.match.params.kind);
+        req.setKey(deserializeKey(key));
+        operation.setDeleterequest(req);
+        ops.push(operation);
+      }
+    }
+    props.pendingTransaction.setOperations([...oldOps, ...ops]);
+    setRefreshCount(refreshCount + 1);
+    setSelected({ v: new Set<string>() });
+  };
 
   return (
     <>
@@ -149,15 +391,26 @@ export const KindListRoute = (props: KindListRouteProps) => {
             type="button"
             className={
               "btn btn-sm mr-2 " +
+              (selected.v.size == 0 ? "btn-outline-primary" : "btn-primary")
+            }
+            onClick={doRefresh}
+          >
+            Refresh {kindDisplay}
+          </button>
+          <button
+            type="button"
+            className={
+              "btn btn-sm mr-2 " +
               (selected.v.size == 0 ? "btn-outline-danger" : "btn-danger")
             }
             disabled={selected.v.size == 0}
+            onClick={startDelete}
           >
             Delete {selected.v.size} {kindDisplay}
           </button>
           <Link
             to={`/kind/${props.match.params.kind}/create`}
-            className="btn btn-sm btn-success"
+            className={"btn btn-sm btn-success"}
           >
             Create {props.match.params.kind}
           </Link>
@@ -171,7 +424,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 <input
                   type="checkbox"
                   checked={
-                    data !== null
+                    data !== undefined
                       ? data
                           .getEntitiesList()
                           .filter(
@@ -183,7 +436,7 @@ export const KindListRoute = (props: KindListRouteProps) => {
                       : false
                   }
                   onChange={e => {
-                    if (data !== null) {
+                    if (data !== undefined) {
                       if (e.target.checked) {
                         selected.v.clear();
                         for (const entity of data.getEntitiesList()) {
@@ -198,11 +451,11 @@ export const KindListRoute = (props: KindListRouteProps) => {
                 />
               </th>
               <th>ID</th>
-              {kindSchema.getFieldsList().map(field => (
-                <th key={field.getId()}>
-                  {g(field.getEditor()).getDisplayname()}
-                </th>
-              ))}
+              {kindSchema.getFieldsList().map(field => {
+                const editor = (field.getEditor(), new SchemaFieldEditorInfo());
+                const displayName = c(editor.getDisplayname(), field.getName());
+                return <th key={field.getId()}>{displayName}</th>;
+              })}
               <th className="w-checkbox">
                 <FontAwesomeIcon icon={faPencilAlt} />
               </th>

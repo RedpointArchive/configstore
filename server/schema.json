@@ -2,9 +2,11 @@
   "name": "server",
   "kinds": {
     "User": {
+      "id": 1,
       "editor": {
         "singular": "User",
-        "plural": "Users"
+        "plural": "Users",
+        "renderEditorDropdownWithField": "emailAddress"
       },
       "fields": [
         {
@@ -30,15 +32,16 @@
           "id": 4,
           "name": "dateLastLoginUtc",
           "type": "timestamp",
+          "readonly": true,
           "comment": "The time that the user last logged in",
           "editor": {
-            "displayName": "Last login",
-            "readonly": true
+            "displayName": "Last login"
           }
         }
       ]
     },
     "IntegerTest": {
+      "id": 2,
       "editor": {
         "singular": "IntegerTest",
         "plural": "IntegerTests"
@@ -56,6 +59,7 @@
       ]
     },
     "NilKeyTest": {
+      "id": 3,
       "editor": {
         "singular": "NilKeyTest",
         "plural": "NilKeyTests"
@@ -73,9 +77,11 @@
       ]
     },
     "Project": {
+      "id": 4,
       "editor": {
         "singular": "Project",
-        "plural": "Projects"
+        "plural": "Projects",
+        "renderEditorDropdownWithField": "name"
       },
       "fields": [
         {
@@ -90,6 +96,7 @@
       ]
     },
     "ProjectAccess": {
+      "id": 5,
       "editor": {
         "singular": "ProjectAccess",
         "plural": "ProjectAccesses"
@@ -99,20 +106,315 @@
           "id": 2,
           "name": "user",
           "type": "key",
-          "foreignType": "User",
           "comment": "The user that has access to the project",
           "editor": {
-            "displayName": "User"
+            "displayName": "User",
+            "allowedKinds": ["User"]
           }
         },
         {
           "id": 3,
           "name": "project",
           "type": "key",
-          "foreignType": "Project",
           "comment": "The project the user has access to",
           "editor": {
-            "displayName": "Project"
+            "displayName": "Project",
+            "allowedKinds": ["Project"]
+          }
+        }
+      ]
+    },
+    "IndexTest": {
+      "id": 6,
+      "editor": {
+        "singular": "IndexTest",
+        "plural": "IndexTests"
+      },
+      "indexes": [
+        {
+          "name": "String",
+          "type": "memory",
+          "field": "stringField"
+        },
+        {
+          "name": "Int64",
+          "type": "memory",
+          "field": "int64Field"
+        },
+        {
+          "name": "UInt64",
+          "type": "memory",
+          "field": "uint64Field"
+        },
+        {
+          "name": "Boolean",
+          "type": "memory",
+          "field": "booleanField"
+        },
+        {
+          "name": "Double",
+          "type": "memory",
+          "field": "doubleField"
+        },
+        {
+          "name": "Timestamp",
+          "type": "memory",
+          "field": "timestampField"
+        },
+        {
+          "name": "Bytes",
+          "type": "memory",
+          "field": "bytesField"
+        },
+        {
+          "name": "Key",
+          "type": "memory",
+          "field": "keyField"
+        },
+        {
+          "name": "StringFnv",
+          "type": "memory",
+          "computed": {
+            "fnv64a": {
+              "field": "stringField"
+            }
+          }
+        }
+      ],
+      "fields": [
+        {
+          "id": 2,
+          "name": "stringField",
+          "type": "string"
+        },
+        {
+          "id": 3,
+          "name": "int64Field",
+          "type": "int64"
+        },
+        {
+          "id": 4,
+          "name": "uint64Field",
+          "type": "uint64"
+        },
+        {
+          "id": 5,
+          "name": "booleanField",
+          "type": "boolean"
+        },
+        {
+          "id": 6,
+          "name": "doubleField",
+          "type": "double"
+        },
+        {
+          "id": 7,
+          "name": "timestampField",
+          "type": "timestamp"
+        },
+        {
+          "id": 8,
+          "name": "bytesField",
+          "type": "bytes"
+        },
+        {
+          "id": 9,
+          "name": "keyField",
+          "type": "key"
+        }
+      ]
+    },
+    "UnitTest001": {
+      "id": 7,
+      "editor": {
+        "singular": "UnitTest001",
+        "plural": "UnitTest001s"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "d1",
+          "type": "double"
+        },
+        {
+          "id": 3,
+          "name": "i1",
+          "type": "int64"
+        },
+        {
+          "id": 4,
+          "name": "s1",
+          "type": "string"
+        },
+        {
+          "id": 5,
+          "name": "t1",
+          "type": "timestamp"
+        },
+        {
+          "id": 6,
+          "name": "b1",
+          "type": "boolean"
+        },
+        {
+          "id": 7,
+          "name": "b2",
+          "type": "bytes"
+        },
+        {
+          "id": 8,
+          "name": "k1",
+          "type": "key"
+        },
+        {
+          "id": 9,
+          "name": "k2",
+          "type": "key"
+        },
+        {
+          "id": 10,
+          "name": "i2",
+          "type": "int64"
+        },
+        {
+          "id": 11,
+          "name": "u1",
+          "type": "uint64"
+        },
+        {
+          "id": 12,
+          "name": "t2",
+          "type": "timestamp"
+        }
+      ]
+    },
+    "ValidatorTest": {
+      "id": 8,
+      "editor": {
+        "singular": "ValidatorTest",
+        "plural": "ValidatorTests"
+      },
+      "fields": [
+        {
+          "id": 2,
+          "name": "requiredString",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "required": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 3,
+          "name": "requiredInt64",
+          "type": "int64",
+          "editor": {
+            "validators": [
+              {
+                "required": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 4,
+          "name": "defaultString",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "default": {
+                  "value": {
+                    "type": "string",
+                    "stringValue": "root"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 5,
+          "name": "defaultInt64",
+          "type": "int64",
+          "editor": {
+            "validators": [
+              {
+                "default": {
+                  "value": {
+                    "type": "int64",
+                    "int64Value": "22"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 6,
+          "name": "ipAddress",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "formatIPAddress": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 7,
+          "name": "ipAddressPort",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "formatIPAddressPort": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 8,
+          "name": "fixedLengthBytes",
+          "type": "bytes",
+          "editor": {
+            "validators": [
+              {
+                "fixedLength": {
+                  "length": 32
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 9,
+          "name": "requiredKey",
+          "type": "key",
+          "editor": {
+            "validators": [
+              {
+                "required": {}
+              }
+            ]
+          }
+        },
+        {
+          "id": 10,
+          "name": "fixedLengthString",
+          "type": "string",
+          "editor": {
+            "validators": [
+              {
+                "fixedLength": {
+                  "length": 32
+                }
+              }
+            ]
           }
         }
       ]

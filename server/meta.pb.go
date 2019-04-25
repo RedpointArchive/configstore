@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
 	math "math"
 )
@@ -25,36 +26,39 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type ValueType int32
 
 const (
-	ValueType_TypeDouble    ValueType = 0
-	ValueType_TypeInt64     ValueType = 1
-	ValueType_TypeString    ValueType = 2
-	ValueType_TypeTimestamp ValueType = 3
-	ValueType_TypeBoolean   ValueType = 4
-	ValueType_TypeBytes     ValueType = 5
-	ValueType_TypeKey       ValueType = 6
-	ValueType_TypeUInt64    ValueType = 7
+	ValueType_unknown   ValueType = 0
+	ValueType_double    ValueType = 1
+	ValueType_int64     ValueType = 2
+	ValueType_string    ValueType = 3
+	ValueType_timestamp ValueType = 4
+	ValueType_boolean   ValueType = 5
+	ValueType_bytes     ValueType = 6
+	ValueType_key       ValueType = 7
+	ValueType_uint64    ValueType = 8
 )
 
 var ValueType_name = map[int32]string{
-	0: "TypeDouble",
-	1: "TypeInt64",
-	2: "TypeString",
-	3: "TypeTimestamp",
-	4: "TypeBoolean",
-	5: "TypeBytes",
-	6: "TypeKey",
-	7: "TypeUInt64",
+	0: "unknown",
+	1: "double",
+	2: "int64",
+	3: "string",
+	4: "timestamp",
+	5: "boolean",
+	6: "bytes",
+	7: "key",
+	8: "uint64",
 }
 
 var ValueType_value = map[string]int32{
-	"TypeDouble":    0,
-	"TypeInt64":     1,
-	"TypeString":    2,
-	"TypeTimestamp": 3,
-	"TypeBoolean":   4,
-	"TypeBytes":     5,
-	"TypeKey":       6,
-	"TypeUInt64":    7,
+	"unknown":   0,
+	"double":    1,
+	"int64":     2,
+	"string":    3,
+	"timestamp": 4,
+	"boolean":   5,
+	"bytes":     6,
+	"key":       7,
+	"uint64":    8,
 }
 
 func (x ValueType) String() string {
@@ -65,32 +69,57 @@ func (ValueType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{0}
 }
 
-type FieldEditorInfoType int32
+type SchemaFieldEditorInfoType int32
 
 const (
-	FieldEditorInfoType_Default  FieldEditorInfoType = 0
-	FieldEditorInfoType_Password FieldEditorInfoType = 1
-	FieldEditorInfoType_Lookup   FieldEditorInfoType = 2
+	SchemaFieldEditorInfoType_default  SchemaFieldEditorInfoType = 0
+	SchemaFieldEditorInfoType_password SchemaFieldEditorInfoType = 1
+	SchemaFieldEditorInfoType_lookup   SchemaFieldEditorInfoType = 2
 )
 
-var FieldEditorInfoType_name = map[int32]string{
-	0: "Default",
-	1: "Password",
-	2: "Lookup",
+var SchemaFieldEditorInfoType_name = map[int32]string{
+	0: "default",
+	1: "password",
+	2: "lookup",
 }
 
-var FieldEditorInfoType_value = map[string]int32{
-	"Default":  0,
-	"Password": 1,
-	"Lookup":   2,
+var SchemaFieldEditorInfoType_value = map[string]int32{
+	"default":  0,
+	"password": 1,
+	"lookup":   2,
 }
 
-func (x FieldEditorInfoType) String() string {
-	return proto.EnumName(FieldEditorInfoType_name, int32(x))
+func (x SchemaFieldEditorInfoType) String() string {
+	return proto.EnumName(SchemaFieldEditorInfoType_name, int32(x))
 }
 
-func (FieldEditorInfoType) EnumDescriptor() ([]byte, []int) {
+func (SchemaFieldEditorInfoType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{1}
+}
+
+type SchemaIndexType int32
+
+const (
+	SchemaIndexType_unspecified SchemaIndexType = 0
+	SchemaIndexType_memory      SchemaIndexType = 1
+)
+
+var SchemaIndexType_name = map[int32]string{
+	0: "unspecified",
+	1: "memory",
+}
+
+var SchemaIndexType_value = map[string]int32{
+	"unspecified": 0,
+	"memory":      1,
+}
+
+func (x SchemaIndexType) String() string {
+	return proto.EnumName(SchemaIndexType_name, int32(x))
+}
+
+func (SchemaIndexType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{2}
 }
 
 type PartitionId struct {
@@ -268,19 +297,19 @@ func (m *Key) GetPath() []*PathElement {
 }
 
 type Value struct {
-	Id                   int32     `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type                 ValueType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
-	DoubleValue          float64   `protobuf:"fixed64,3,opt,name=doubleValue,proto3" json:"doubleValue,omitempty"`
-	Int64Value           int64     `protobuf:"varint,4,opt,name=int64Value,proto3" json:"int64Value,omitempty"`
-	StringValue          string    `protobuf:"bytes,5,opt,name=stringValue,proto3" json:"stringValue,omitempty"`
-	TimestampValue       []byte    `protobuf:"bytes,6,opt,name=timestampValue,proto3" json:"timestampValue,omitempty"`
-	BooleanValue         bool      `protobuf:"varint,7,opt,name=booleanValue,proto3" json:"booleanValue,omitempty"`
-	BytesValue           []byte    `protobuf:"bytes,8,opt,name=bytesValue,proto3" json:"bytesValue,omitempty"`
-	KeyValue             *Key      `protobuf:"bytes,9,opt,name=keyValue,proto3" json:"keyValue,omitempty"`
-	Uint64Value          uint64    `protobuf:"varint,10,opt,name=uint64Value,proto3" json:"uint64Value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	Id                   int32                `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type                 ValueType            `protobuf:"varint,2,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
+	DoubleValue          float64              `protobuf:"fixed64,3,opt,name=doubleValue,proto3" json:"doubleValue,omitempty"`
+	Int64Value           int64                `protobuf:"varint,4,opt,name=int64Value,proto3" json:"int64Value,omitempty"`
+	StringValue          string               `protobuf:"bytes,5,opt,name=stringValue,proto3" json:"stringValue,omitempty"`
+	TimestampValue       *timestamp.Timestamp `protobuf:"bytes,6,opt,name=timestampValue,proto3" json:"timestampValue,omitempty"`
+	BooleanValue         bool                 `protobuf:"varint,7,opt,name=booleanValue,proto3" json:"booleanValue,omitempty"`
+	BytesValue           []byte               `protobuf:"bytes,8,opt,name=bytesValue,proto3" json:"bytesValue,omitempty"`
+	KeyValue             *Key                 `protobuf:"bytes,9,opt,name=keyValue,proto3" json:"keyValue,omitempty"`
+	Uint64Value          uint64               `protobuf:"varint,10,opt,name=uint64Value,proto3" json:"uint64Value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
 func (m *Value) Reset()         { *m = Value{} }
@@ -319,7 +348,7 @@ func (m *Value) GetType() ValueType {
 	if m != nil {
 		return m.Type
 	}
-	return ValueType_TypeDouble
+	return ValueType_unknown
 }
 
 func (m *Value) GetDoubleValue() float64 {
@@ -343,7 +372,7 @@ func (m *Value) GetStringValue() string {
 	return ""
 }
 
-func (m *Value) GetTimestampValue() []byte {
+func (m *Value) GetTimestampValue() *timestamp.Timestamp {
 	if m != nil {
 		return m.TimestampValue
 	}
@@ -378,255 +407,867 @@ func (m *Value) GetUint64Value() uint64 {
 	return 0
 }
 
-type Field struct {
-	Id                   int32            `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string           `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Type                 ValueType        `protobuf:"varint,3,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
-	Comment              string           `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
-	Editor               *FieldEditorInfo `protobuf:"bytes,5,opt,name=editor,proto3" json:"editor,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+type SchemaField struct {
+	Id                   int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Type                 ValueType              `protobuf:"varint,3,opt,name=type,proto3,enum=meta.ValueType" json:"type,omitempty"`
+	Comment              string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Editor               *SchemaFieldEditorInfo `protobuf:"bytes,5,opt,name=editor,proto3" json:"editor,omitempty"`
+	Readonly             bool                   `protobuf:"varint,6,opt,name=readonly,proto3" json:"readonly,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
-func (m *Field) Reset()         { *m = Field{} }
-func (m *Field) String() string { return proto.CompactTextString(m) }
-func (*Field) ProtoMessage()    {}
-func (*Field) Descriptor() ([]byte, []int) {
+func (m *SchemaField) Reset()         { *m = SchemaField{} }
+func (m *SchemaField) String() string { return proto.CompactTextString(m) }
+func (*SchemaField) ProtoMessage()    {}
+func (*SchemaField) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b5ea8fe65782bcc, []int{4}
 }
 
-func (m *Field) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Field.Unmarshal(m, b)
+func (m *SchemaField) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaField.Unmarshal(m, b)
 }
-func (m *Field) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Field.Marshal(b, m, deterministic)
+func (m *SchemaField) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaField.Marshal(b, m, deterministic)
 }
-func (m *Field) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Field.Merge(m, src)
+func (m *SchemaField) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaField.Merge(m, src)
 }
-func (m *Field) XXX_Size() int {
-	return xxx_messageInfo_Field.Size(m)
+func (m *SchemaField) XXX_Size() int {
+	return xxx_messageInfo_SchemaField.Size(m)
 }
-func (m *Field) XXX_DiscardUnknown() {
-	xxx_messageInfo_Field.DiscardUnknown(m)
+func (m *SchemaField) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaField.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Field proto.InternalMessageInfo
+var xxx_messageInfo_SchemaField proto.InternalMessageInfo
 
-func (m *Field) GetId() int32 {
+func (m *SchemaField) GetId() int32 {
 	if m != nil {
 		return m.Id
 	}
 	return 0
 }
 
-func (m *Field) GetName() string {
+func (m *SchemaField) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *Field) GetType() ValueType {
+func (m *SchemaField) GetType() ValueType {
 	if m != nil {
 		return m.Type
 	}
-	return ValueType_TypeDouble
+	return ValueType_unknown
 }
 
-func (m *Field) GetComment() string {
+func (m *SchemaField) GetComment() string {
 	if m != nil {
 		return m.Comment
 	}
 	return ""
 }
 
-func (m *Field) GetEditor() *FieldEditorInfo {
+func (m *SchemaField) GetEditor() *SchemaFieldEditorInfo {
 	if m != nil {
 		return m.Editor
 	}
 	return nil
 }
 
-type FieldEditorInfo struct {
-	DisplayName          string              `protobuf:"bytes,1,opt,name=displayName,proto3" json:"displayName,omitempty"`
-	Type                 FieldEditorInfoType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.FieldEditorInfoType" json:"type,omitempty"`
-	Readonly             bool                `protobuf:"varint,3,opt,name=readonly,proto3" json:"readonly,omitempty"`
-	ForeignType          string              `protobuf:"bytes,4,opt,name=foreignType,proto3" json:"foreignType,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
-}
-
-func (m *FieldEditorInfo) Reset()         { *m = FieldEditorInfo{} }
-func (m *FieldEditorInfo) String() string { return proto.CompactTextString(m) }
-func (*FieldEditorInfo) ProtoMessage()    {}
-func (*FieldEditorInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{5}
-}
-
-func (m *FieldEditorInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_FieldEditorInfo.Unmarshal(m, b)
-}
-func (m *FieldEditorInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_FieldEditorInfo.Marshal(b, m, deterministic)
-}
-func (m *FieldEditorInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FieldEditorInfo.Merge(m, src)
-}
-func (m *FieldEditorInfo) XXX_Size() int {
-	return xxx_messageInfo_FieldEditorInfo.Size(m)
-}
-func (m *FieldEditorInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_FieldEditorInfo.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_FieldEditorInfo proto.InternalMessageInfo
-
-func (m *FieldEditorInfo) GetDisplayName() string {
-	if m != nil {
-		return m.DisplayName
-	}
-	return ""
-}
-
-func (m *FieldEditorInfo) GetType() FieldEditorInfoType {
-	if m != nil {
-		return m.Type
-	}
-	return FieldEditorInfoType_Default
-}
-
-func (m *FieldEditorInfo) GetReadonly() bool {
+func (m *SchemaField) GetReadonly() bool {
 	if m != nil {
 		return m.Readonly
 	}
 	return false
 }
 
-func (m *FieldEditorInfo) GetForeignType() string {
+type SchemaFieldEditorInfo struct {
+	DisplayName                           string                        `protobuf:"bytes,1,opt,name=displayName,proto3" json:"displayName,omitempty"`
+	Type                                  SchemaFieldEditorInfoType     `protobuf:"varint,2,opt,name=type,proto3,enum=meta.SchemaFieldEditorInfoType" json:"type,omitempty"`
+	EditorReadonly                        bool                          `protobuf:"varint,3,opt,name=editorReadonly,proto3" json:"editorReadonly,omitempty"`
+	AllowedKinds                          []string                      `protobuf:"bytes,4,rep,name=allowedKinds,proto3" json:"allowedKinds,omitempty"`
+	UseFinancialValueToNibblinsConversion bool                          `protobuf:"varint,5,opt,name=useFinancialValueToNibblinsConversion,proto3" json:"useFinancialValueToNibblinsConversion,omitempty"`
+	Validators                            []*SchemaFieldEditorValidator `protobuf:"bytes,6,rep,name=validators,proto3" json:"validators,omitempty"`
+	XXX_NoUnkeyedLiteral                  struct{}                      `json:"-"`
+	XXX_unrecognized                      []byte                        `json:"-"`
+	XXX_sizecache                         int32                         `json:"-"`
+}
+
+func (m *SchemaFieldEditorInfo) Reset()         { *m = SchemaFieldEditorInfo{} }
+func (m *SchemaFieldEditorInfo) String() string { return proto.CompactTextString(m) }
+func (*SchemaFieldEditorInfo) ProtoMessage()    {}
+func (*SchemaFieldEditorInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{5}
+}
+
+func (m *SchemaFieldEditorInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorInfo.Unmarshal(m, b)
+}
+func (m *SchemaFieldEditorInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorInfo.Marshal(b, m, deterministic)
+}
+func (m *SchemaFieldEditorInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorInfo.Merge(m, src)
+}
+func (m *SchemaFieldEditorInfo) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorInfo.Size(m)
+}
+func (m *SchemaFieldEditorInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaFieldEditorInfo proto.InternalMessageInfo
+
+func (m *SchemaFieldEditorInfo) GetDisplayName() string {
 	if m != nil {
-		return m.ForeignType
+		return m.DisplayName
 	}
 	return ""
 }
 
-type KindEditor struct {
-	Singular             string   `protobuf:"bytes,1,opt,name=singular,proto3" json:"singular,omitempty"`
-	Plural               string   `protobuf:"bytes,2,opt,name=plural,proto3" json:"plural,omitempty"`
+func (m *SchemaFieldEditorInfo) GetType() SchemaFieldEditorInfoType {
+	if m != nil {
+		return m.Type
+	}
+	return SchemaFieldEditorInfoType_default
+}
+
+func (m *SchemaFieldEditorInfo) GetEditorReadonly() bool {
+	if m != nil {
+		return m.EditorReadonly
+	}
+	return false
+}
+
+func (m *SchemaFieldEditorInfo) GetAllowedKinds() []string {
+	if m != nil {
+		return m.AllowedKinds
+	}
+	return nil
+}
+
+func (m *SchemaFieldEditorInfo) GetUseFinancialValueToNibblinsConversion() bool {
+	if m != nil {
+		return m.UseFinancialValueToNibblinsConversion
+	}
+	return false
+}
+
+func (m *SchemaFieldEditorInfo) GetValidators() []*SchemaFieldEditorValidator {
+	if m != nil {
+		return m.Validators
+	}
+	return nil
+}
+
+type SchemaFieldEditorValidator struct {
+	// Types that are valid to be assigned to Validator:
+	//	*SchemaFieldEditorValidator_Required
+	//	*SchemaFieldEditorValidator_FixedLength
+	//	*SchemaFieldEditorValidator_Default
+	//	*SchemaFieldEditorValidator_FormatIPAddress
+	//	*SchemaFieldEditorValidator_FormatIPAddressPort
+	Validator            isSchemaFieldEditorValidator_Validator `protobuf_oneof:"validator"`
+	XXX_NoUnkeyedLiteral struct{}                               `json:"-"`
+	XXX_unrecognized     []byte                                 `json:"-"`
+	XXX_sizecache        int32                                  `json:"-"`
+}
+
+func (m *SchemaFieldEditorValidator) Reset()         { *m = SchemaFieldEditorValidator{} }
+func (m *SchemaFieldEditorValidator) String() string { return proto.CompactTextString(m) }
+func (*SchemaFieldEditorValidator) ProtoMessage()    {}
+func (*SchemaFieldEditorValidator) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{6}
+}
+
+func (m *SchemaFieldEditorValidator) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorValidator.Unmarshal(m, b)
+}
+func (m *SchemaFieldEditorValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorValidator.Marshal(b, m, deterministic)
+}
+func (m *SchemaFieldEditorValidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorValidator.Merge(m, src)
+}
+func (m *SchemaFieldEditorValidator) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorValidator.Size(m)
+}
+func (m *SchemaFieldEditorValidator) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorValidator.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaFieldEditorValidator proto.InternalMessageInfo
+
+type isSchemaFieldEditorValidator_Validator interface {
+	isSchemaFieldEditorValidator_Validator()
+}
+
+type SchemaFieldEditorValidator_Required struct {
+	Required *SchemaFieldEditorValidatorRequired `protobuf:"bytes,1,opt,name=required,proto3,oneof"`
+}
+
+type SchemaFieldEditorValidator_FixedLength struct {
+	FixedLength *SchemaFieldEditorValidatorFixedLength `protobuf:"bytes,2,opt,name=fixedLength,proto3,oneof"`
+}
+
+type SchemaFieldEditorValidator_Default struct {
+	Default *SchemaFieldEditorValidatorDefault `protobuf:"bytes,3,opt,name=default,proto3,oneof"`
+}
+
+type SchemaFieldEditorValidator_FormatIPAddress struct {
+	FormatIPAddress *SchemaFieldEditorValidatorFormatIPAddress `protobuf:"bytes,4,opt,name=formatIPAddress,proto3,oneof"`
+}
+
+type SchemaFieldEditorValidator_FormatIPAddressPort struct {
+	FormatIPAddressPort *SchemaFieldEditorValidatorFormatIPAddressPort `protobuf:"bytes,5,opt,name=formatIPAddressPort,proto3,oneof"`
+}
+
+func (*SchemaFieldEditorValidator_Required) isSchemaFieldEditorValidator_Validator() {}
+
+func (*SchemaFieldEditorValidator_FixedLength) isSchemaFieldEditorValidator_Validator() {}
+
+func (*SchemaFieldEditorValidator_Default) isSchemaFieldEditorValidator_Validator() {}
+
+func (*SchemaFieldEditorValidator_FormatIPAddress) isSchemaFieldEditorValidator_Validator() {}
+
+func (*SchemaFieldEditorValidator_FormatIPAddressPort) isSchemaFieldEditorValidator_Validator() {}
+
+func (m *SchemaFieldEditorValidator) GetValidator() isSchemaFieldEditorValidator_Validator {
+	if m != nil {
+		return m.Validator
+	}
+	return nil
+}
+
+func (m *SchemaFieldEditorValidator) GetRequired() *SchemaFieldEditorValidatorRequired {
+	if x, ok := m.GetValidator().(*SchemaFieldEditorValidator_Required); ok {
+		return x.Required
+	}
+	return nil
+}
+
+func (m *SchemaFieldEditorValidator) GetFixedLength() *SchemaFieldEditorValidatorFixedLength {
+	if x, ok := m.GetValidator().(*SchemaFieldEditorValidator_FixedLength); ok {
+		return x.FixedLength
+	}
+	return nil
+}
+
+func (m *SchemaFieldEditorValidator) GetDefault() *SchemaFieldEditorValidatorDefault {
+	if x, ok := m.GetValidator().(*SchemaFieldEditorValidator_Default); ok {
+		return x.Default
+	}
+	return nil
+}
+
+func (m *SchemaFieldEditorValidator) GetFormatIPAddress() *SchemaFieldEditorValidatorFormatIPAddress {
+	if x, ok := m.GetValidator().(*SchemaFieldEditorValidator_FormatIPAddress); ok {
+		return x.FormatIPAddress
+	}
+	return nil
+}
+
+func (m *SchemaFieldEditorValidator) GetFormatIPAddressPort() *SchemaFieldEditorValidatorFormatIPAddressPort {
+	if x, ok := m.GetValidator().(*SchemaFieldEditorValidator_FormatIPAddressPort); ok {
+		return x.FormatIPAddressPort
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SchemaFieldEditorValidator) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SchemaFieldEditorValidator_Required)(nil),
+		(*SchemaFieldEditorValidator_FixedLength)(nil),
+		(*SchemaFieldEditorValidator_Default)(nil),
+		(*SchemaFieldEditorValidator_FormatIPAddress)(nil),
+		(*SchemaFieldEditorValidator_FormatIPAddressPort)(nil),
+	}
+}
+
+type SchemaFieldEditorValidatorRequired struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *KindEditor) Reset()         { *m = KindEditor{} }
-func (m *KindEditor) String() string { return proto.CompactTextString(m) }
-func (*KindEditor) ProtoMessage()    {}
-func (*KindEditor) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{6}
+func (m *SchemaFieldEditorValidatorRequired) Reset()         { *m = SchemaFieldEditorValidatorRequired{} }
+func (m *SchemaFieldEditorValidatorRequired) String() string { return proto.CompactTextString(m) }
+func (*SchemaFieldEditorValidatorRequired) ProtoMessage()    {}
+func (*SchemaFieldEditorValidatorRequired) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{7}
 }
 
-func (m *KindEditor) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_KindEditor.Unmarshal(m, b)
+func (m *SchemaFieldEditorValidatorRequired) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorValidatorRequired.Unmarshal(m, b)
 }
-func (m *KindEditor) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_KindEditor.Marshal(b, m, deterministic)
+func (m *SchemaFieldEditorValidatorRequired) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorValidatorRequired.Marshal(b, m, deterministic)
 }
-func (m *KindEditor) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KindEditor.Merge(m, src)
+func (m *SchemaFieldEditorValidatorRequired) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorValidatorRequired.Merge(m, src)
 }
-func (m *KindEditor) XXX_Size() int {
-	return xxx_messageInfo_KindEditor.Size(m)
+func (m *SchemaFieldEditorValidatorRequired) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorValidatorRequired.Size(m)
 }
-func (m *KindEditor) XXX_DiscardUnknown() {
-	xxx_messageInfo_KindEditor.DiscardUnknown(m)
+func (m *SchemaFieldEditorValidatorRequired) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorValidatorRequired.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_KindEditor proto.InternalMessageInfo
+var xxx_messageInfo_SchemaFieldEditorValidatorRequired proto.InternalMessageInfo
 
-func (m *KindEditor) GetSingular() string {
+type SchemaFieldEditorValidatorFixedLength struct {
+	Length               uint32   `protobuf:"varint,1,opt,name=length,proto3" json:"length,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SchemaFieldEditorValidatorFixedLength) Reset()         { *m = SchemaFieldEditorValidatorFixedLength{} }
+func (m *SchemaFieldEditorValidatorFixedLength) String() string { return proto.CompactTextString(m) }
+func (*SchemaFieldEditorValidatorFixedLength) ProtoMessage()    {}
+func (*SchemaFieldEditorValidatorFixedLength) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{8}
+}
+
+func (m *SchemaFieldEditorValidatorFixedLength) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFixedLength.Unmarshal(m, b)
+}
+func (m *SchemaFieldEditorValidatorFixedLength) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFixedLength.Marshal(b, m, deterministic)
+}
+func (m *SchemaFieldEditorValidatorFixedLength) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorValidatorFixedLength.Merge(m, src)
+}
+func (m *SchemaFieldEditorValidatorFixedLength) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFixedLength.Size(m)
+}
+func (m *SchemaFieldEditorValidatorFixedLength) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorValidatorFixedLength.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaFieldEditorValidatorFixedLength proto.InternalMessageInfo
+
+func (m *SchemaFieldEditorValidatorFixedLength) GetLength() uint32 {
+	if m != nil {
+		return m.Length
+	}
+	return 0
+}
+
+type SchemaFieldEditorValidatorDefault struct {
+	Value                *Value   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SchemaFieldEditorValidatorDefault) Reset()         { *m = SchemaFieldEditorValidatorDefault{} }
+func (m *SchemaFieldEditorValidatorDefault) String() string { return proto.CompactTextString(m) }
+func (*SchemaFieldEditorValidatorDefault) ProtoMessage()    {}
+func (*SchemaFieldEditorValidatorDefault) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{9}
+}
+
+func (m *SchemaFieldEditorValidatorDefault) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorValidatorDefault.Unmarshal(m, b)
+}
+func (m *SchemaFieldEditorValidatorDefault) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorValidatorDefault.Marshal(b, m, deterministic)
+}
+func (m *SchemaFieldEditorValidatorDefault) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorValidatorDefault.Merge(m, src)
+}
+func (m *SchemaFieldEditorValidatorDefault) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorValidatorDefault.Size(m)
+}
+func (m *SchemaFieldEditorValidatorDefault) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorValidatorDefault.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaFieldEditorValidatorDefault proto.InternalMessageInfo
+
+func (m *SchemaFieldEditorValidatorDefault) GetValue() *Value {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
+
+type SchemaFieldEditorValidatorFormatIPAddress struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SchemaFieldEditorValidatorFormatIPAddress) Reset() {
+	*m = SchemaFieldEditorValidatorFormatIPAddress{}
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddress) String() string { return proto.CompactTextString(m) }
+func (*SchemaFieldEditorValidatorFormatIPAddress) ProtoMessage()    {}
+func (*SchemaFieldEditorValidatorFormatIPAddress) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{10}
+}
+
+func (m *SchemaFieldEditorValidatorFormatIPAddress) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddress.Unmarshal(m, b)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddress.Marshal(b, m, deterministic)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddress) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddress.Merge(m, src)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddress) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddress.Size(m)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddress) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddress.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddress proto.InternalMessageInfo
+
+type SchemaFieldEditorValidatorFormatIPAddressPort struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SchemaFieldEditorValidatorFormatIPAddressPort) Reset() {
+	*m = SchemaFieldEditorValidatorFormatIPAddressPort{}
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddressPort) String() string {
+	return proto.CompactTextString(m)
+}
+func (*SchemaFieldEditorValidatorFormatIPAddressPort) ProtoMessage() {}
+func (*SchemaFieldEditorValidatorFormatIPAddressPort) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{11}
+}
+
+func (m *SchemaFieldEditorValidatorFormatIPAddressPort) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddressPort.Unmarshal(m, b)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddressPort) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddressPort.Marshal(b, m, deterministic)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddressPort) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddressPort.Merge(m, src)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddressPort) XXX_Size() int {
+	return xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddressPort.Size(m)
+}
+func (m *SchemaFieldEditorValidatorFormatIPAddressPort) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddressPort.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaFieldEditorValidatorFormatIPAddressPort proto.InternalMessageInfo
+
+type SchemaKindEditor struct {
+	Singular                      string   `protobuf:"bytes,1,opt,name=singular,proto3" json:"singular,omitempty"`
+	Plural                        string   `protobuf:"bytes,2,opt,name=plural,proto3" json:"plural,omitempty"`
+	RenderEditorDropdownWithField string   `protobuf:"bytes,3,opt,name=renderEditorDropdownWithField,proto3" json:"renderEditorDropdownWithField,omitempty"`
+	XXX_NoUnkeyedLiteral          struct{} `json:"-"`
+	XXX_unrecognized              []byte   `json:"-"`
+	XXX_sizecache                 int32    `json:"-"`
+}
+
+func (m *SchemaKindEditor) Reset()         { *m = SchemaKindEditor{} }
+func (m *SchemaKindEditor) String() string { return proto.CompactTextString(m) }
+func (*SchemaKindEditor) ProtoMessage()    {}
+func (*SchemaKindEditor) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{12}
+}
+
+func (m *SchemaKindEditor) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaKindEditor.Unmarshal(m, b)
+}
+func (m *SchemaKindEditor) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaKindEditor.Marshal(b, m, deterministic)
+}
+func (m *SchemaKindEditor) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaKindEditor.Merge(m, src)
+}
+func (m *SchemaKindEditor) XXX_Size() int {
+	return xxx_messageInfo_SchemaKindEditor.Size(m)
+}
+func (m *SchemaKindEditor) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaKindEditor.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaKindEditor proto.InternalMessageInfo
+
+func (m *SchemaKindEditor) GetSingular() string {
 	if m != nil {
 		return m.Singular
 	}
 	return ""
 }
 
-func (m *KindEditor) GetPlural() string {
+func (m *SchemaKindEditor) GetPlural() string {
 	if m != nil {
 		return m.Plural
 	}
 	return ""
 }
 
-type Kind struct {
-	Name                 string      `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Fields               []*Field    `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
-	Editor               *KindEditor `protobuf:"bytes,3,opt,name=editor,proto3" json:"editor,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
-}
-
-func (m *Kind) Reset()         { *m = Kind{} }
-func (m *Kind) String() string { return proto.CompactTextString(m) }
-func (*Kind) ProtoMessage()    {}
-func (*Kind) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{7}
-}
-
-func (m *Kind) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Kind.Unmarshal(m, b)
-}
-func (m *Kind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Kind.Marshal(b, m, deterministic)
-}
-func (m *Kind) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Kind.Merge(m, src)
-}
-func (m *Kind) XXX_Size() int {
-	return xxx_messageInfo_Kind.Size(m)
-}
-func (m *Kind) XXX_DiscardUnknown() {
-	xxx_messageInfo_Kind.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Kind proto.InternalMessageInfo
-
-func (m *Kind) GetName() string {
+func (m *SchemaKindEditor) GetRenderEditorDropdownWithField() string {
 	if m != nil {
-		return m.Name
+		return m.RenderEditorDropdownWithField
 	}
 	return ""
 }
 
-func (m *Kind) GetFields() []*Field {
+type SchemaKind struct {
+	Fields               []*SchemaField    `protobuf:"bytes,2,rep,name=fields,proto3" json:"fields,omitempty"`
+	Editor               *SchemaKindEditor `protobuf:"bytes,3,opt,name=editor,proto3" json:"editor,omitempty"`
+	Indexes              []*SchemaIndex    `protobuf:"bytes,4,rep,name=indexes,proto3" json:"indexes,omitempty"`
+	Ancestors            []string          `protobuf:"bytes,5,rep,name=ancestors,proto3" json:"ancestors,omitempty"`
+	Id                   int32             `protobuf:"varint,6,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *SchemaKind) Reset()         { *m = SchemaKind{} }
+func (m *SchemaKind) String() string { return proto.CompactTextString(m) }
+func (*SchemaKind) ProtoMessage()    {}
+func (*SchemaKind) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{13}
+}
+
+func (m *SchemaKind) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaKind.Unmarshal(m, b)
+}
+func (m *SchemaKind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaKind.Marshal(b, m, deterministic)
+}
+func (m *SchemaKind) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaKind.Merge(m, src)
+}
+func (m *SchemaKind) XXX_Size() int {
+	return xxx_messageInfo_SchemaKind.Size(m)
+}
+func (m *SchemaKind) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaKind.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaKind proto.InternalMessageInfo
+
+func (m *SchemaKind) GetFields() []*SchemaField {
 	if m != nil {
 		return m.Fields
 	}
 	return nil
 }
 
-func (m *Kind) GetEditor() *KindEditor {
+func (m *SchemaKind) GetEditor() *SchemaKindEditor {
 	if m != nil {
 		return m.Editor
 	}
 	return nil
 }
 
-type Schema struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Kinds                []*Kind  `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty"`
+func (m *SchemaKind) GetIndexes() []*SchemaIndex {
+	if m != nil {
+		return m.Indexes
+	}
+	return nil
+}
+
+func (m *SchemaKind) GetAncestors() []string {
+	if m != nil {
+		return m.Ancestors
+	}
+	return nil
+}
+
+func (m *SchemaKind) GetId() int32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+type SchemaIndex struct {
+	Name string          `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Type SchemaIndexType `protobuf:"varint,2,opt,name=type,proto3,enum=meta.SchemaIndexType" json:"type,omitempty"`
+	// Types that are valid to be assigned to Value:
+	//	*SchemaIndex_Computed
+	//	*SchemaIndex_Field
+	Value                isSchemaIndex_Value `protobuf_oneof:"value"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *SchemaIndex) Reset()         { *m = SchemaIndex{} }
+func (m *SchemaIndex) String() string { return proto.CompactTextString(m) }
+func (*SchemaIndex) ProtoMessage()    {}
+func (*SchemaIndex) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{14}
+}
+
+func (m *SchemaIndex) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaIndex.Unmarshal(m, b)
+}
+func (m *SchemaIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaIndex.Marshal(b, m, deterministic)
+}
+func (m *SchemaIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaIndex.Merge(m, src)
+}
+func (m *SchemaIndex) XXX_Size() int {
+	return xxx_messageInfo_SchemaIndex.Size(m)
+}
+func (m *SchemaIndex) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaIndex.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaIndex proto.InternalMessageInfo
+
+func (m *SchemaIndex) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *SchemaIndex) GetType() SchemaIndexType {
+	if m != nil {
+		return m.Type
+	}
+	return SchemaIndexType_unspecified
+}
+
+type isSchemaIndex_Value interface {
+	isSchemaIndex_Value()
+}
+
+type SchemaIndex_Computed struct {
+	Computed *SchemaComputedIndex `protobuf:"bytes,3,opt,name=computed,proto3,oneof"`
+}
+
+type SchemaIndex_Field struct {
+	Field string `protobuf:"bytes,4,opt,name=field,proto3,oneof"`
+}
+
+func (*SchemaIndex_Computed) isSchemaIndex_Value() {}
+
+func (*SchemaIndex_Field) isSchemaIndex_Value() {}
+
+func (m *SchemaIndex) GetValue() isSchemaIndex_Value {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
+
+func (m *SchemaIndex) GetComputed() *SchemaComputedIndex {
+	if x, ok := m.GetValue().(*SchemaIndex_Computed); ok {
+		return x.Computed
+	}
+	return nil
+}
+
+func (m *SchemaIndex) GetField() string {
+	if x, ok := m.GetValue().(*SchemaIndex_Field); ok {
+		return x.Field
+	}
+	return ""
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SchemaIndex) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SchemaIndex_Computed)(nil),
+		(*SchemaIndex_Field)(nil),
+	}
+}
+
+type SchemaComputedIndex struct {
+	// Types that are valid to be assigned to Algorithm:
+	//	*SchemaComputedIndex_Fnv64A
+	//	*SchemaComputedIndex_Fnv64APair
+	Algorithm            isSchemaComputedIndex_Algorithm `protobuf_oneof:"algorithm"`
+	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
+	XXX_unrecognized     []byte                          `json:"-"`
+	XXX_sizecache        int32                           `json:"-"`
+}
+
+func (m *SchemaComputedIndex) Reset()         { *m = SchemaComputedIndex{} }
+func (m *SchemaComputedIndex) String() string { return proto.CompactTextString(m) }
+func (*SchemaComputedIndex) ProtoMessage()    {}
+func (*SchemaComputedIndex) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{15}
+}
+
+func (m *SchemaComputedIndex) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaComputedIndex.Unmarshal(m, b)
+}
+func (m *SchemaComputedIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaComputedIndex.Marshal(b, m, deterministic)
+}
+func (m *SchemaComputedIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaComputedIndex.Merge(m, src)
+}
+func (m *SchemaComputedIndex) XXX_Size() int {
+	return xxx_messageInfo_SchemaComputedIndex.Size(m)
+}
+func (m *SchemaComputedIndex) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaComputedIndex.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaComputedIndex proto.InternalMessageInfo
+
+type isSchemaComputedIndex_Algorithm interface {
+	isSchemaComputedIndex_Algorithm()
+}
+
+type SchemaComputedIndex_Fnv64A struct {
+	Fnv64A *SchemaComputedIndexFnv64A `protobuf:"bytes,1,opt,name=fnv64a,proto3,oneof"`
+}
+
+type SchemaComputedIndex_Fnv64APair struct {
+	Fnv64APair *SchemaComputedIndexFnv64APair `protobuf:"bytes,2,opt,name=fnv64a_pair,json=fnv64aPair,proto3,oneof"`
+}
+
+func (*SchemaComputedIndex_Fnv64A) isSchemaComputedIndex_Algorithm() {}
+
+func (*SchemaComputedIndex_Fnv64APair) isSchemaComputedIndex_Algorithm() {}
+
+func (m *SchemaComputedIndex) GetAlgorithm() isSchemaComputedIndex_Algorithm {
+	if m != nil {
+		return m.Algorithm
+	}
+	return nil
+}
+
+func (m *SchemaComputedIndex) GetFnv64A() *SchemaComputedIndexFnv64A {
+	if x, ok := m.GetAlgorithm().(*SchemaComputedIndex_Fnv64A); ok {
+		return x.Fnv64A
+	}
+	return nil
+}
+
+func (m *SchemaComputedIndex) GetFnv64APair() *SchemaComputedIndexFnv64APair {
+	if x, ok := m.GetAlgorithm().(*SchemaComputedIndex_Fnv64APair); ok {
+		return x.Fnv64APair
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SchemaComputedIndex) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SchemaComputedIndex_Fnv64A)(nil),
+		(*SchemaComputedIndex_Fnv64APair)(nil),
+	}
+}
+
+type SchemaComputedIndexFnv64A struct {
+	Field                string   `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SchemaComputedIndexFnv64A) Reset()         { *m = SchemaComputedIndexFnv64A{} }
+func (m *SchemaComputedIndexFnv64A) String() string { return proto.CompactTextString(m) }
+func (*SchemaComputedIndexFnv64A) ProtoMessage()    {}
+func (*SchemaComputedIndexFnv64A) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{16}
+}
+
+func (m *SchemaComputedIndexFnv64A) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaComputedIndexFnv64A.Unmarshal(m, b)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaComputedIndexFnv64A.Marshal(b, m, deterministic)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaComputedIndexFnv64A.Merge(m, src)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_Size() int {
+	return xxx_messageInfo_SchemaComputedIndexFnv64A.Size(m)
+}
+func (m *SchemaComputedIndexFnv64A) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaComputedIndexFnv64A.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaComputedIndexFnv64A proto.InternalMessageInfo
+
+func (m *SchemaComputedIndexFnv64A) GetField() string {
+	if m != nil {
+		return m.Field
+	}
+	return ""
+}
+
+type SchemaComputedIndexFnv64APair struct {
+	Field1               string   `protobuf:"bytes,1,opt,name=field1,proto3" json:"field1,omitempty"`
+	Field2               string   `protobuf:"bytes,2,opt,name=field2,proto3" json:"field2,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SchemaComputedIndexFnv64APair) Reset()         { *m = SchemaComputedIndexFnv64APair{} }
+func (m *SchemaComputedIndexFnv64APair) String() string { return proto.CompactTextString(m) }
+func (*SchemaComputedIndexFnv64APair) ProtoMessage()    {}
+func (*SchemaComputedIndexFnv64APair) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{17}
+}
+
+func (m *SchemaComputedIndexFnv64APair) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SchemaComputedIndexFnv64APair.Unmarshal(m, b)
+}
+func (m *SchemaComputedIndexFnv64APair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SchemaComputedIndexFnv64APair.Marshal(b, m, deterministic)
+}
+func (m *SchemaComputedIndexFnv64APair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SchemaComputedIndexFnv64APair.Merge(m, src)
+}
+func (m *SchemaComputedIndexFnv64APair) XXX_Size() int {
+	return xxx_messageInfo_SchemaComputedIndexFnv64APair.Size(m)
+}
+func (m *SchemaComputedIndexFnv64APair) XXX_DiscardUnknown() {
+	xxx_messageInfo_SchemaComputedIndexFnv64APair.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SchemaComputedIndexFnv64APair proto.InternalMessageInfo
+
+func (m *SchemaComputedIndexFnv64APair) GetField1() string {
+	if m != nil {
+		return m.Field1
+	}
+	return ""
+}
+
+func (m *SchemaComputedIndexFnv64APair) GetField2() string {
+	if m != nil {
+		return m.Field2
+	}
+	return ""
+}
+
+type Schema struct {
+	Name                 string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Kinds                map[string]*SchemaKind `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *Schema) Reset()         { *m = Schema{} }
 func (m *Schema) String() string { return proto.CompactTextString(m) }
 func (*Schema) ProtoMessage()    {}
 func (*Schema) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{8}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{18}
 }
 
 func (m *Schema) XXX_Unmarshal(b []byte) error {
@@ -654,7 +1295,7 @@ func (m *Schema) GetName() string {
 	return ""
 }
 
-func (m *Schema) GetKinds() []*Kind {
+func (m *Schema) GetKinds() map[string]*SchemaKind {
 	if m != nil {
 		return m.Kinds
 	}
@@ -671,7 +1312,7 @@ func (m *GetSchemaRequest) Reset()         { *m = GetSchemaRequest{} }
 func (m *GetSchemaRequest) String() string { return proto.CompactTextString(m) }
 func (*GetSchemaRequest) ProtoMessage()    {}
 func (*GetSchemaRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{9}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{19}
 }
 
 func (m *GetSchemaRequest) XXX_Unmarshal(b []byte) error {
@@ -703,7 +1344,7 @@ func (m *GetSchemaResponse) Reset()         { *m = GetSchemaResponse{} }
 func (m *GetSchemaResponse) String() string { return proto.CompactTextString(m) }
 func (*GetSchemaResponse) ProtoMessage()    {}
 func (*GetSchemaResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{10}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{20}
 }
 
 func (m *GetSchemaResponse) XXX_Unmarshal(b []byte) error {
@@ -732,7 +1373,8 @@ func (m *GetSchemaResponse) GetSchema() *Schema {
 }
 
 type MetaListEntitiesRequest struct {
-	Start                []byte   `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	Start []byte `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	// a limit of 0 or lower indicates no limit to the number of entities returned
 	Limit                uint32   `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	KindName             string   `protobuf:"bytes,3,opt,name=kindName,proto3" json:"kindName,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -744,7 +1386,7 @@ func (m *MetaListEntitiesRequest) Reset()         { *m = MetaListEntitiesRequest
 func (m *MetaListEntitiesRequest) String() string { return proto.CompactTextString(m) }
 func (*MetaListEntitiesRequest) ProtoMessage()    {}
 func (*MetaListEntitiesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{11}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{21}
 }
 
 func (m *MetaListEntitiesRequest) XXX_Unmarshal(b []byte) error {
@@ -799,7 +1441,7 @@ func (m *MetaListEntitiesResponse) Reset()         { *m = MetaListEntitiesRespon
 func (m *MetaListEntitiesResponse) String() string { return proto.CompactTextString(m) }
 func (*MetaListEntitiesResponse) ProtoMessage()    {}
 func (*MetaListEntitiesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{12}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{22}
 }
 
 func (m *MetaListEntitiesResponse) XXX_Unmarshal(b []byte) error {
@@ -853,7 +1495,7 @@ func (m *MetaEntity) Reset()         { *m = MetaEntity{} }
 func (m *MetaEntity) String() string { return proto.CompactTextString(m) }
 func (*MetaEntity) ProtoMessage()    {}
 func (*MetaEntity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3b5ea8fe65782bcc, []int{13}
+	return fileDescriptor_3b5ea8fe65782bcc, []int{23}
 }
 
 func (m *MetaEntity) XXX_Unmarshal(b []byte) error {
@@ -888,85 +1530,1278 @@ func (m *MetaEntity) GetValues() []*Value {
 	return nil
 }
 
+type GetDefaultPartitionIdRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetDefaultPartitionIdRequest) Reset()         { *m = GetDefaultPartitionIdRequest{} }
+func (m *GetDefaultPartitionIdRequest) String() string { return proto.CompactTextString(m) }
+func (*GetDefaultPartitionIdRequest) ProtoMessage()    {}
+func (*GetDefaultPartitionIdRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{24}
+}
+
+func (m *GetDefaultPartitionIdRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetDefaultPartitionIdRequest.Unmarshal(m, b)
+}
+func (m *GetDefaultPartitionIdRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetDefaultPartitionIdRequest.Marshal(b, m, deterministic)
+}
+func (m *GetDefaultPartitionIdRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetDefaultPartitionIdRequest.Merge(m, src)
+}
+func (m *GetDefaultPartitionIdRequest) XXX_Size() int {
+	return xxx_messageInfo_GetDefaultPartitionIdRequest.Size(m)
+}
+func (m *GetDefaultPartitionIdRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetDefaultPartitionIdRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetDefaultPartitionIdRequest proto.InternalMessageInfo
+
+type GetDefaultPartitionIdResponse struct {
+	Namespace            string   `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetDefaultPartitionIdResponse) Reset()         { *m = GetDefaultPartitionIdResponse{} }
+func (m *GetDefaultPartitionIdResponse) String() string { return proto.CompactTextString(m) }
+func (*GetDefaultPartitionIdResponse) ProtoMessage()    {}
+func (*GetDefaultPartitionIdResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{25}
+}
+
+func (m *GetDefaultPartitionIdResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetDefaultPartitionIdResponse.Unmarshal(m, b)
+}
+func (m *GetDefaultPartitionIdResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetDefaultPartitionIdResponse.Marshal(b, m, deterministic)
+}
+func (m *GetDefaultPartitionIdResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetDefaultPartitionIdResponse.Merge(m, src)
+}
+func (m *GetDefaultPartitionIdResponse) XXX_Size() int {
+	return xxx_messageInfo_GetDefaultPartitionIdResponse.Size(m)
+}
+func (m *GetDefaultPartitionIdResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetDefaultPartitionIdResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetDefaultPartitionIdResponse proto.InternalMessageInfo
+
+func (m *GetDefaultPartitionIdResponse) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+type MetaGetEntityRequest struct {
+	Key                  *Key     `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	KindName             string   `protobuf:"bytes,2,opt,name=kindName,proto3" json:"kindName,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MetaGetEntityRequest) Reset()         { *m = MetaGetEntityRequest{} }
+func (m *MetaGetEntityRequest) String() string { return proto.CompactTextString(m) }
+func (*MetaGetEntityRequest) ProtoMessage()    {}
+func (*MetaGetEntityRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{26}
+}
+
+func (m *MetaGetEntityRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaGetEntityRequest.Unmarshal(m, b)
+}
+func (m *MetaGetEntityRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaGetEntityRequest.Marshal(b, m, deterministic)
+}
+func (m *MetaGetEntityRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaGetEntityRequest.Merge(m, src)
+}
+func (m *MetaGetEntityRequest) XXX_Size() int {
+	return xxx_messageInfo_MetaGetEntityRequest.Size(m)
+}
+func (m *MetaGetEntityRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaGetEntityRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaGetEntityRequest proto.InternalMessageInfo
+
+func (m *MetaGetEntityRequest) GetKey() *Key {
+	if m != nil {
+		return m.Key
+	}
+	return nil
+}
+
+func (m *MetaGetEntityRequest) GetKindName() string {
+	if m != nil {
+		return m.KindName
+	}
+	return ""
+}
+
+type MetaGetEntityResponse struct {
+	Entity               *MetaEntity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *MetaGetEntityResponse) Reset()         { *m = MetaGetEntityResponse{} }
+func (m *MetaGetEntityResponse) String() string { return proto.CompactTextString(m) }
+func (*MetaGetEntityResponse) ProtoMessage()    {}
+func (*MetaGetEntityResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{27}
+}
+
+func (m *MetaGetEntityResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaGetEntityResponse.Unmarshal(m, b)
+}
+func (m *MetaGetEntityResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaGetEntityResponse.Marshal(b, m, deterministic)
+}
+func (m *MetaGetEntityResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaGetEntityResponse.Merge(m, src)
+}
+func (m *MetaGetEntityResponse) XXX_Size() int {
+	return xxx_messageInfo_MetaGetEntityResponse.Size(m)
+}
+func (m *MetaGetEntityResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaGetEntityResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaGetEntityResponse proto.InternalMessageInfo
+
+func (m *MetaGetEntityResponse) GetEntity() *MetaEntity {
+	if m != nil {
+		return m.Entity
+	}
+	return nil
+}
+
+type MetaUpdateEntityRequest struct {
+	Entity               *MetaEntity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *MetaUpdateEntityRequest) Reset()         { *m = MetaUpdateEntityRequest{} }
+func (m *MetaUpdateEntityRequest) String() string { return proto.CompactTextString(m) }
+func (*MetaUpdateEntityRequest) ProtoMessage()    {}
+func (*MetaUpdateEntityRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{28}
+}
+
+func (m *MetaUpdateEntityRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaUpdateEntityRequest.Unmarshal(m, b)
+}
+func (m *MetaUpdateEntityRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaUpdateEntityRequest.Marshal(b, m, deterministic)
+}
+func (m *MetaUpdateEntityRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaUpdateEntityRequest.Merge(m, src)
+}
+func (m *MetaUpdateEntityRequest) XXX_Size() int {
+	return xxx_messageInfo_MetaUpdateEntityRequest.Size(m)
+}
+func (m *MetaUpdateEntityRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaUpdateEntityRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaUpdateEntityRequest proto.InternalMessageInfo
+
+func (m *MetaUpdateEntityRequest) GetEntity() *MetaEntity {
+	if m != nil {
+		return m.Entity
+	}
+	return nil
+}
+
+type MetaUpdateEntityResponse struct {
+	Entity               *MetaEntity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *MetaUpdateEntityResponse) Reset()         { *m = MetaUpdateEntityResponse{} }
+func (m *MetaUpdateEntityResponse) String() string { return proto.CompactTextString(m) }
+func (*MetaUpdateEntityResponse) ProtoMessage()    {}
+func (*MetaUpdateEntityResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{29}
+}
+
+func (m *MetaUpdateEntityResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaUpdateEntityResponse.Unmarshal(m, b)
+}
+func (m *MetaUpdateEntityResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaUpdateEntityResponse.Marshal(b, m, deterministic)
+}
+func (m *MetaUpdateEntityResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaUpdateEntityResponse.Merge(m, src)
+}
+func (m *MetaUpdateEntityResponse) XXX_Size() int {
+	return xxx_messageInfo_MetaUpdateEntityResponse.Size(m)
+}
+func (m *MetaUpdateEntityResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaUpdateEntityResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaUpdateEntityResponse proto.InternalMessageInfo
+
+func (m *MetaUpdateEntityResponse) GetEntity() *MetaEntity {
+	if m != nil {
+		return m.Entity
+	}
+	return nil
+}
+
+type MetaCreateEntityRequest struct {
+	Entity               *MetaEntity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	KindName             string      `protobuf:"bytes,2,opt,name=kindName,proto3" json:"kindName,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *MetaCreateEntityRequest) Reset()         { *m = MetaCreateEntityRequest{} }
+func (m *MetaCreateEntityRequest) String() string { return proto.CompactTextString(m) }
+func (*MetaCreateEntityRequest) ProtoMessage()    {}
+func (*MetaCreateEntityRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{30}
+}
+
+func (m *MetaCreateEntityRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaCreateEntityRequest.Unmarshal(m, b)
+}
+func (m *MetaCreateEntityRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaCreateEntityRequest.Marshal(b, m, deterministic)
+}
+func (m *MetaCreateEntityRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaCreateEntityRequest.Merge(m, src)
+}
+func (m *MetaCreateEntityRequest) XXX_Size() int {
+	return xxx_messageInfo_MetaCreateEntityRequest.Size(m)
+}
+func (m *MetaCreateEntityRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaCreateEntityRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaCreateEntityRequest proto.InternalMessageInfo
+
+func (m *MetaCreateEntityRequest) GetEntity() *MetaEntity {
+	if m != nil {
+		return m.Entity
+	}
+	return nil
+}
+
+func (m *MetaCreateEntityRequest) GetKindName() string {
+	if m != nil {
+		return m.KindName
+	}
+	return ""
+}
+
+type MetaCreateEntityResponse struct {
+	Entity               *MetaEntity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *MetaCreateEntityResponse) Reset()         { *m = MetaCreateEntityResponse{} }
+func (m *MetaCreateEntityResponse) String() string { return proto.CompactTextString(m) }
+func (*MetaCreateEntityResponse) ProtoMessage()    {}
+func (*MetaCreateEntityResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{31}
+}
+
+func (m *MetaCreateEntityResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaCreateEntityResponse.Unmarshal(m, b)
+}
+func (m *MetaCreateEntityResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaCreateEntityResponse.Marshal(b, m, deterministic)
+}
+func (m *MetaCreateEntityResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaCreateEntityResponse.Merge(m, src)
+}
+func (m *MetaCreateEntityResponse) XXX_Size() int {
+	return xxx_messageInfo_MetaCreateEntityResponse.Size(m)
+}
+func (m *MetaCreateEntityResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaCreateEntityResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaCreateEntityResponse proto.InternalMessageInfo
+
+func (m *MetaCreateEntityResponse) GetEntity() *MetaEntity {
+	if m != nil {
+		return m.Entity
+	}
+	return nil
+}
+
+type MetaDeleteEntityRequest struct {
+	Key                  *Key     `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	KindName             string   `protobuf:"bytes,2,opt,name=kindName,proto3" json:"kindName,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MetaDeleteEntityRequest) Reset()         { *m = MetaDeleteEntityRequest{} }
+func (m *MetaDeleteEntityRequest) String() string { return proto.CompactTextString(m) }
+func (*MetaDeleteEntityRequest) ProtoMessage()    {}
+func (*MetaDeleteEntityRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{32}
+}
+
+func (m *MetaDeleteEntityRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaDeleteEntityRequest.Unmarshal(m, b)
+}
+func (m *MetaDeleteEntityRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaDeleteEntityRequest.Marshal(b, m, deterministic)
+}
+func (m *MetaDeleteEntityRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaDeleteEntityRequest.Merge(m, src)
+}
+func (m *MetaDeleteEntityRequest) XXX_Size() int {
+	return xxx_messageInfo_MetaDeleteEntityRequest.Size(m)
+}
+func (m *MetaDeleteEntityRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaDeleteEntityRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaDeleteEntityRequest proto.InternalMessageInfo
+
+func (m *MetaDeleteEntityRequest) GetKey() *Key {
+	if m != nil {
+		return m.Key
+	}
+	return nil
+}
+
+func (m *MetaDeleteEntityRequest) GetKindName() string {
+	if m != nil {
+		return m.KindName
+	}
+	return ""
+}
+
+type MetaDeleteEntityResponse struct {
+	Entity               *MetaEntity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *MetaDeleteEntityResponse) Reset()         { *m = MetaDeleteEntityResponse{} }
+func (m *MetaDeleteEntityResponse) String() string { return proto.CompactTextString(m) }
+func (*MetaDeleteEntityResponse) ProtoMessage()    {}
+func (*MetaDeleteEntityResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{33}
+}
+
+func (m *MetaDeleteEntityResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaDeleteEntityResponse.Unmarshal(m, b)
+}
+func (m *MetaDeleteEntityResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaDeleteEntityResponse.Marshal(b, m, deterministic)
+}
+func (m *MetaDeleteEntityResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaDeleteEntityResponse.Merge(m, src)
+}
+func (m *MetaDeleteEntityResponse) XXX_Size() int {
+	return xxx_messageInfo_MetaDeleteEntityResponse.Size(m)
+}
+func (m *MetaDeleteEntityResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaDeleteEntityResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaDeleteEntityResponse proto.InternalMessageInfo
+
+func (m *MetaDeleteEntityResponse) GetEntity() *MetaEntity {
+	if m != nil {
+		return m.Entity
+	}
+	return nil
+}
+
+type MetaTransaction struct {
+	Operations           []*MetaOperation `protobuf:"bytes,1,rep,name=operations,proto3" json:"operations,omitempty"`
+	Description          string           `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *MetaTransaction) Reset()         { *m = MetaTransaction{} }
+func (m *MetaTransaction) String() string { return proto.CompactTextString(m) }
+func (*MetaTransaction) ProtoMessage()    {}
+func (*MetaTransaction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{34}
+}
+
+func (m *MetaTransaction) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaTransaction.Unmarshal(m, b)
+}
+func (m *MetaTransaction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaTransaction.Marshal(b, m, deterministic)
+}
+func (m *MetaTransaction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaTransaction.Merge(m, src)
+}
+func (m *MetaTransaction) XXX_Size() int {
+	return xxx_messageInfo_MetaTransaction.Size(m)
+}
+func (m *MetaTransaction) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaTransaction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaTransaction proto.InternalMessageInfo
+
+func (m *MetaTransaction) GetOperations() []*MetaOperation {
+	if m != nil {
+		return m.Operations
+	}
+	return nil
+}
+
+func (m *MetaTransaction) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
+type MetaOperation struct {
+	// Types that are valid to be assigned to Operation:
+	//	*MetaOperation_ListRequest
+	//	*MetaOperation_GetRequest
+	//	*MetaOperation_UpdateRequest
+	//	*MetaOperation_CreateRequest
+	//	*MetaOperation_DeleteRequest
+	Operation            isMetaOperation_Operation `protobuf_oneof:"operation"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
+}
+
+func (m *MetaOperation) Reset()         { *m = MetaOperation{} }
+func (m *MetaOperation) String() string { return proto.CompactTextString(m) }
+func (*MetaOperation) ProtoMessage()    {}
+func (*MetaOperation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{35}
+}
+
+func (m *MetaOperation) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaOperation.Unmarshal(m, b)
+}
+func (m *MetaOperation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaOperation.Marshal(b, m, deterministic)
+}
+func (m *MetaOperation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaOperation.Merge(m, src)
+}
+func (m *MetaOperation) XXX_Size() int {
+	return xxx_messageInfo_MetaOperation.Size(m)
+}
+func (m *MetaOperation) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaOperation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaOperation proto.InternalMessageInfo
+
+type isMetaOperation_Operation interface {
+	isMetaOperation_Operation()
+}
+
+type MetaOperation_ListRequest struct {
+	ListRequest *MetaListEntitiesRequest `protobuf:"bytes,1,opt,name=listRequest,proto3,oneof"`
+}
+
+type MetaOperation_GetRequest struct {
+	GetRequest *MetaGetEntityRequest `protobuf:"bytes,2,opt,name=getRequest,proto3,oneof"`
+}
+
+type MetaOperation_UpdateRequest struct {
+	UpdateRequest *MetaUpdateEntityRequest `protobuf:"bytes,3,opt,name=updateRequest,proto3,oneof"`
+}
+
+type MetaOperation_CreateRequest struct {
+	CreateRequest *MetaCreateEntityRequest `protobuf:"bytes,4,opt,name=createRequest,proto3,oneof"`
+}
+
+type MetaOperation_DeleteRequest struct {
+	DeleteRequest *MetaDeleteEntityRequest `protobuf:"bytes,5,opt,name=deleteRequest,proto3,oneof"`
+}
+
+func (*MetaOperation_ListRequest) isMetaOperation_Operation() {}
+
+func (*MetaOperation_GetRequest) isMetaOperation_Operation() {}
+
+func (*MetaOperation_UpdateRequest) isMetaOperation_Operation() {}
+
+func (*MetaOperation_CreateRequest) isMetaOperation_Operation() {}
+
+func (*MetaOperation_DeleteRequest) isMetaOperation_Operation() {}
+
+func (m *MetaOperation) GetOperation() isMetaOperation_Operation {
+	if m != nil {
+		return m.Operation
+	}
+	return nil
+}
+
+func (m *MetaOperation) GetListRequest() *MetaListEntitiesRequest {
+	if x, ok := m.GetOperation().(*MetaOperation_ListRequest); ok {
+		return x.ListRequest
+	}
+	return nil
+}
+
+func (m *MetaOperation) GetGetRequest() *MetaGetEntityRequest {
+	if x, ok := m.GetOperation().(*MetaOperation_GetRequest); ok {
+		return x.GetRequest
+	}
+	return nil
+}
+
+func (m *MetaOperation) GetUpdateRequest() *MetaUpdateEntityRequest {
+	if x, ok := m.GetOperation().(*MetaOperation_UpdateRequest); ok {
+		return x.UpdateRequest
+	}
+	return nil
+}
+
+func (m *MetaOperation) GetCreateRequest() *MetaCreateEntityRequest {
+	if x, ok := m.GetOperation().(*MetaOperation_CreateRequest); ok {
+		return x.CreateRequest
+	}
+	return nil
+}
+
+func (m *MetaOperation) GetDeleteRequest() *MetaDeleteEntityRequest {
+	if x, ok := m.GetOperation().(*MetaOperation_DeleteRequest); ok {
+		return x.DeleteRequest
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*MetaOperation) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*MetaOperation_ListRequest)(nil),
+		(*MetaOperation_GetRequest)(nil),
+		(*MetaOperation_UpdateRequest)(nil),
+		(*MetaOperation_CreateRequest)(nil),
+		(*MetaOperation_DeleteRequest)(nil),
+	}
+}
+
+type MetaTransactionResult struct {
+	OperationResults     []*MetaOperationResult `protobuf:"bytes,1,rep,name=operationResults,proto3" json:"operationResults,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *MetaTransactionResult) Reset()         { *m = MetaTransactionResult{} }
+func (m *MetaTransactionResult) String() string { return proto.CompactTextString(m) }
+func (*MetaTransactionResult) ProtoMessage()    {}
+func (*MetaTransactionResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{36}
+}
+
+func (m *MetaTransactionResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaTransactionResult.Unmarshal(m, b)
+}
+func (m *MetaTransactionResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaTransactionResult.Marshal(b, m, deterministic)
+}
+func (m *MetaTransactionResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaTransactionResult.Merge(m, src)
+}
+func (m *MetaTransactionResult) XXX_Size() int {
+	return xxx_messageInfo_MetaTransactionResult.Size(m)
+}
+func (m *MetaTransactionResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaTransactionResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaTransactionResult proto.InternalMessageInfo
+
+func (m *MetaTransactionResult) GetOperationResults() []*MetaOperationResult {
+	if m != nil {
+		return m.OperationResults
+	}
+	return nil
+}
+
+type MetaOperationResultError struct {
+	ErrorMessage         string   `protobuf:"bytes,1,opt,name=errorMessage,proto3" json:"errorMessage,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MetaOperationResultError) Reset()         { *m = MetaOperationResultError{} }
+func (m *MetaOperationResultError) String() string { return proto.CompactTextString(m) }
+func (*MetaOperationResultError) ProtoMessage()    {}
+func (*MetaOperationResultError) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{37}
+}
+
+func (m *MetaOperationResultError) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaOperationResultError.Unmarshal(m, b)
+}
+func (m *MetaOperationResultError) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaOperationResultError.Marshal(b, m, deterministic)
+}
+func (m *MetaOperationResultError) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaOperationResultError.Merge(m, src)
+}
+func (m *MetaOperationResultError) XXX_Size() int {
+	return xxx_messageInfo_MetaOperationResultError.Size(m)
+}
+func (m *MetaOperationResultError) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaOperationResultError.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaOperationResultError proto.InternalMessageInfo
+
+func (m *MetaOperationResultError) GetErrorMessage() string {
+	if m != nil {
+		return m.ErrorMessage
+	}
+	return ""
+}
+
+type MetaOperationResult struct {
+	Error *MetaOperationResultError `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
+	// Types that are valid to be assigned to Operation:
+	//	*MetaOperationResult_ListResponse
+	//	*MetaOperationResult_GetResponse
+	//	*MetaOperationResult_UpdateResponse
+	//	*MetaOperationResult_CreateResponse
+	//	*MetaOperationResult_DeleteResponse
+	Operation            isMetaOperationResult_Operation `protobuf_oneof:"operation"`
+	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
+	XXX_unrecognized     []byte                          `json:"-"`
+	XXX_sizecache        int32                           `json:"-"`
+}
+
+func (m *MetaOperationResult) Reset()         { *m = MetaOperationResult{} }
+func (m *MetaOperationResult) String() string { return proto.CompactTextString(m) }
+func (*MetaOperationResult) ProtoMessage()    {}
+func (*MetaOperationResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{38}
+}
+
+func (m *MetaOperationResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaOperationResult.Unmarshal(m, b)
+}
+func (m *MetaOperationResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaOperationResult.Marshal(b, m, deterministic)
+}
+func (m *MetaOperationResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaOperationResult.Merge(m, src)
+}
+func (m *MetaOperationResult) XXX_Size() int {
+	return xxx_messageInfo_MetaOperationResult.Size(m)
+}
+func (m *MetaOperationResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaOperationResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaOperationResult proto.InternalMessageInfo
+
+func (m *MetaOperationResult) GetError() *MetaOperationResultError {
+	if m != nil {
+		return m.Error
+	}
+	return nil
+}
+
+type isMetaOperationResult_Operation interface {
+	isMetaOperationResult_Operation()
+}
+
+type MetaOperationResult_ListResponse struct {
+	ListResponse *MetaListEntitiesResponse `protobuf:"bytes,2,opt,name=listResponse,proto3,oneof"`
+}
+
+type MetaOperationResult_GetResponse struct {
+	GetResponse *MetaGetEntityResponse `protobuf:"bytes,3,opt,name=getResponse,proto3,oneof"`
+}
+
+type MetaOperationResult_UpdateResponse struct {
+	UpdateResponse *MetaUpdateEntityResponse `protobuf:"bytes,4,opt,name=updateResponse,proto3,oneof"`
+}
+
+type MetaOperationResult_CreateResponse struct {
+	CreateResponse *MetaCreateEntityResponse `protobuf:"bytes,5,opt,name=createResponse,proto3,oneof"`
+}
+
+type MetaOperationResult_DeleteResponse struct {
+	DeleteResponse *MetaDeleteEntityResponse `protobuf:"bytes,6,opt,name=deleteResponse,proto3,oneof"`
+}
+
+func (*MetaOperationResult_ListResponse) isMetaOperationResult_Operation() {}
+
+func (*MetaOperationResult_GetResponse) isMetaOperationResult_Operation() {}
+
+func (*MetaOperationResult_UpdateResponse) isMetaOperationResult_Operation() {}
+
+func (*MetaOperationResult_CreateResponse) isMetaOperationResult_Operation() {}
+
+func (*MetaOperationResult_DeleteResponse) isMetaOperationResult_Operation() {}
+
+func (m *MetaOperationResult) GetOperation() isMetaOperationResult_Operation {
+	if m != nil {
+		return m.Operation
+	}
+	return nil
+}
+
+func (m *MetaOperationResult) GetListResponse() *MetaListEntitiesResponse {
+	if x, ok := m.GetOperation().(*MetaOperationResult_ListResponse); ok {
+		return x.ListResponse
+	}
+	return nil
+}
+
+func (m *MetaOperationResult) GetGetResponse() *MetaGetEntityResponse {
+	if x, ok := m.GetOperation().(*MetaOperationResult_GetResponse); ok {
+		return x.GetResponse
+	}
+	return nil
+}
+
+func (m *MetaOperationResult) GetUpdateResponse() *MetaUpdateEntityResponse {
+	if x, ok := m.GetOperation().(*MetaOperationResult_UpdateResponse); ok {
+		return x.UpdateResponse
+	}
+	return nil
+}
+
+func (m *MetaOperationResult) GetCreateResponse() *MetaCreateEntityResponse {
+	if x, ok := m.GetOperation().(*MetaOperationResult_CreateResponse); ok {
+		return x.CreateResponse
+	}
+	return nil
+}
+
+func (m *MetaOperationResult) GetDeleteResponse() *MetaDeleteEntityResponse {
+	if x, ok := m.GetOperation().(*MetaOperationResult_DeleteResponse); ok {
+		return x.DeleteResponse
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*MetaOperationResult) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*MetaOperationResult_ListResponse)(nil),
+		(*MetaOperationResult_GetResponse)(nil),
+		(*MetaOperationResult_UpdateResponse)(nil),
+		(*MetaOperationResult_CreateResponse)(nil),
+		(*MetaOperationResult_DeleteResponse)(nil),
+	}
+}
+
+type WatchTransactionsRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WatchTransactionsRequest) Reset()         { *m = WatchTransactionsRequest{} }
+func (m *WatchTransactionsRequest) String() string { return proto.CompactTextString(m) }
+func (*WatchTransactionsRequest) ProtoMessage()    {}
+func (*WatchTransactionsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{39}
+}
+
+func (m *WatchTransactionsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WatchTransactionsRequest.Unmarshal(m, b)
+}
+func (m *WatchTransactionsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WatchTransactionsRequest.Marshal(b, m, deterministic)
+}
+func (m *WatchTransactionsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WatchTransactionsRequest.Merge(m, src)
+}
+func (m *WatchTransactionsRequest) XXX_Size() int {
+	return xxx_messageInfo_WatchTransactionsRequest.Size(m)
+}
+func (m *WatchTransactionsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_WatchTransactionsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WatchTransactionsRequest proto.InternalMessageInfo
+
+type WatchTransactionsResponse struct {
+	// Types that are valid to be assigned to Response:
+	//	*WatchTransactionsResponse_Batch
+	//	*WatchTransactionsResponse_InitialState
+	Response             isWatchTransactionsResponse_Response `protobuf_oneof:"response"`
+	XXX_NoUnkeyedLiteral struct{}                             `json:"-"`
+	XXX_unrecognized     []byte                               `json:"-"`
+	XXX_sizecache        int32                                `json:"-"`
+}
+
+func (m *WatchTransactionsResponse) Reset()         { *m = WatchTransactionsResponse{} }
+func (m *WatchTransactionsResponse) String() string { return proto.CompactTextString(m) }
+func (*WatchTransactionsResponse) ProtoMessage()    {}
+func (*WatchTransactionsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{40}
+}
+
+func (m *WatchTransactionsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WatchTransactionsResponse.Unmarshal(m, b)
+}
+func (m *WatchTransactionsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WatchTransactionsResponse.Marshal(b, m, deterministic)
+}
+func (m *WatchTransactionsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WatchTransactionsResponse.Merge(m, src)
+}
+func (m *WatchTransactionsResponse) XXX_Size() int {
+	return xxx_messageInfo_WatchTransactionsResponse.Size(m)
+}
+func (m *WatchTransactionsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_WatchTransactionsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WatchTransactionsResponse proto.InternalMessageInfo
+
+type isWatchTransactionsResponse_Response interface {
+	isWatchTransactionsResponse_Response()
+}
+
+type WatchTransactionsResponse_Batch struct {
+	Batch *MetaTransactionBatch `protobuf:"bytes,1,opt,name=batch,proto3,oneof"`
+}
+
+type WatchTransactionsResponse_InitialState struct {
+	InitialState *MetaTransactionInitialState `protobuf:"bytes,2,opt,name=initialState,proto3,oneof"`
+}
+
+func (*WatchTransactionsResponse_Batch) isWatchTransactionsResponse_Response() {}
+
+func (*WatchTransactionsResponse_InitialState) isWatchTransactionsResponse_Response() {}
+
+func (m *WatchTransactionsResponse) GetResponse() isWatchTransactionsResponse_Response {
+	if m != nil {
+		return m.Response
+	}
+	return nil
+}
+
+func (m *WatchTransactionsResponse) GetBatch() *MetaTransactionBatch {
+	if x, ok := m.GetResponse().(*WatchTransactionsResponse_Batch); ok {
+		return x.Batch
+	}
+	return nil
+}
+
+func (m *WatchTransactionsResponse) GetInitialState() *MetaTransactionInitialState {
+	if x, ok := m.GetResponse().(*WatchTransactionsResponse_InitialState); ok {
+		return x.InitialState
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*WatchTransactionsResponse) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*WatchTransactionsResponse_Batch)(nil),
+		(*WatchTransactionsResponse_InitialState)(nil),
+	}
+}
+
+type MetaTransactionRecord struct {
+	MutatedKeys          []*Key               `protobuf:"bytes,1,rep,name=mutatedKeys,proto3" json:"mutatedKeys,omitempty"`
+	DeletedKeys          []*Key               `protobuf:"bytes,2,rep,name=deletedKeys,proto3" json:"deletedKeys,omitempty"`
+	DateSubmitted        *timestamp.Timestamp `protobuf:"bytes,3,opt,name=dateSubmitted,proto3" json:"dateSubmitted,omitempty"`
+	DateCreated          *timestamp.Timestamp `protobuf:"bytes,4,opt,name=dateCreated,proto3" json:"dateCreated,omitempty"`
+	Description          string               `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	Id                   string               `protobuf:"bytes,6,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *MetaTransactionRecord) Reset()         { *m = MetaTransactionRecord{} }
+func (m *MetaTransactionRecord) String() string { return proto.CompactTextString(m) }
+func (*MetaTransactionRecord) ProtoMessage()    {}
+func (*MetaTransactionRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{41}
+}
+
+func (m *MetaTransactionRecord) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaTransactionRecord.Unmarshal(m, b)
+}
+func (m *MetaTransactionRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaTransactionRecord.Marshal(b, m, deterministic)
+}
+func (m *MetaTransactionRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaTransactionRecord.Merge(m, src)
+}
+func (m *MetaTransactionRecord) XXX_Size() int {
+	return xxx_messageInfo_MetaTransactionRecord.Size(m)
+}
+func (m *MetaTransactionRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaTransactionRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaTransactionRecord proto.InternalMessageInfo
+
+func (m *MetaTransactionRecord) GetMutatedKeys() []*Key {
+	if m != nil {
+		return m.MutatedKeys
+	}
+	return nil
+}
+
+func (m *MetaTransactionRecord) GetDeletedKeys() []*Key {
+	if m != nil {
+		return m.DeletedKeys
+	}
+	return nil
+}
+
+func (m *MetaTransactionRecord) GetDateSubmitted() *timestamp.Timestamp {
+	if m != nil {
+		return m.DateSubmitted
+	}
+	return nil
+}
+
+func (m *MetaTransactionRecord) GetDateCreated() *timestamp.Timestamp {
+	if m != nil {
+		return m.DateCreated
+	}
+	return nil
+}
+
+func (m *MetaTransactionRecord) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
+func (m *MetaTransactionRecord) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type MetaTransactionBatch struct {
+	MutatedEntities      []*MetaEntity `protobuf:"bytes,1,rep,name=mutatedEntities,proto3" json:"mutatedEntities,omitempty"`
+	DeletedKeys          []*Key        `protobuf:"bytes,2,rep,name=deletedKeys,proto3" json:"deletedKeys,omitempty"`
+	Description          string        `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Id                   string        `protobuf:"bytes,4,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *MetaTransactionBatch) Reset()         { *m = MetaTransactionBatch{} }
+func (m *MetaTransactionBatch) String() string { return proto.CompactTextString(m) }
+func (*MetaTransactionBatch) ProtoMessage()    {}
+func (*MetaTransactionBatch) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{42}
+}
+
+func (m *MetaTransactionBatch) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaTransactionBatch.Unmarshal(m, b)
+}
+func (m *MetaTransactionBatch) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaTransactionBatch.Marshal(b, m, deterministic)
+}
+func (m *MetaTransactionBatch) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaTransactionBatch.Merge(m, src)
+}
+func (m *MetaTransactionBatch) XXX_Size() int {
+	return xxx_messageInfo_MetaTransactionBatch.Size(m)
+}
+func (m *MetaTransactionBatch) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaTransactionBatch.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaTransactionBatch proto.InternalMessageInfo
+
+func (m *MetaTransactionBatch) GetMutatedEntities() []*MetaEntity {
+	if m != nil {
+		return m.MutatedEntities
+	}
+	return nil
+}
+
+func (m *MetaTransactionBatch) GetDeletedKeys() []*Key {
+	if m != nil {
+		return m.DeletedKeys
+	}
+	return nil
+}
+
+func (m *MetaTransactionBatch) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
+func (m *MetaTransactionBatch) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type MetaTransactionInitialState struct {
+	Entities             []*MetaEntity `protobuf:"bytes,1,rep,name=entities,proto3" json:"entities,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *MetaTransactionInitialState) Reset()         { *m = MetaTransactionInitialState{} }
+func (m *MetaTransactionInitialState) String() string { return proto.CompactTextString(m) }
+func (*MetaTransactionInitialState) ProtoMessage()    {}
+func (*MetaTransactionInitialState) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b5ea8fe65782bcc, []int{43}
+}
+
+func (m *MetaTransactionInitialState) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MetaTransactionInitialState.Unmarshal(m, b)
+}
+func (m *MetaTransactionInitialState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MetaTransactionInitialState.Marshal(b, m, deterministic)
+}
+func (m *MetaTransactionInitialState) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MetaTransactionInitialState.Merge(m, src)
+}
+func (m *MetaTransactionInitialState) XXX_Size() int {
+	return xxx_messageInfo_MetaTransactionInitialState.Size(m)
+}
+func (m *MetaTransactionInitialState) XXX_DiscardUnknown() {
+	xxx_messageInfo_MetaTransactionInitialState.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MetaTransactionInitialState proto.InternalMessageInfo
+
+func (m *MetaTransactionInitialState) GetEntities() []*MetaEntity {
+	if m != nil {
+		return m.Entities
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterEnum("meta.ValueType", ValueType_name, ValueType_value)
-	proto.RegisterEnum("meta.FieldEditorInfoType", FieldEditorInfoType_name, FieldEditorInfoType_value)
+	proto.RegisterEnum("meta.SchemaFieldEditorInfoType", SchemaFieldEditorInfoType_name, SchemaFieldEditorInfoType_value)
+	proto.RegisterEnum("meta.SchemaIndexType", SchemaIndexType_name, SchemaIndexType_value)
 	proto.RegisterType((*PartitionId)(nil), "meta.PartitionId")
 	proto.RegisterType((*PathElement)(nil), "meta.PathElement")
 	proto.RegisterType((*Key)(nil), "meta.Key")
 	proto.RegisterType((*Value)(nil), "meta.Value")
-	proto.RegisterType((*Field)(nil), "meta.Field")
-	proto.RegisterType((*FieldEditorInfo)(nil), "meta.FieldEditorInfo")
-	proto.RegisterType((*KindEditor)(nil), "meta.KindEditor")
-	proto.RegisterType((*Kind)(nil), "meta.Kind")
+	proto.RegisterType((*SchemaField)(nil), "meta.SchemaField")
+	proto.RegisterType((*SchemaFieldEditorInfo)(nil), "meta.SchemaFieldEditorInfo")
+	proto.RegisterType((*SchemaFieldEditorValidator)(nil), "meta.SchemaFieldEditorValidator")
+	proto.RegisterType((*SchemaFieldEditorValidatorRequired)(nil), "meta.SchemaFieldEditorValidatorRequired")
+	proto.RegisterType((*SchemaFieldEditorValidatorFixedLength)(nil), "meta.SchemaFieldEditorValidatorFixedLength")
+	proto.RegisterType((*SchemaFieldEditorValidatorDefault)(nil), "meta.SchemaFieldEditorValidatorDefault")
+	proto.RegisterType((*SchemaFieldEditorValidatorFormatIPAddress)(nil), "meta.SchemaFieldEditorValidatorFormatIPAddress")
+	proto.RegisterType((*SchemaFieldEditorValidatorFormatIPAddressPort)(nil), "meta.SchemaFieldEditorValidatorFormatIPAddressPort")
+	proto.RegisterType((*SchemaKindEditor)(nil), "meta.SchemaKindEditor")
+	proto.RegisterType((*SchemaKind)(nil), "meta.SchemaKind")
+	proto.RegisterType((*SchemaIndex)(nil), "meta.SchemaIndex")
+	proto.RegisterType((*SchemaComputedIndex)(nil), "meta.SchemaComputedIndex")
+	proto.RegisterType((*SchemaComputedIndexFnv64A)(nil), "meta.SchemaComputedIndexFnv64a")
+	proto.RegisterType((*SchemaComputedIndexFnv64APair)(nil), "meta.SchemaComputedIndexFnv64aPair")
 	proto.RegisterType((*Schema)(nil), "meta.Schema")
+	proto.RegisterMapType((map[string]*SchemaKind)(nil), "meta.Schema.KindsEntry")
 	proto.RegisterType((*GetSchemaRequest)(nil), "meta.GetSchemaRequest")
 	proto.RegisterType((*GetSchemaResponse)(nil), "meta.GetSchemaResponse")
 	proto.RegisterType((*MetaListEntitiesRequest)(nil), "meta.MetaListEntitiesRequest")
 	proto.RegisterType((*MetaListEntitiesResponse)(nil), "meta.MetaListEntitiesResponse")
 	proto.RegisterType((*MetaEntity)(nil), "meta.MetaEntity")
+	proto.RegisterType((*GetDefaultPartitionIdRequest)(nil), "meta.GetDefaultPartitionIdRequest")
+	proto.RegisterType((*GetDefaultPartitionIdResponse)(nil), "meta.GetDefaultPartitionIdResponse")
+	proto.RegisterType((*MetaGetEntityRequest)(nil), "meta.MetaGetEntityRequest")
+	proto.RegisterType((*MetaGetEntityResponse)(nil), "meta.MetaGetEntityResponse")
+	proto.RegisterType((*MetaUpdateEntityRequest)(nil), "meta.MetaUpdateEntityRequest")
+	proto.RegisterType((*MetaUpdateEntityResponse)(nil), "meta.MetaUpdateEntityResponse")
+	proto.RegisterType((*MetaCreateEntityRequest)(nil), "meta.MetaCreateEntityRequest")
+	proto.RegisterType((*MetaCreateEntityResponse)(nil), "meta.MetaCreateEntityResponse")
+	proto.RegisterType((*MetaDeleteEntityRequest)(nil), "meta.MetaDeleteEntityRequest")
+	proto.RegisterType((*MetaDeleteEntityResponse)(nil), "meta.MetaDeleteEntityResponse")
+	proto.RegisterType((*MetaTransaction)(nil), "meta.MetaTransaction")
+	proto.RegisterType((*MetaOperation)(nil), "meta.MetaOperation")
+	proto.RegisterType((*MetaTransactionResult)(nil), "meta.MetaTransactionResult")
+	proto.RegisterType((*MetaOperationResultError)(nil), "meta.MetaOperationResultError")
+	proto.RegisterType((*MetaOperationResult)(nil), "meta.MetaOperationResult")
+	proto.RegisterType((*WatchTransactionsRequest)(nil), "meta.WatchTransactionsRequest")
+	proto.RegisterType((*WatchTransactionsResponse)(nil), "meta.WatchTransactionsResponse")
+	proto.RegisterType((*MetaTransactionRecord)(nil), "meta.MetaTransactionRecord")
+	proto.RegisterType((*MetaTransactionBatch)(nil), "meta.MetaTransactionBatch")
+	proto.RegisterType((*MetaTransactionInitialState)(nil), "meta.MetaTransactionInitialState")
 }
 
 func init() { proto.RegisterFile("meta.proto", fileDescriptor_3b5ea8fe65782bcc) }
 
 var fileDescriptor_3b5ea8fe65782bcc = []byte{
-	// 887 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x55, 0xdd, 0x6e, 0xdc, 0x44,
-	0x14, 0x8e, 0x77, 0xbd, 0x8e, 0xf7, 0xec, 0x26, 0x71, 0x86, 0x92, 0x2e, 0x01, 0xaa, 0x95, 0xa1,
-	0x68, 0x55, 0x68, 0x2f, 0x52, 0x84, 0x84, 0x54, 0x21, 0x14, 0x1a, 0x68, 0x94, 0x12, 0x55, 0x93,
-	0xc2, 0xfd, 0x24, 0x3e, 0x9b, 0x8c, 0x62, 0x7b, 0x8c, 0x67, 0x5c, 0xf0, 0x0d, 0x0f, 0xc0, 0x1b,
-	0x70, 0x07, 0x0f, 0xc5, 0xfb, 0xa0, 0x33, 0x33, 0xeb, 0x75, 0x7e, 0xe0, 0x6a, 0xe7, 0x7c, 0xe7,
-	0xf8, 0x3b, 0xdf, 0x7c, 0x67, 0x66, 0x16, 0xa0, 0x40, 0x23, 0x9e, 0x55, 0xb5, 0x32, 0x8a, 0x85,
-	0xb4, 0x4e, 0x3f, 0x87, 0xc9, 0x1b, 0x51, 0x1b, 0x69, 0xa4, 0x2a, 0x8f, 0x33, 0xf6, 0x11, 0x8c,
-	0x4b, 0x51, 0xa0, 0xae, 0xc4, 0x05, 0xce, 0x82, 0x79, 0xb0, 0x18, 0xf3, 0x35, 0x90, 0x9e, 0x51,
-	0xb1, 0xb9, 0x3a, 0xca, 0xb1, 0xc0, 0xd2, 0x30, 0x06, 0xe1, 0xb5, 0x2c, 0x33, 0x5f, 0x67, 0xd7,
-	0x2c, 0x81, 0x81, 0xcc, 0x66, 0x83, 0x79, 0xb0, 0x18, 0xbe, 0xda, 0xe0, 0x03, 0x99, 0xb1, 0x07,
-	0x10, 0x12, 0xc3, 0x6c, 0x48, 0x55, 0xaf, 0x36, 0xb8, 0x8d, 0x0e, 0x63, 0x88, 0x64, 0xf6, 0xb6,
-	0xad, 0x30, 0x15, 0x30, 0x3c, 0xc1, 0x96, 0x3d, 0x87, 0x49, 0xb5, 0x16, 0x62, 0x39, 0x27, 0x07,
-	0xbb, 0xcf, 0xac, 0xe0, 0x9e, 0x42, 0xde, 0xaf, 0x62, 0x8f, 0x21, 0xac, 0x84, 0xb9, 0x9a, 0x0d,
-	0xe6, 0xc3, 0x7e, 0x75, 0x27, 0x91, 0xdb, 0x74, 0xfa, 0xcf, 0x00, 0x46, 0x3f, 0x8b, 0xbc, 0x41,
-	0xb6, 0x6d, 0xe5, 0x11, 0xf9, 0xc8, 0x8a, 0xfb, 0x04, 0x42, 0xd3, 0x56, 0x68, 0x05, 0x6f, 0x1f,
-	0xec, 0x38, 0x02, 0x5b, 0x4a, 0xda, 0xb8, 0x4d, 0xb2, 0x39, 0x4c, 0x32, 0xd5, 0x9c, 0xe7, 0x68,
-	0x13, 0x76, 0x23, 0x01, 0xef, 0x43, 0xec, 0x11, 0x80, 0x2c, 0xcd, 0x57, 0x5f, 0xba, 0x82, 0x90,
-	0x76, 0xcf, 0x7b, 0x08, 0x31, 0x68, 0x53, 0xcb, 0xf2, 0xd2, 0x15, 0x8c, 0xac, 0x61, 0x7d, 0x88,
-	0x7d, 0x06, 0xdb, 0x46, 0x16, 0xa8, 0x8d, 0x28, 0x2a, 0x57, 0x14, 0xcd, 0x83, 0xc5, 0x94, 0xdf,
-	0x42, 0x59, 0x0a, 0xd3, 0x73, 0xa5, 0x72, 0x14, 0xa5, 0xab, 0xda, 0x9c, 0x07, 0x8b, 0x98, 0xdf,
-	0xc0, 0x48, 0xcd, 0x79, 0x6b, 0x50, 0xbb, 0x8a, 0xd8, 0xf2, 0xf4, 0x10, 0xf6, 0x18, 0xe2, 0x6b,
-	0x6c, 0x5d, 0x76, 0x6c, 0x7d, 0x1e, 0xbb, 0x8d, 0x9f, 0x60, 0xcb, 0xbb, 0x14, 0x89, 0x6e, 0x7a,
-	0xbb, 0x82, 0x79, 0xb0, 0x08, 0x79, 0x1f, 0x4a, 0xff, 0x0c, 0x60, 0xf4, 0xbd, 0xc4, 0x3c, 0xbb,
-	0xe3, 0x2b, 0xf3, 0x43, 0x1f, 0xb8, 0xa3, 0x41, 0xeb, 0xce, 0xeb, 0xe1, 0xff, 0x79, 0x3d, 0x83,
-	0xcd, 0x0b, 0x55, 0xd0, 0xec, 0xac, 0x8d, 0x63, 0xbe, 0x0a, 0xd9, 0x53, 0x88, 0x30, 0x93, 0x46,
-	0xd5, 0xd6, 0xbe, 0xc9, 0xc1, 0xfb, 0x8e, 0xc0, 0xf6, 0x3f, 0xb2, 0x89, 0xe3, 0x72, 0xa9, 0xb8,
-	0x2f, 0x4a, 0xff, 0x0a, 0x60, 0xe7, 0x56, 0xce, 0x0e, 0x52, 0xea, 0x2a, 0x17, 0xed, 0x29, 0x89,
-	0x73, 0xe7, 0xb6, 0x0f, 0xb1, 0xa7, 0x37, 0xce, 0xc3, 0x07, 0xf7, 0xb6, 0xe8, 0xa9, 0xdd, 0x87,
-	0xb8, 0x46, 0x91, 0xa9, 0x32, 0x6f, 0xed, 0xb6, 0x62, 0xde, 0xc5, 0xd4, 0x6c, 0xa9, 0x6a, 0x94,
-	0x97, 0x25, 0x7d, 0xe0, 0x77, 0xd3, 0x87, 0xd2, 0x6f, 0x01, 0x4e, 0x64, 0xe9, 0x99, 0x89, 0x4b,
-	0xcb, 0xf2, 0xb2, 0xc9, 0x45, 0xed, 0x95, 0x75, 0x31, 0xdb, 0x83, 0xa8, 0xca, 0x9b, 0x5a, 0xe4,
-	0xde, 0x50, 0x1f, 0xa5, 0x12, 0x42, 0x62, 0xe8, 0xec, 0x0e, 0x6e, 0xd8, 0x1d, 0x2d, 0x49, 0xb8,
-	0xf6, 0xb7, 0x63, 0xd2, 0xdb, 0x0c, 0xf7, 0x29, 0xb6, 0xe8, 0x4c, 0x1d, 0x5a, 0x53, 0x13, 0x7f,
-	0x10, 0x3a, 0x59, 0x9d, 0x9f, 0xdf, 0x40, 0x74, 0x76, 0x71, 0x85, 0x85, 0xb8, 0xb7, 0xd9, 0x1c,
-	0x46, 0x74, 0xfd, 0x57, 0xbd, 0x60, 0x4d, 0xc3, 0x5d, 0x22, 0x65, 0x90, 0xfc, 0x80, 0xc6, 0x51,
-	0x70, 0xfc, 0xa5, 0x41, 0x6d, 0xd2, 0xaf, 0x61, 0xb7, 0x87, 0xe9, 0x4a, 0x95, 0x1a, 0xd9, 0xa7,
-	0x10, 0x69, 0x8b, 0xf8, 0x37, 0x60, 0xea, 0xb8, 0x7c, 0x95, 0xcf, 0xa5, 0x02, 0x1e, 0xfe, 0x88,
-	0x46, 0xbc, 0x96, 0xda, 0x1c, 0x95, 0xf4, 0x1e, 0xa0, 0xf6, 0xac, 0xec, 0x01, 0x8c, 0xb4, 0x11,
-	0xb5, 0xb1, 0xdf, 0x4f, 0xb9, 0x0b, 0x08, 0xcd, 0x65, 0x21, 0x8d, 0x75, 0x70, 0x8b, 0xbb, 0x80,
-	0x4c, 0x27, 0x79, 0xa7, 0xdd, 0x03, 0xc5, 0xbb, 0x38, 0xfd, 0x1d, 0x66, 0x77, 0x5b, 0x78, 0x91,
-	0xe4, 0x01, 0xfe, 0xb6, 0x6a, 0x61, 0xd7, 0x34, 0xf0, 0x42, 0xd5, 0xc8, 0x51, 0x37, 0xb9, 0xd1,
-	0xb6, 0x4f, 0xcc, 0xfb, 0x10, 0xfb, 0x02, 0x62, 0xf4, 0x4c, 0xb3, 0xa1, 0x35, 0xca, 0xfb, 0x4d,
-	0x7d, 0x6c, 0x8f, 0x96, 0x77, 0x15, 0xe9, 0x29, 0xc0, 0x1a, 0x67, 0x1f, 0xc2, 0xf0, 0x1a, 0x5b,
-	0xef, 0x49, 0xef, 0xbe, 0x12, 0x4a, 0xb3, 0x7e, 0x47, 0x17, 0xe9, 0xd6, 0xac, 0xed, 0xe5, 0xe2,
-	0x3e, 0xf5, 0xe4, 0x8f, 0x00, 0xc6, 0xdd, 0x75, 0x63, 0xdb, 0x00, 0xf4, 0xfb, 0xd2, 0xbe, 0x62,
-	0xc9, 0x06, 0xdb, 0x82, 0x31, 0xc5, 0xc7, 0x74, 0xbb, 0x93, 0x60, 0x95, 0x3e, 0xb3, 0x4f, 0x54,
-	0x32, 0x60, 0xbb, 0xb0, 0x45, 0xf1, 0xdb, 0xd5, 0x6b, 0x94, 0x0c, 0xd9, 0x0e, 0x4c, 0x08, 0x3a,
-	0x74, 0x4f, 0x4f, 0x12, 0xae, 0x28, 0x0e, 0xe9, 0xa5, 0x49, 0x46, 0x6c, 0x02, 0x9b, 0x14, 0x9e,
-	0x60, 0x9b, 0x44, 0x2b, 0xbe, 0x9f, 0x1c, 0xff, 0xe6, 0x93, 0x17, 0xf0, 0xde, 0x3d, 0xd7, 0x8a,
-	0xbe, 0x79, 0x89, 0x4b, 0xd1, 0xe4, 0x26, 0xd9, 0x60, 0x53, 0x88, 0xdf, 0x08, 0xad, 0x7f, 0x55,
-	0x75, 0x96, 0x04, 0x0c, 0x20, 0x7a, 0xad, 0xd4, 0x75, 0x53, 0x25, 0x83, 0x83, 0xbf, 0x03, 0xd8,
-	0xfb, 0x4e, 0x95, 0x4b, 0x79, 0xa9, 0x8d, 0xaa, 0x91, 0x6c, 0x3a, 0xc3, 0xfa, 0x9d, 0xbc, 0x40,
-	0xf6, 0x02, 0xc6, 0xdd, 0x99, 0x62, 0x7b, 0xce, 0x87, 0xdb, 0x07, 0x6f, 0xff, 0xe1, 0x1d, 0xdc,
-	0xcf, 0xf5, 0x18, 0xe2, 0xd5, 0xcc, 0xd9, 0xc7, 0xeb, 0xd9, 0xdc, 0x73, 0xcc, 0xf6, 0x1f, 0xfd,
-	0x57, 0xda, 0x51, 0x9d, 0x47, 0xf6, 0x6f, 0xf6, 0xf9, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x87,
-	0x52, 0xfc, 0x96, 0x74, 0x07, 0x00, 0x00,
+	// 2171 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x58, 0xdd, 0x76, 0xdb, 0xc6,
+	0x11, 0x26, 0xf8, 0x27, 0x72, 0x28, 0x59, 0xf0, 0xfa, 0x8f, 0xa6, 0x63, 0x5b, 0x86, 0xe3, 0x54,
+	0xb6, 0x1a, 0xb9, 0x91, 0x7c, 0xd2, 0x26, 0xc7, 0x6d, 0x62, 0xfd, 0x99, 0xaa, 0x12, 0xdb, 0x67,
+	0xe5, 0x3a, 0x17, 0x3d, 0xa7, 0xe9, 0x8a, 0x58, 0x52, 0x7b, 0x04, 0x02, 0x28, 0xb0, 0x94, 0xcc,
+	0x9b, 0x3e, 0x41, 0xef, 0xfb, 0x00, 0xfd, 0xb9, 0xef, 0x03, 0xf4, 0xa2, 0xbd, 0x6f, 0x2f, 0xfa,
+	0x26, 0xed, 0x13, 0xf4, 0xec, 0x0f, 0xc0, 0x05, 0x08, 0x92, 0x56, 0xee, 0xb0, 0x33, 0xdf, 0x7c,
+	0x3b, 0x3b, 0x33, 0x3b, 0xbb, 0x0b, 0x80, 0x21, 0xe5, 0x64, 0x33, 0x8c, 0x02, 0x1e, 0xa0, 0xaa,
+	0xf8, 0xee, 0xdc, 0x1f, 0x04, 0xc1, 0xc0, 0xa3, 0x4f, 0xa5, 0xec, 0x64, 0xd4, 0x7f, 0xca, 0xd9,
+	0x90, 0xc6, 0x9c, 0x0c, 0x43, 0x05, 0x73, 0x36, 0xa0, 0xf5, 0x86, 0x44, 0x9c, 0x71, 0x16, 0xf8,
+	0x87, 0x2e, 0xfa, 0x08, 0x9a, 0x3e, 0x19, 0xd2, 0x38, 0x24, 0x3d, 0xda, 0xb6, 0xd6, 0xac, 0xf5,
+	0x26, 0x9e, 0x08, 0x9c, 0x63, 0x01, 0xe6, 0xa7, 0xfb, 0x1e, 0x1d, 0x52, 0x9f, 0x23, 0x04, 0xd5,
+	0x33, 0xe6, 0xbb, 0x1a, 0x27, 0xbf, 0x91, 0x0d, 0x65, 0xe6, 0xb6, 0xcb, 0x6b, 0xd6, 0x7a, 0xa5,
+	0x5b, 0xc2, 0x65, 0xe6, 0xa2, 0xeb, 0x50, 0x15, 0x0c, 0xed, 0x8a, 0x40, 0x75, 0x4b, 0x58, 0x8e,
+	0x76, 0x1a, 0x50, 0x67, 0xee, 0xdb, 0x71, 0x48, 0x1d, 0x02, 0x95, 0x23, 0x3a, 0x46, 0xdb, 0xd0,
+	0x0a, 0x27, 0x8e, 0x48, 0xce, 0xd6, 0xd6, 0xd5, 0x4d, 0xb9, 0x22, 0xc3, 0x43, 0x6c, 0xa2, 0xd0,
+	0x23, 0xa8, 0x86, 0x84, 0x9f, 0xb6, 0xcb, 0x6b, 0x15, 0x13, 0x9d, 0xba, 0x88, 0xa5, 0xda, 0xf9,
+	0x6f, 0x19, 0x6a, 0xef, 0x88, 0x37, 0xa2, 0xe8, 0x8a, 0x74, 0x4f, 0x90, 0xd7, 0xa4, 0x73, 0x0f,
+	0xa1, 0xca, 0xc7, 0x21, 0x95, 0x0e, 0x5f, 0xd9, 0x5a, 0x55, 0x04, 0x12, 0x2a, 0x7c, 0xc3, 0x52,
+	0x89, 0xd6, 0xa0, 0xe5, 0x06, 0xa3, 0x13, 0x8f, 0x4a, 0x85, 0x5c, 0x88, 0x85, 0x4d, 0x11, 0xba,
+	0x07, 0xc0, 0x7c, 0xfe, 0xf9, 0x33, 0x05, 0xa8, 0x8a, 0xd5, 0x63, 0x43, 0x22, 0x18, 0x62, 0x1e,
+	0x31, 0x7f, 0xa0, 0x00, 0x35, 0x19, 0x30, 0x53, 0x84, 0x76, 0xe0, 0x4a, 0x9a, 0x1a, 0x05, 0xaa,
+	0xcb, 0x08, 0x74, 0x36, 0x55, 0x06, 0x37, 0x93, 0x0c, 0x6e, 0xbe, 0x4d, 0x60, 0x38, 0x67, 0x81,
+	0x1c, 0x58, 0x3e, 0x09, 0x02, 0x8f, 0x12, 0x5f, 0x31, 0x2c, 0xad, 0x59, 0xeb, 0x0d, 0x9c, 0x91,
+	0x09, 0x4f, 0x4f, 0xc6, 0x9c, 0xc6, 0x0a, 0xd1, 0x58, 0xb3, 0xd6, 0x97, 0xb1, 0x21, 0x41, 0x8f,
+	0xa0, 0x71, 0x46, 0xc7, 0x4a, 0xdb, 0x94, 0x1e, 0x34, 0x55, 0x50, 0x8e, 0xe8, 0x18, 0xa7, 0x2a,
+	0xb1, 0xa0, 0x91, 0xb1, 0x62, 0x58, 0xb3, 0xd6, 0xab, 0xd8, 0x14, 0x39, 0xff, 0xb0, 0xa0, 0x75,
+	0xdc, 0x3b, 0xa5, 0x43, 0x72, 0xc0, 0xa8, 0xe7, 0x4e, 0x45, 0x1e, 0xe9, 0xb2, 0x28, 0xab, 0xe2,
+	0x11, 0xdf, 0x69, 0x36, 0x2a, 0xf3, 0xb2, 0xd1, 0x86, 0xa5, 0x5e, 0x30, 0x14, 0xd9, 0x95, 0x81,
+	0x6e, 0xe2, 0x64, 0x88, 0xb6, 0xa1, 0x4e, 0x5d, 0xc6, 0x83, 0x48, 0x06, 0xb8, 0xb5, 0x75, 0x47,
+	0x11, 0x18, 0x5e, 0xec, 0x4b, 0xf5, 0xa1, 0xdf, 0x0f, 0xb0, 0x86, 0xa2, 0x0e, 0x34, 0x22, 0x4a,
+	0xdc, 0xc0, 0xf7, 0xc6, 0x32, 0xe4, 0x0d, 0x9c, 0x8e, 0x9d, 0xff, 0x94, 0xe1, 0x46, 0xa1, 0xb5,
+	0x2c, 0x09, 0x16, 0x87, 0x1e, 0x19, 0xbf, 0x12, 0x8b, 0x50, 0x3b, 0xc0, 0x14, 0xa1, 0xed, 0x4c,
+	0x65, 0xdd, 0x9f, 0xe3, 0x8a, 0xb1, 0xb6, 0x4f, 0xe0, 0x8a, 0x72, 0x0b, 0x27, 0x2e, 0x55, 0xa4,
+	0x4b, 0x39, 0xa9, 0xc8, 0x34, 0xf1, 0xbc, 0xe0, 0x82, 0xba, 0x47, 0xcc, 0x77, 0xe3, 0x76, 0x75,
+	0xad, 0xb2, 0xde, 0xc4, 0x19, 0x19, 0x7a, 0x0b, 0x8f, 0x46, 0x31, 0x3d, 0x60, 0x3e, 0xf1, 0x7b,
+	0x8c, 0x78, 0x2a, 0x8c, 0xc1, 0x2b, 0x76, 0x72, 0xe2, 0x31, 0x3f, 0xde, 0x0d, 0xfc, 0x73, 0x1a,
+	0xc5, 0x2c, 0xf0, 0x65, 0xb0, 0x1a, 0xf8, 0xc3, 0xc0, 0xe8, 0x6b, 0x80, 0x73, 0xe2, 0x31, 0x97,
+	0xf0, 0x20, 0x8a, 0xdb, 0x75, 0xb9, 0xef, 0xd6, 0x66, 0x2c, 0xee, 0x5d, 0x02, 0xc4, 0x86, 0x8d,
+	0xf3, 0xaf, 0x0a, 0x74, 0x66, 0x43, 0xd1, 0x81, 0xc8, 0xc7, 0xef, 0x46, 0x2c, 0xa2, 0x49, 0x13,
+	0x58, 0x5f, 0x48, 0xaf, 0xf1, 0xdd, 0x12, 0x4e, 0x6d, 0xd1, 0x6b, 0x68, 0xf5, 0xd9, 0x7b, 0xea,
+	0x7e, 0x43, 0xfd, 0x81, 0xec, 0x10, 0x82, 0x6a, 0x63, 0x11, 0xd5, 0xc1, 0xc4, 0xa4, 0x5b, 0xc2,
+	0x26, 0x03, 0xda, 0x85, 0x25, 0x97, 0xf6, 0xc9, 0xc8, 0xe3, 0x32, 0x29, 0xad, 0xad, 0x1f, 0x2d,
+	0x22, 0xdb, 0x53, 0xf0, 0x6e, 0x09, 0x27, 0x96, 0xe8, 0xd7, 0xb0, 0xda, 0x0f, 0xa2, 0x21, 0xe1,
+	0x87, 0x6f, 0x5e, 0xb8, 0x6e, 0x44, 0xe3, 0x58, 0x16, 0x71, 0x6b, 0xeb, 0xe9, 0x42, 0xcf, 0xb2,
+	0x66, 0xdd, 0x12, 0xce, 0x33, 0xa1, 0x01, 0x5c, 0xcb, 0x89, 0xde, 0x04, 0x11, 0xd7, 0x9b, 0x61,
+	0xfb, 0x92, 0x13, 0x08, 0xd3, 0x6e, 0x09, 0x17, 0x31, 0xee, 0xb4, 0xa0, 0x99, 0x26, 0xd4, 0xf9,
+	0x18, 0x9c, 0xc5, 0xa9, 0x71, 0xbe, 0x82, 0x47, 0x1f, 0x14, 0x75, 0x74, 0x13, 0xea, 0x9e, 0x4a,
+	0x99, 0xc8, 0xfe, 0x0a, 0xd6, 0x23, 0xe7, 0x00, 0x1e, 0x2c, 0x8c, 0x34, 0x7a, 0x00, 0xb5, 0x73,
+	0xd9, 0x90, 0x54, 0xe5, 0xb4, 0x8c, 0x0e, 0x82, 0x95, 0xc6, 0xd9, 0x80, 0xc7, 0x1f, 0x1c, 0x03,
+	0xe7, 0x29, 0x7c, 0x7a, 0xa9, 0x80, 0x39, 0x7f, 0xb0, 0xc0, 0x56, 0x16, 0x62, 0x13, 0xee, 0xa7,
+	0x2d, 0x26, 0x66, 0xfe, 0x60, 0xe4, 0x91, 0x48, 0x77, 0x8a, 0x74, 0x2c, 0x96, 0x1b, 0x7a, 0xa3,
+	0x88, 0x78, 0xba, 0x11, 0xea, 0x11, 0xda, 0x83, 0xbb, 0x11, 0xf5, 0x5d, 0x1a, 0x29, 0x8e, 0xbd,
+	0x28, 0x08, 0xdd, 0xe0, 0xc2, 0xff, 0x8e, 0xf1, 0x53, 0xe9, 0x8b, 0x3a, 0x4e, 0xf1, 0x7c, 0x90,
+	0xf3, 0x4f, 0x0b, 0x60, 0xe2, 0x0e, 0x7a, 0x0c, 0xf5, 0xbe, 0x90, 0xc7, 0xd9, 0x03, 0xd3, 0x58,
+	0x22, 0xd6, 0x00, 0xb4, 0x99, 0xf6, 0x52, 0x55, 0xec, 0x37, 0x4d, 0xe8, 0x64, 0x6d, 0x69, 0x1b,
+	0xdd, 0x80, 0x25, 0xe6, 0xbb, 0xf4, 0x3d, 0x55, 0xcd, 0x28, 0xc7, 0x7d, 0x28, 0x54, 0x38, 0x41,
+	0x88, 0x5b, 0x06, 0xf1, 0x7b, 0x34, 0x96, 0x3d, 0xa4, 0x26, 0x7b, 0xd7, 0x44, 0xa0, 0x4f, 0x8a,
+	0x7a, 0x72, 0x52, 0x38, 0x7f, 0x4d, 0x4f, 0x12, 0x49, 0x93, 0x9e, 0x1c, 0x96, 0x71, 0x72, 0x3c,
+	0xce, 0x74, 0xdb, 0x1b, 0x53, 0x73, 0x1b, 0x3d, 0xf6, 0xa7, 0xd0, 0xe8, 0x05, 0xc3, 0x70, 0xc4,
+	0xa9, 0xab, 0xd7, 0x76, 0xdb, 0x84, 0xef, 0x6a, 0x9d, 0x34, 0x13, 0x1d, 0x25, 0x01, 0xa3, 0x9b,
+	0x50, 0x93, 0xc1, 0x51, 0xc7, 0x4e, 0xb7, 0x84, 0xd5, 0x70, 0x67, 0x49, 0x17, 0x9d, 0xf3, 0x17,
+	0x0b, 0xae, 0x15, 0x90, 0xa0, 0x2f, 0xa0, 0xde, 0xf7, 0xcf, 0x3f, 0x7f, 0x46, 0x74, 0x59, 0xde,
+	0x9f, 0x39, 0xdf, 0x81, 0x84, 0x75, 0x4b, 0x58, 0x1b, 0xa0, 0x03, 0x68, 0xa9, 0xaf, 0xef, 0x43,
+	0xc2, 0x22, 0xdd, 0xc5, 0x1e, 0x2e, 0xb0, 0x7f, 0x43, 0x58, 0xd4, 0x2d, 0x61, 0xe8, 0xa7, 0x23,
+	0xb1, 0x63, 0x89, 0x37, 0x08, 0x22, 0xc6, 0x4f, 0x87, 0xce, 0x67, 0x70, 0x7b, 0xa6, 0x2d, 0xba,
+	0x9e, 0xac, 0x52, 0x85, 0x57, 0x0d, 0x9c, 0xd7, 0x70, 0x77, 0xee, 0x74, 0xa2, 0x8e, 0x25, 0xf2,
+	0x33, 0x6d, 0xa7, 0x47, 0xa9, 0x7c, 0x2b, 0xa9, 0x6f, 0x35, 0x72, 0xfe, 0x68, 0x41, 0x5d, 0x31,
+	0x16, 0xe6, 0xf3, 0x53, 0xa8, 0x9d, 0xc9, 0x93, 0x4d, 0x15, 0xea, 0x2d, 0x73, 0xc5, 0x9b, 0xf2,
+	0x7c, 0xdb, 0xf7, 0x79, 0x34, 0xc6, 0x0a, 0xd5, 0xf9, 0x25, 0xc0, 0x44, 0x88, 0x6c, 0xa8, 0x9c,
+	0xd1, 0xb1, 0xe6, 0x13, 0x9f, 0xe8, 0x93, 0xa4, 0x2f, 0xa8, 0x00, 0xda, 0xf9, 0x62, 0xd6, 0xcd,
+	0xe1, 0xcb, 0xf2, 0xcf, 0x2c, 0x07, 0x81, 0xfd, 0x92, 0x72, 0xa5, 0x13, 0xed, 0x8b, 0xc6, 0xdc,
+	0xf9, 0x02, 0xae, 0x1a, 0xb2, 0x38, 0x0c, 0xfc, 0x98, 0xa2, 0x8f, 0xa1, 0x1e, 0x4b, 0x89, 0x4e,
+	0xeb, 0xb2, 0xc9, 0x8a, 0xb5, 0xce, 0x21, 0x70, 0xeb, 0x5b, 0xca, 0xc9, 0x37, 0x2c, 0xe6, 0xfb,
+	0xbe, 0xb8, 0xb8, 0xd2, 0x58, 0xb3, 0x8a, 0x50, 0xc7, 0x9c, 0x44, 0x5c, 0xda, 0x2f, 0x63, 0x35,
+	0x10, 0x52, 0x8f, 0x0d, 0x19, 0x97, 0xbe, 0xae, 0x60, 0x35, 0x10, 0x3d, 0x44, 0x2c, 0xf5, 0x55,
+	0x7a, 0x93, 0xc6, 0xe9, 0xd8, 0xf9, 0x3d, 0xb4, 0xa7, 0xa7, 0xd0, 0x4e, 0x8a, 0xe0, 0xd2, 0xf7,
+	0xc9, 0x14, 0xf2, 0x5b, 0x5c, 0x5e, 0x86, 0x41, 0x44, 0x31, 0x8d, 0x47, 0x1e, 0x8f, 0xe5, 0x3c,
+	0x0d, 0x6c, 0x8a, 0xd0, 0x8f, 0xa1, 0x41, 0x35, 0x53, 0xbb, 0x22, 0x33, 0xa0, 0x43, 0x26, 0xe6,
+	0x91, 0x73, 0x8c, 0x71, 0x8a, 0x70, 0x5e, 0x01, 0x4c, 0xe4, 0xe8, 0xce, 0x24, 0xfa, 0x99, 0xcb,
+	0xa3, 0x4c, 0xc4, 0x43, 0xa8, 0xcb, 0x48, 0x27, 0x89, 0xcd, 0x74, 0x68, 0xad, 0x72, 0xee, 0xc1,
+	0x47, 0x2f, 0x29, 0xd7, 0x3d, 0xdd, 0xbc, 0xfb, 0xeb, 0x6c, 0xfc, 0x1c, 0xee, 0xce, 0xd0, 0xeb,
+	0x45, 0xcf, 0x7f, 0xc5, 0xbc, 0x86, 0xeb, 0xc2, 0xdd, 0x97, 0x94, 0xeb, 0x95, 0xe8, 0x74, 0xcc,
+	0x75, 0xdc, 0x8c, 0x7f, 0x39, 0x17, 0xff, 0x17, 0x70, 0x23, 0x47, 0xa8, 0xfd, 0x58, 0x87, 0xba,
+	0x0c, 0x52, 0x42, 0x3a, 0x1d, 0x44, 0xad, 0x77, 0x76, 0x55, 0x95, 0xfc, 0x2a, 0x74, 0x09, 0xa7,
+	0x59, 0xb7, 0x3e, 0x9c, 0x64, 0x4f, 0xd5, 0x41, 0x96, 0xe4, 0xd2, 0xae, 0x7c, 0xaf, 0x5c, 0xd9,
+	0x8d, 0xe8, 0x0f, 0x77, 0x65, 0x6e, 0xb8, 0xb4, 0x9b, 0xd9, 0x09, 0x2e, 0xed, 0x26, 0x56, 0x6e,
+	0xee, 0x51, 0x8f, 0xe6, 0xdd, 0xfc, 0xc1, 0x89, 0xd4, 0x9e, 0x65, 0x39, 0x2f, 0xed, 0xd9, 0x29,
+	0xac, 0x0a, 0xe9, 0xdb, 0x88, 0xf8, 0x31, 0xe9, 0x89, 0xd2, 0x44, 0xdb, 0x00, 0x41, 0x48, 0x23,
+	0x22, 0x06, 0x71, 0xdb, 0x92, 0xa5, 0x7f, 0x6d, 0x42, 0xf0, 0x3a, 0xd1, 0x61, 0x03, 0x26, 0xdf,
+	0x18, 0x34, 0xee, 0x45, 0x2c, 0x14, 0x63, 0xed, 0xac, 0x29, 0x72, 0xfe, 0x57, 0x86, 0x95, 0x8c,
+	0x3d, 0x7a, 0x01, 0x2d, 0x8f, 0xc5, 0x5c, 0x47, 0x42, 0xbb, 0x7a, 0x77, 0x32, 0x53, 0x41, 0x1b,
+	0x12, 0xf7, 0x5c, 0xc3, 0x06, 0x3d, 0x07, 0x18, 0xd0, 0x94, 0xa1, 0xac, 0x5f, 0xa1, 0x29, 0x43,
+	0x7e, 0xdb, 0x88, 0x83, 0x66, 0x82, 0x47, 0xfb, 0xb0, 0x32, 0x92, 0xf5, 0x97, 0x10, 0x54, 0xf2,
+	0x2e, 0x14, 0xd4, 0x78, 0xb7, 0x84, 0xb3, 0x56, 0x82, 0xa6, 0x27, 0xeb, 0x23, 0xa1, 0xa9, 0xe6,
+	0x69, 0x0a, 0xea, 0x53, 0xd0, 0x64, 0xac, 0x04, 0x8d, 0x2b, 0x93, 0x99, 0xd0, 0xd4, 0xf2, 0x34,
+	0x05, 0xf5, 0x23, 0x68, 0x32, 0x56, 0xe2, 0xf4, 0x4c, 0xf3, 0xe2, 0xfc, 0x46, 0xed, 0x76, 0x23,
+	0xbd, 0xaa, 0x6b, 0xa2, 0x7d, 0xb0, 0x53, 0x54, 0xd2, 0x5b, 0x55, 0xaa, 0x6f, 0x17, 0xa5, 0x5a,
+	0x22, 0xf0, 0x94, 0x89, 0xf3, 0x0b, 0x55, 0x84, 0x39, 0xe0, 0x7e, 0x14, 0x05, 0x91, 0x78, 0xf7,
+	0x51, 0xf1, 0xf1, 0x2d, 0x8d, 0x63, 0x32, 0x48, 0x7a, 0x5b, 0x46, 0xe6, 0xfc, 0xbd, 0x02, 0xd7,
+	0x0a, 0x08, 0xd0, 0x33, 0xa8, 0x49, 0x9c, 0x2e, 0x8a, 0x7b, 0x33, 0x7d, 0x92, 0x53, 0x61, 0x05,
+	0x46, 0x7b, 0xb0, 0xac, 0x8a, 0x43, 0x6d, 0x03, 0x5d, 0x0f, 0xf7, 0x66, 0x55, 0x94, 0x42, 0x75,
+	0x4b, 0x38, 0x63, 0x85, 0xbe, 0x82, 0x96, 0xac, 0x11, 0x4d, 0x52, 0x31, 0x9f, 0xe7, 0x85, 0xad,
+	0x53, 0x14, 0xa5, 0x61, 0x81, 0xba, 0x70, 0x25, 0x29, 0x10, 0xcd, 0x51, 0xcd, 0x3b, 0x52, 0xd4,
+	0xf6, 0xba, 0x25, 0x9c, 0xb3, 0x13, 0x4c, 0x49, 0x8d, 0x68, 0xa6, 0x5a, 0x9e, 0xa9, 0xa8, 0x33,
+	0x09, 0xa6, 0xac, 0x9d, 0x60, 0x4a, 0xca, 0x44, 0x33, 0xd5, 0xf3, 0x4c, 0x45, 0x9d, 0x44, 0x30,
+	0x65, 0xed, 0xb2, 0xf5, 0xd5, 0x81, 0xf6, 0x77, 0x84, 0xf7, 0x4e, 0x8d, 0x02, 0x4b, 0xb6, 0xaa,
+	0xf3, 0x67, 0x0b, 0x6e, 0x17, 0x28, 0xb5, 0x43, 0x5b, 0x50, 0x3b, 0x11, 0x4a, 0x9d, 0x61, 0x63,
+	0xd3, 0x1a, 0xf0, 0x1d, 0x81, 0x10, 0x97, 0x57, 0x09, 0x45, 0x2f, 0x61, 0x99, 0xf9, 0x8c, 0x33,
+	0xe2, 0x1d, 0x73, 0xc2, 0x93, 0xfc, 0x3e, 0x28, 0x34, 0x3d, 0x34, 0x80, 0x22, 0xc5, 0xa6, 0xe1,
+	0x0e, 0x88, 0x77, 0xbb, 0x72, 0xc4, 0xf9, 0x53, 0xb9, 0x60, 0x8f, 0xf4, 0x82, 0xc8, 0x45, 0x1b,
+	0xd0, 0x1a, 0x8e, 0x04, 0xde, 0x3d, 0xa2, 0xe3, 0x64, 0x7b, 0x18, 0x2d, 0xda, 0xd4, 0x0a, 0xb0,
+	0x0a, 0x94, 0x02, 0x97, 0xa7, 0xc0, 0x86, 0x16, 0x7d, 0x0d, 0x2b, 0x22, 0xcf, 0xc7, 0xa3, 0x93,
+	0x21, 0xe3, 0x93, 0xbb, 0xfd, 0xbc, 0xff, 0x67, 0x59, 0x03, 0xf4, 0x1c, 0x5a, 0x42, 0xa0, 0xb2,
+	0xef, 0xea, 0x02, 0x9b, 0x67, 0x6f, 0xc2, 0xf3, 0xdd, 0xba, 0x36, 0xd5, 0xad, 0x8d, 0x77, 0x4d,
+	0x53, 0xbe, 0x6b, 0xfe, 0x66, 0xa9, 0x8b, 0x48, 0x3e, 0x39, 0xe8, 0x4b, 0x58, 0xd5, 0x61, 0x48,
+	0x36, 0x96, 0x0e, 0xd4, 0xf4, 0x99, 0x93, 0x07, 0x5e, 0x2e, 0x66, 0x39, 0x9f, 0x2b, 0xb3, 0x7c,
+	0xae, 0xa6, 0x3e, 0x1f, 0xc1, 0x9d, 0x39, 0x45, 0x91, 0xb9, 0x37, 0x5a, 0x8b, 0xee, 0x8d, 0x4f,
+	0x2e, 0xa0, 0x99, 0xfe, 0xdc, 0x43, 0x2d, 0x58, 0x1a, 0xf9, 0x67, 0x7e, 0x70, 0xe1, 0xdb, 0x25,
+	0x04, 0x50, 0x57, 0xbf, 0x57, 0x6d, 0x0b, 0x35, 0xa1, 0x26, 0x7f, 0x2b, 0xda, 0x65, 0x21, 0x56,
+	0xff, 0x4c, 0xed, 0x0a, 0x5a, 0x81, 0x66, 0xfa, 0xfb, 0xd3, 0xae, 0x0a, 0x73, 0xfd, 0x9f, 0xd3,
+	0xae, 0x09, 0x13, 0xf9, 0x4b, 0xd3, 0xae, 0xa3, 0x25, 0x79, 0x17, 0xb0, 0x97, 0x84, 0xad, 0xfa,
+	0x3d, 0x69, 0x37, 0x9e, 0xec, 0x24, 0x0f, 0xa0, 0x82, 0x3f, 0x71, 0x82, 0x49, 0xff, 0xad, 0xb1,
+	0x4b, 0x68, 0x19, 0x1a, 0x21, 0x89, 0xe3, 0x8b, 0x20, 0x72, 0x6d, 0x4b, 0x70, 0x78, 0x41, 0x70,
+	0x36, 0x0a, 0xed, 0xf2, 0x93, 0x4d, 0x58, 0xcd, 0xbd, 0x2f, 0xd1, 0x2a, 0xb4, 0x46, 0x7e, 0x1c,
+	0xd2, 0x1e, 0xeb, 0x33, 0xea, 0xaa, 0x65, 0x0c, 0xe9, 0x30, 0x88, 0xc6, 0xb6, 0xb5, 0xf5, 0xef,
+	0x1a, 0xdc, 0xdc, 0x0d, 0xfc, 0x3e, 0x1b, 0x88, 0x57, 0x2e, 0x15, 0x01, 0x39, 0xa6, 0xd1, 0x39,
+	0xeb, 0x51, 0xf4, 0x1c, 0x9a, 0xe9, 0xeb, 0x02, 0xe9, 0x87, 0x76, 0xfe, 0x09, 0xd2, 0xb9, 0x35,
+	0x25, 0xd7, 0xbb, 0xfe, 0x10, 0x1a, 0x49, 0x1f, 0x46, 0xf3, 0x4f, 0xfa, 0xce, 0x82, 0xb6, 0x8d,
+	0x76, 0x60, 0x49, 0x77, 0x63, 0x34, 0xe7, 0xc4, 0xef, 0xcc, 0x6b, 0xdc, 0xe8, 0x48, 0x3d, 0x06,
+	0x54, 0x37, 0x46, 0xf3, 0xcf, 0xfd, 0xce, 0x82, 0xf6, 0x9d, 0x90, 0xa9, 0x3d, 0x86, 0xe6, 0x9f,
+	0xfe, 0x9d, 0x05, 0x1d, 0x3c, 0x21, 0x53, 0x3d, 0x19, 0xcd, 0xbf, 0x03, 0x74, 0x16, 0x34, 0x71,
+	0xf4, 0x5b, 0xb8, 0x51, 0xf8, 0x06, 0x41, 0x4e, 0x9a, 0xa7, 0x99, 0x0f, 0x98, 0xce, 0xc3, 0xb9,
+	0x18, 0x3d, 0xc3, 0x01, 0xd8, 0x2f, 0xc2, 0xd0, 0x1b, 0x9b, 0xf7, 0xc8, 0x1b, 0x85, 0x7d, 0xd9,
+	0x4c, 0xc8, 0xf4, 0xb5, 0xe4, 0x1d, 0x5c, 0x9d, 0x3a, 0x32, 0x90, 0x5e, 0xde, 0xac, 0x83, 0xa6,
+	0x73, 0x7f, 0xa6, 0x5e, 0x79, 0xf7, 0x13, 0xeb, 0xa4, 0x2e, 0x3b, 0xe2, 0xf6, 0xff, 0x03, 0x00,
+	0x00, 0xff, 0xff, 0x83, 0x36, 0xaa, 0x9d, 0x75, 0x1a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -983,6 +2818,13 @@ const _ = grpc.SupportPackageIsVersion4
 type ConfigstoreMetaServiceClient interface {
 	GetSchema(ctx context.Context, in *GetSchemaRequest, opts ...grpc.CallOption) (*GetSchemaResponse, error)
 	MetaList(ctx context.Context, in *MetaListEntitiesRequest, opts ...grpc.CallOption) (*MetaListEntitiesResponse, error)
+	MetaGet(ctx context.Context, in *MetaGetEntityRequest, opts ...grpc.CallOption) (*MetaGetEntityResponse, error)
+	MetaUpdate(ctx context.Context, in *MetaUpdateEntityRequest, opts ...grpc.CallOption) (*MetaUpdateEntityResponse, error)
+	MetaCreate(ctx context.Context, in *MetaCreateEntityRequest, opts ...grpc.CallOption) (*MetaCreateEntityResponse, error)
+	MetaDelete(ctx context.Context, in *MetaDeleteEntityRequest, opts ...grpc.CallOption) (*MetaDeleteEntityResponse, error)
+	GetDefaultPartitionId(ctx context.Context, in *GetDefaultPartitionIdRequest, opts ...grpc.CallOption) (*GetDefaultPartitionIdResponse, error)
+	ApplyTransaction(ctx context.Context, in *MetaTransaction, opts ...grpc.CallOption) (*MetaTransactionResult, error)
+	WatchTransactions(ctx context.Context, in *WatchTransactionsRequest, opts ...grpc.CallOption) (ConfigstoreMetaService_WatchTransactionsClient, error)
 }
 
 type configstoreMetaServiceClient struct {
@@ -1011,10 +2853,103 @@ func (c *configstoreMetaServiceClient) MetaList(ctx context.Context, in *MetaLis
 	return out, nil
 }
 
+func (c *configstoreMetaServiceClient) MetaGet(ctx context.Context, in *MetaGetEntityRequest, opts ...grpc.CallOption) (*MetaGetEntityResponse, error) {
+	out := new(MetaGetEntityResponse)
+	err := c.cc.Invoke(ctx, "/meta.ConfigstoreMetaService/MetaGet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configstoreMetaServiceClient) MetaUpdate(ctx context.Context, in *MetaUpdateEntityRequest, opts ...grpc.CallOption) (*MetaUpdateEntityResponse, error) {
+	out := new(MetaUpdateEntityResponse)
+	err := c.cc.Invoke(ctx, "/meta.ConfigstoreMetaService/MetaUpdate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configstoreMetaServiceClient) MetaCreate(ctx context.Context, in *MetaCreateEntityRequest, opts ...grpc.CallOption) (*MetaCreateEntityResponse, error) {
+	out := new(MetaCreateEntityResponse)
+	err := c.cc.Invoke(ctx, "/meta.ConfigstoreMetaService/MetaCreate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configstoreMetaServiceClient) MetaDelete(ctx context.Context, in *MetaDeleteEntityRequest, opts ...grpc.CallOption) (*MetaDeleteEntityResponse, error) {
+	out := new(MetaDeleteEntityResponse)
+	err := c.cc.Invoke(ctx, "/meta.ConfigstoreMetaService/MetaDelete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configstoreMetaServiceClient) GetDefaultPartitionId(ctx context.Context, in *GetDefaultPartitionIdRequest, opts ...grpc.CallOption) (*GetDefaultPartitionIdResponse, error) {
+	out := new(GetDefaultPartitionIdResponse)
+	err := c.cc.Invoke(ctx, "/meta.ConfigstoreMetaService/GetDefaultPartitionId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configstoreMetaServiceClient) ApplyTransaction(ctx context.Context, in *MetaTransaction, opts ...grpc.CallOption) (*MetaTransactionResult, error) {
+	out := new(MetaTransactionResult)
+	err := c.cc.Invoke(ctx, "/meta.ConfigstoreMetaService/ApplyTransaction", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configstoreMetaServiceClient) WatchTransactions(ctx context.Context, in *WatchTransactionsRequest, opts ...grpc.CallOption) (ConfigstoreMetaService_WatchTransactionsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_ConfigstoreMetaService_serviceDesc.Streams[0], "/meta.ConfigstoreMetaService/WatchTransactions", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &configstoreMetaServiceWatchTransactionsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ConfigstoreMetaService_WatchTransactionsClient interface {
+	Recv() (*WatchTransactionsResponse, error)
+	grpc.ClientStream
+}
+
+type configstoreMetaServiceWatchTransactionsClient struct {
+	grpc.ClientStream
+}
+
+func (x *configstoreMetaServiceWatchTransactionsClient) Recv() (*WatchTransactionsResponse, error) {
+	m := new(WatchTransactionsResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ConfigstoreMetaServiceServer is the server API for ConfigstoreMetaService service.
 type ConfigstoreMetaServiceServer interface {
 	GetSchema(context.Context, *GetSchemaRequest) (*GetSchemaResponse, error)
 	MetaList(context.Context, *MetaListEntitiesRequest) (*MetaListEntitiesResponse, error)
+	MetaGet(context.Context, *MetaGetEntityRequest) (*MetaGetEntityResponse, error)
+	MetaUpdate(context.Context, *MetaUpdateEntityRequest) (*MetaUpdateEntityResponse, error)
+	MetaCreate(context.Context, *MetaCreateEntityRequest) (*MetaCreateEntityResponse, error)
+	MetaDelete(context.Context, *MetaDeleteEntityRequest) (*MetaDeleteEntityResponse, error)
+	GetDefaultPartitionId(context.Context, *GetDefaultPartitionIdRequest) (*GetDefaultPartitionIdResponse, error)
+	ApplyTransaction(context.Context, *MetaTransaction) (*MetaTransactionResult, error)
+	WatchTransactions(*WatchTransactionsRequest, ConfigstoreMetaService_WatchTransactionsServer) error
 }
 
 func RegisterConfigstoreMetaServiceServer(s *grpc.Server, srv ConfigstoreMetaServiceServer) {
@@ -1057,6 +2992,135 @@ func _ConfigstoreMetaService_MetaList_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigstoreMetaService_MetaGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaGetEntityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigstoreMetaServiceServer).MetaGet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/meta.ConfigstoreMetaService/MetaGet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigstoreMetaServiceServer).MetaGet(ctx, req.(*MetaGetEntityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigstoreMetaService_MetaUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaUpdateEntityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigstoreMetaServiceServer).MetaUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/meta.ConfigstoreMetaService/MetaUpdate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigstoreMetaServiceServer).MetaUpdate(ctx, req.(*MetaUpdateEntityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigstoreMetaService_MetaCreate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaCreateEntityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigstoreMetaServiceServer).MetaCreate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/meta.ConfigstoreMetaService/MetaCreate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigstoreMetaServiceServer).MetaCreate(ctx, req.(*MetaCreateEntityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigstoreMetaService_MetaDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaDeleteEntityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigstoreMetaServiceServer).MetaDelete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/meta.ConfigstoreMetaService/MetaDelete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigstoreMetaServiceServer).MetaDelete(ctx, req.(*MetaDeleteEntityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigstoreMetaService_GetDefaultPartitionId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDefaultPartitionIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigstoreMetaServiceServer).GetDefaultPartitionId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/meta.ConfigstoreMetaService/GetDefaultPartitionId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigstoreMetaServiceServer).GetDefaultPartitionId(ctx, req.(*GetDefaultPartitionIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigstoreMetaService_ApplyTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaTransaction)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigstoreMetaServiceServer).ApplyTransaction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/meta.ConfigstoreMetaService/ApplyTransaction",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigstoreMetaServiceServer).ApplyTransaction(ctx, req.(*MetaTransaction))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigstoreMetaService_WatchTransactions_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchTransactionsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ConfigstoreMetaServiceServer).WatchTransactions(m, &configstoreMetaServiceWatchTransactionsServer{stream})
+}
+
+type ConfigstoreMetaService_WatchTransactionsServer interface {
+	Send(*WatchTransactionsResponse) error
+	grpc.ServerStream
+}
+
+type configstoreMetaServiceWatchTransactionsServer struct {
+	grpc.ServerStream
+}
+
+func (x *configstoreMetaServiceWatchTransactionsServer) Send(m *WatchTransactionsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _ConfigstoreMetaService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "meta.ConfigstoreMetaService",
 	HandlerType: (*ConfigstoreMetaServiceServer)(nil),
@@ -1069,8 +3133,37 @@ var _ConfigstoreMetaService_serviceDesc = grpc.ServiceDesc{
 			MethodName: "MetaList",
 			Handler:    _ConfigstoreMetaService_MetaList_Handler,
 		},
+		{
+			MethodName: "MetaGet",
+			Handler:    _ConfigstoreMetaService_MetaGet_Handler,
+		},
+		{
+			MethodName: "MetaUpdate",
+			Handler:    _ConfigstoreMetaService_MetaUpdate_Handler,
+		},
+		{
+			MethodName: "MetaCreate",
+			Handler:    _ConfigstoreMetaService_MetaCreate_Handler,
+		},
+		{
+			MethodName: "MetaDelete",
+			Handler:    _ConfigstoreMetaService_MetaDelete_Handler,
+		},
+		{
+			MethodName: "GetDefaultPartitionId",
+			Handler:    _ConfigstoreMetaService_GetDefaultPartitionId_Handler,
+		},
+		{
+			MethodName: "ApplyTransaction",
+			Handler:    _ConfigstoreMetaService_ApplyTransaction_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "WatchTransactions",
+			Handler:       _ConfigstoreMetaService_WatchTransactions_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "meta.proto",
 }
-
