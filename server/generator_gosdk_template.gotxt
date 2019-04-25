@@ -423,17 +423,21 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 			resp, err := watcher.Recv()
 			if err == io.EOF {
 				// Retry the Watch request itself
+				fmt.Printf("configstore client: got EOF from configstore endpoint, attempting to reconnect...\n")
 				watcher.CloseSend()
 				watcher, err = client.Watch(ctx, &TypedWatchTransactionsRequest{})
 				if err != nil {
+					fmt.Printf("configstore client: failed to reconnect: %v\n", err)
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
 					// Connection re-established, loop back around again to receive updates.
+					fmt.Printf("configstore client: connection re-established\n")
 				}
 			}
 			if err == nil || status.Code(err) == codes.OK {
 				if resp == nil {
+					fmt.Printf("configstore client: got nil response from endpoint (this is a bug), ignoring...\n")
 					time.Sleep(1 * time.Second)
 					continue
 				}
@@ -488,18 +492,22 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 					}
 					configstore.mutex.Unlock()
 				}
-
 			} else if status.Code(err) == codes.Unavailable {
 				// Retry the Watch request itself
+				fmt.Printf("configstore client: got Unavailable code from configstore endpoint, attempting to reconnect...\n")
 				watcher.CloseSend()
 				watcher, err = client.Watch(ctx, &TypedWatchTransactionsRequest{})
 				if err != nil {
+					fmt.Printf("configstore client: failed to reconnect: %v\n", err)
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
 					// Connection re-established, loop back around again to receive updates.
 				}
 			} else {
+				if err != nil {
+					fmt.Printf("configstore client: got transient error, retrying in 1 second: %v\n", err)
+				}
 				time.Sleep(1 * time.Second)
 				continue
 			}
