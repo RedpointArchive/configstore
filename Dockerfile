@@ -50,7 +50,6 @@ ENV GOPATH=/go
 ENV PATH="/go/bin:/usr/local/go/bin:${PATH}"
 
 COPY --from=go_install /usr/local/go /usr/local/go
-COPY --from=go_install /go /go
 
 COPY server /src
 COPY --from=protocol_build /workdir_go/meta.pb.go /src/meta.pb.go
@@ -126,7 +125,6 @@ RUN gcloud components install beta
 RUN gcloud components install cloud-firestore-emulator
 
 COPY --from=go_install /usr/local/go /usr/local/go
-COPY --from=go_install /go /go
 
 RUN go get -v \
   "github.com/rs/xid" \
