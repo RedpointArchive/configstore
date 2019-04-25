@@ -414,20 +414,21 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 	client := NewTransactionServiceClient(configstore.conn)
 	var mut sync.Mutex
 	mut.Lock()
-	watcher, err := client.Watch(ctx, &TypedWatchTransactionsRequest{})
-	if err != nil {
-		return nil, err
+	watcher, watcherErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
+	if watcherErr != nil {
+		return nil, watcherErr
 	}
 	go func() {
 		for {
-			resp, err := watcher.Recv()
-			if err == io.EOF {
+			resp, respErr := watcher.Recv()
+			if respErr == io.EOF {
 				// Retry the Watch request itself
 				fmt.Printf("configstore client: got EOF from configstore endpoint, attempting to reconnect...\n")
 				watcher.CloseSend()
-				watcher, err = client.Watch(ctx, &TypedWatchTransactionsRequest{})
-				if err != nil {
-					fmt.Printf("configstore client: failed to reconnect: %v\n", err)
+				newWatcher, watcherReconnectErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
+				watcher = newWatcher
+				if watcherReconnectErr != nil {
+					fmt.Printf("configstore client: failed to reconnect: %v\n", watcherReconnectErr)
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
@@ -435,7 +436,7 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 					fmt.Printf("configstore client: connection re-established\n")
 				}
 			}
-			if err == nil || status.Code(err) == codes.OK {
+			if respErr == nil || status.Code(respErr) == codes.OK {
 				if resp == nil {
 					fmt.Printf("configstore client: got nil response from endpoint (this is a bug), ignoring...\n")
 					time.Sleep(1 * time.Second)
@@ -492,24 +493,22 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 					}
 					configstore.mutex.Unlock()
 				}
-			} else if status.Code(err) == codes.Unavailable {
-				// Retry the Watch request itself
-				fmt.Printf("configstore client: got Unavailable code from configstore endpoint, attempting to reconnect...\n")
+			} else {
+				// We got some other kind of error e.g. configstore is unavailable, or the Watch endpoint
+				// returned an error and will no longer deliver new updates. In this case, we must always
+				// reconnect as we can't trust the state of the server side requests to be one in which 
+				// retrying Recv() will ever work.
+				fmt.Printf("configstore client: got %s code from configstore endpoint, attempting to reconnect...\n", status.Code(respErr).String())
 				watcher.CloseSend()
-				watcher, err = client.Watch(ctx, &TypedWatchTransactionsRequest{})
-				if err != nil {
-					fmt.Printf("configstore client: failed to reconnect: %v\n", err)
+				newWatcher, watcherReconnectErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
+				watcher = newWatcher
+				if watcherReconnectErr != nil {
+					fmt.Printf("configstore client: failed to reconnect: %v\n", watcherReconnectErr)
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
 					// Connection re-established, loop back around again to receive updates.
 				}
-			} else {
-				if err != nil {
-					fmt.Printf("configstore client: got transient error, retrying in 1 second: %v\n", err)
-				}
-				time.Sleep(1 * time.Second)
-				continue
 			}
 		}
 	}()
