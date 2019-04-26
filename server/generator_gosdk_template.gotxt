@@ -413,6 +413,7 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 	{{ end }}
 	client := NewTransactionServiceClient(configstore.conn)
 	var mut sync.Mutex
+	isLocked := true
 	mut.Lock()
 	watcher, watcherErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
 	if watcherErr != nil {
@@ -479,8 +480,11 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 						{{ end }}
 						}
 					}
+					if isLocked {
+						isLocked = false
+						mut.Unlock()
+					}
 					configstore.mutex.Unlock()
-					mut.Unlock()
 				case *TypedWatchTransactionsResponse_Batch:
 					// handle receiving batch
 					configstore.mutex.Lock()
