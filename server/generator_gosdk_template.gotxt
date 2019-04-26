@@ -420,6 +420,24 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 	}
 	go func() {
 		for {
+			if watcher == nil {
+				// watcher can become nil if we lose connection, attempt to reconnect (setting watcher = newWatcher),
+				// but the connection failed on the reconnection attempt and we don't actually have a valid connection
+				// yet. in this case, the connection is already closed, and we just need to attempt to reconnect until
+				// we're back.
+				fmt.Printf("configstore client: currently disconnected, attempting to reconnect...\n")
+				newWatcher, watcherReconnectErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
+				watcher = newWatcher
+				if watcherReconnectErr != nil {
+					fmt.Printf("configstore client: failed to reconnect: %v\n", watcherReconnectErr)
+					time.Sleep(30 * time.Second)
+					continue
+				} else {
+					// Connection re-established, keep going to receive updates.
+					fmt.Printf("configstore client: connection re-established\n")
+				}
+			}
+
 			resp, respErr := watcher.Recv()
 			if respErr == io.EOF {
 				// Retry the Watch request itself
