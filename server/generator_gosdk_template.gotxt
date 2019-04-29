@@ -466,6 +466,23 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 				case *TypedWatchTransactionsResponse_InitialState:
 					// handle receiving initial state
 					configstore.mutex.Lock()
+					{{ range $kindName, $kind := .Kinds }}
+					{
+						var keys []string
+						ref := configstore.{{ $kindName }}s.(*{{ $kindName }}ImplStore)
+						for k := range ref.store {
+							keys = append(keys, k)
+						}
+						for _, s := range keys {
+							oldEntity, ok := ref.store[s]
+							if ok {
+								_ = oldEntity
+								{{ template "indexstoresremoveinternal" $kindName }}
+							}
+							delete(ref.store, s)
+						}
+					}
+					{{ end }}
 					for _, entity := range b.InitialState.Entities {
 						switch e := entity.Entity.(type) {
 						{{ range $kindName, $kind := .Kinds }}
@@ -530,6 +547,7 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 					continue
 				} else {
 					// Connection re-established, loop back around again to receive updates.
+					fmt.Printf("configstore client: connection re-established\n")
 				}
 			}
 		}
