@@ -10,6 +10,10 @@ func (s *operationProcessor) operationUpdateRead(ctx context.Context, schema *Sc
 }
 
 func (s *operationProcessor) operationUpdateWrite(ctx context.Context, schema *Schema, req *MetaUpdateEntityRequest, readState interface{}) (*MetaUpdateEntityResponse, error) {
+	if req == nil || req.Entity == nil || req.Entity.Key == nil {
+		return nil, fmt.Errorf("missing entity or entity key for update operation")
+	}
+
 	pathElements := req.Entity.Key.Path
 	lastKind := pathElements[len(pathElements)-1].Kind
 
