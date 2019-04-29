@@ -213,6 +213,15 @@ message MetaDeleteEntityResponse {
     MetaEntity entity = 1;
 }
 
+message GetTransactionQueueCountRequest {
+
+}
+
+message GetTransactionQueueCountResponse {
+    uint32 transactionQueueCount = 1;
+}
+
+
 service ConfigstoreMetaService {
     rpc GetSchema(GetSchemaRequest) returns (GetSchemaResponse);
     rpc MetaList(MetaListEntitiesRequest) returns (MetaListEntitiesResponse);
@@ -223,6 +232,7 @@ service ConfigstoreMetaService {
     rpc GetDefaultPartitionId(GetDefaultPartitionIdRequest) returns (GetDefaultPartitionIdResponse);
     rpc ApplyTransaction(MetaTransaction) returns (MetaTransactionResult);
     rpc WatchTransactions(WatchTransactionsRequest) returns (stream WatchTransactionsResponse);
+    rpc GetTransactionQueueCount(GetTransactionQueueCountRequest) returns (GetTransactionQueueCountResponse);
 }
 
 // =======

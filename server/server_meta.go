@@ -168,6 +168,14 @@ func (s *configstoreMetaServiceServer) ApplyTransaction(ctx context.Context, req
 	return resp, err
 }
 
+func (s *configstoreMetaServiceServer) GetTransactionQueueCount(ctx context.Context, req *GetTransactionQueueCountRequest) (*GetTransactionQueueCountResponse, error) {
+	s.transactionWatcher.transactionsLock.RLock()
+	defer s.transactionWatcher.transactionsLock.RUnlock()
+	return &GetTransactionQueueCountResponse{
+		TransactionQueueCount: uint32(len(s.transactionWatcher.transactions)),
+	}, nil
+}
+
 func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsRequest, srv ConfigstoreMetaService_WatchTransactionsServer) error {
 	if !s.transactionWatcher.isConsistent {
 		return fmt.Errorf("configstore is not yet transactionally consistent because it is starting up, please try again in a moment")
