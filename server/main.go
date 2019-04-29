@@ -254,6 +254,10 @@ func main() {
 					MethodName: "ApplyTransaction",
 					Handler:    _ConfigstoreMetaService_ApplyTransaction_Handler,
 				},
+				{
+					MethodName: "GetTransactionQueueCount",
+					Handler:    _ConfigstoreMetaService_GetTransactionQueueCount_Handler,
+				},
 			},
 			Streams: []grpc.StreamDesc{
 				{

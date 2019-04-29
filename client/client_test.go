@@ -20,6 +20,7 @@ import (
 var ctx context.Context
 var configstore *Configstore
 var configstore2 *Configstore
+var metaClient ConfigstoreMetaServiceClient
 
 func TestMain(m *testing.M) {
 	conn, err := grpc.Dial("127.0.0.1:13389", grpc.WithInsecure())
@@ -43,6 +44,7 @@ func TestMain(m *testing.M) {
 		fmt.Println()
 		return
 	}
+	metaClient = NewConfigstoreMetaServiceClient(conn)
 	os.Exit(m.Run())
 }
 
@@ -255,7 +257,7 @@ func TestStore(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	_, ok := configstore2.Users.GetAndCheck(user.Key)
 	assert.Equal(t, ok, true)
@@ -263,7 +265,7 @@ func TestStore(t *testing.T) {
 	_, err = configstore.Users.Delete(ctx, user.Key)
 	assert.NilError(t, err)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	_, ok = configstore2.Users.GetAndCheck(user.Key)
 	assert.Equal(t, ok, false)
@@ -379,4 +381,34 @@ func TestSnapshotMulti(t *testing.T) {
 	oldNilKey, ok := nilKeySnapshot.GetAndCheck(nilKey.Key)
 	assert.Equal(t, ok, true)
 	assert.Assert(t, oldNilKey.NilKeyTest == nil, "nil key test was not nil")
+}
+
+func TestNoopUpdateDoesNotStallConfigstore(t *testing.T) {
+	user, err := configstore.Users.Create(ctx, &User{
+		Key:          CreateTopLevel_User_IncompleteKey(&PartitionId{}),
+		EmailAddress: "hello@example.com",
+		PasswordHash: "v",
+	})
+	assert.NilError(t, err)
+
+	_, err = configstore.Users.Update(ctx, user)
+	assert.NilError(t, err)
+
+	hasSeenAtLeastOneTransaction := false
+	i := 30
+	for i > 0 {
+		resp, err := metaClient.GetTransactionQueueCount(ctx, &GetTransactionQueueCountRequest{})
+		assert.NilError(t, err)
+
+		if (resp.TransactionQueueCount > 0 && !hasSeenAtLeastOneTransaction) {
+			hasSeenAtLeastOneTransaction = true
+		} else if (resp.TransactionQueueCount == 0 && hasSeenAtLeastOneTransaction) {
+			break
+		} else {
+			time.Sleep(time.Second * 1)
+			i--
+		}
+	}
+
+	assert.Assert(t, i != 0, "timed out")
 }

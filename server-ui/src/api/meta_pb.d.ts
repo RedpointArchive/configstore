@@ -894,6 +894,38 @@ export namespace MetaDeleteEntityResponse {
   }
 }
 
+export class GetTransactionQueueCountRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetTransactionQueueCountRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetTransactionQueueCountRequest): GetTransactionQueueCountRequest.AsObject;
+  static serializeBinaryToWriter(message: GetTransactionQueueCountRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetTransactionQueueCountRequest;
+  static deserializeBinaryFromReader(message: GetTransactionQueueCountRequest, reader: jspb.BinaryReader): GetTransactionQueueCountRequest;
+}
+
+export namespace GetTransactionQueueCountRequest {
+  export type AsObject = {
+  }
+}
+
+export class GetTransactionQueueCountResponse extends jspb.Message {
+  getTransactionqueuecount(): number;
+  setTransactionqueuecount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetTransactionQueueCountResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetTransactionQueueCountResponse): GetTransactionQueueCountResponse.AsObject;
+  static serializeBinaryToWriter(message: GetTransactionQueueCountResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetTransactionQueueCountResponse;
+  static deserializeBinaryFromReader(message: GetTransactionQueueCountResponse, reader: jspb.BinaryReader): GetTransactionQueueCountResponse;
+}
+
+export namespace GetTransactionQueueCountResponse {
+  export type AsObject = {
+    transactionqueuecount: number,
+  }
+}
+
 export class MetaTransaction extends jspb.Message {
   getOperationsList(): Array<MetaOperation>;
   setOperationsList(value: Array<MetaOperation>): void;

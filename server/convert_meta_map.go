@@ -2,6 +2,8 @@ package main
 
 import (
 	"cloud.google.com/go/firestore"
+
+	"github.com/google/uuid"
 )
 
 func convertMetaEntityToRefAndDataMap(
@@ -18,7 +20,11 @@ func convertMetaEntityToRefAndDataMap(
 	}
 
 	m := make(map[string]interface{})
-	m["_deleted"] = false
+	u, err := uuid.NewRandom()
+	if err != nil {
+		return nil, nil, err
+	}
+	m["_forceFirestoreSnapshotGeneration"] = u.String()
 
 	for _, value := range entity.Values {
 		name := ""

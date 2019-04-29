@@ -579,5 +579,60 @@ proto.meta.ConfigstoreMetaServicePromiseClient.prototype.watchTransactions =
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.meta.GetTransactionQueueCountRequest,
+ *   !proto.meta.GetTransactionQueueCountResponse>}
+ */
+const methodInfo_ConfigstoreMetaService_GetTransactionQueueCount = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.meta.GetTransactionQueueCountResponse,
+  /** @param {!proto.meta.GetTransactionQueueCountRequest} request */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.meta.GetTransactionQueueCountResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.meta.GetTransactionQueueCountRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.meta.GetTransactionQueueCountResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.meta.GetTransactionQueueCountResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.meta.ConfigstoreMetaServiceClient.prototype.getTransactionQueueCount =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/meta.ConfigstoreMetaService/GetTransactionQueueCount',
+      request,
+      metadata || {},
+      methodInfo_ConfigstoreMetaService_GetTransactionQueueCount,
+      callback);
+};
+
+
+/**
+ * @param {!proto.meta.GetTransactionQueueCountRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.meta.GetTransactionQueueCountResponse>}
+ *     A native promise that resolves to the response
+ */
+proto.meta.ConfigstoreMetaServicePromiseClient.prototype.getTransactionQueueCount =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/meta.ConfigstoreMetaService/GetTransactionQueueCount',
+      request,
+      metadata || {},
+      methodInfo_ConfigstoreMetaService_GetTransactionQueueCount);
+};
+
+
 module.exports = proto.meta;
 

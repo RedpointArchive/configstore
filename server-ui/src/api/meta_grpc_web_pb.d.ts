@@ -7,6 +7,8 @@ import {
   GetDefaultPartitionIdResponse,
   GetSchemaRequest,
   GetSchemaResponse,
+  GetTransactionQueueCountRequest,
+  GetTransactionQueueCountResponse,
   MetaCreateEntityRequest,
   MetaCreateEntityResponse,
   MetaDeleteEntityRequest,
@@ -88,6 +90,13 @@ export class ConfigstoreMetaServiceClient {
     metadata?: grpcWeb.Metadata
   ): grpcWeb.ClientReadableStream<WatchTransactionsResponse>;
 
+  getTransactionQueueCount(
+    request: GetTransactionQueueCountRequest,
+    metadata: grpcWeb.Metadata | undefined,
+    callback: (err: grpcWeb.Error,
+               response: GetTransactionQueueCountResponse) => void
+  ): grpcWeb.ClientReadableStream<GetTransactionQueueCountResponse>;
+
 }
 
 export class ConfigstoreMetaServicePromiseClient {
@@ -139,6 +148,11 @@ export class ConfigstoreMetaServicePromiseClient {
     request: WatchTransactionsRequest,
     metadata?: grpcWeb.Metadata
   ): grpcWeb.ClientReadableStream<WatchTransactionsResponse>;
+
+  getTransactionQueueCount(
+    request: GetTransactionQueueCountRequest,
+    metadata?: grpcWeb.Metadata
+  ): Promise<GetTransactionQueueCountResponse>;
 
 }
 
