@@ -412,3 +412,19 @@ func TestNoopUpdateDoesNotStallConfigstore(t *testing.T) {
 
 	assert.Assert(t, i != 0, "timed out")
 }
+
+func TestUpsert(t *testing.T) {
+	testID := xid.New()
+
+	originalUser := &User{
+		Key:          CreateTopLevel_User_NameKey(&PartitionId{}, testID.String()),
+		EmailAddress: "hello@example.com",
+		PasswordHash: "v",
+	}
+
+	_, err := configstore.Users.Upsert(ctx, originalUser)
+	assert.NilError(t, err)
+
+	_, err = configstore.Users.Upsert(ctx, originalUser)
+	assert.NilError(t, err)
+}

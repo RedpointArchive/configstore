@@ -586,6 +586,7 @@ type {{ $kindName }}Store interface {
 	Client() {{ $kindName }}ServiceClient
 	Create(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error)
 	Update(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error)
+	Upsert(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error)
 	Delete(ctx context.Context, key *Key) (*{{ $kindName }}, error)
 	GetAndCheck(key *Key) (*{{ $kindName }}, bool)
 	Get(key *Key) *{{ $kindName }}
@@ -763,6 +764,25 @@ func (ref *{{ $kindName }}ImplStore) Update(ctx context.Context, entity *{{ $kin
 	ref.store[s] = resp.Entity
 	ref.configstore.mutex.Unlock()
 	return resp.Entity, nil
+}
+
+func (ref *{{ $kindName }}ImplStore) Upsert(ctx context.Context, entity *{{ $kindName }}) (*{{ $kindName }}, error) {
+	_, ok := ref.GetAndCheck(entity.Key)
+	if !ok {
+		// try create
+		entity, err := ref.Create(ctx, entity)
+		if err != nil {
+			if strings.Contains(err.Error(), "already exists") {
+				// fallback to update
+			} else {
+				return nil, err
+			}
+		} else {
+			return entity, nil
+		}
+	}
+	entity, err := ref.Update(ctx, entity)
+	return entity, err
 }
 
 func (ref *{{ $kindName }}ImplStore) Delete(ctx context.Context, key *Key) (*{{ $kindName }}, error) {
