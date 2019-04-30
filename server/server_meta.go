@@ -212,6 +212,7 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 		if err != nil {
 			return err
 		}
+		fmt.Printf("configstore: initial state: sending entity with key %s\n", serializeKey(entity.Key))
 		initialState.Entities = append(
 			initialState.Entities,
 			entity,
