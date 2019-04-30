@@ -200,6 +200,10 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 
 	// send down the initial state of the database
 	initialState := &MetaTransactionInitialState{}
+	RecordTrace(&ConfigstoreTraceEntry{
+		OperatorId: getTraceServiceName(),
+		Type:       ConfigstoreTraceEntry_INITIAL_STATE_SEND_BEGIN,
+	})
 	for _, snapshot := range s.transactionWatcher.currentEntities {
 		key, err := convertDocumentRefToMetaKey(snapshot.Ref)
 		if err != nil {
@@ -212,6 +216,11 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 		if err != nil {
 			return err
 		}
+		RecordTrace(&ConfigstoreTraceEntry{
+			OperatorId: getTraceServiceName(),
+			Type:       ConfigstoreTraceEntry_INITIAL_STATE_SEND_ENTITY,
+			Entity:     entity,
+		})
 		initialState.Entities = append(
 			initialState.Entities,
 			entity,
@@ -219,6 +228,10 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 	}
 	releaseLockIfHeld()
 
+	RecordTrace(&ConfigstoreTraceEntry{
+		OperatorId: getTraceServiceName(),
+		Type:       ConfigstoreTraceEntry_INITIAL_STATE_SEND_END,
+	})
 	srv.Send(&WatchTransactionsResponse{
 		Response: &WatchTransactionsResponse_InitialState{
 			InitialState: initialState,
@@ -230,6 +243,32 @@ func (s *configstoreMetaServiceServer) WatchTransactions(req *WatchTransactionsR
 	for connected {
 		select {
 		case msg := <-ch:
+			RecordTrace(&ConfigstoreTraceEntry{
+				OperatorId:    getTraceServiceName(),
+				Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_BEGIN,
+				TransactionId: msg.Id,
+			})
+			for _, mutatedEntity := range msg.MutatedEntities {
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:    getTraceServiceName(),
+					Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_MUTATED_ENTITY,
+					TransactionId: msg.Id,
+					Entity:        mutatedEntity,
+				})
+			}
+			for _, deletedEntityKey := range msg.DeletedKeys {
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:    getTraceServiceName(),
+					Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_DELETED_ENTITY_KEY,
+					TransactionId: msg.Id,
+					Key:           deletedEntityKey,
+				})
+			}
+			RecordTrace(&ConfigstoreTraceEntry{
+				OperatorId:    getTraceServiceName(),
+				Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_END,
+				TransactionId: msg.Id,
+			})
 			srv.Send(&WatchTransactionsResponse{
 				Response: &WatchTransactionsResponse_Batch{
 					Batch: msg,
