@@ -304,6 +304,12 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 	// listen for inbound changes
 	go func() {
 		for elem := range watcher.inboundChanges {
+
+			// make an explicit copy of elem so we can take the address of
+			// it. if we just did &elem, we'd get a pointer to the for loop
+			// iterator... which is not what we want
+			copy := elem
+
 			watcher.pendingChangesByTimestampLock.Lock()
 
 			ts := serializeTime(elem.Doc.UpdateTime)
@@ -311,7 +317,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 			if watcher.pendingChangesByTimestamp[ts] == nil {
 				watcher.pendingChangesByTimestamp[ts] = make(map[string]*firestore.DocumentChange)
 			}
-			watcher.pendingChangesByTimestamp[ts][serializeRef(elem.Doc.Ref)] = &elem
+			watcher.pendingChangesByTimestamp[ts][serializeRef(elem.Doc.Ref)] = &copy
 
 			watcher.pendingChangesByTimestampLock.Unlock()
 		}
