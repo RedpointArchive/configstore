@@ -74,6 +74,10 @@ func (s *configstoreDynamicProtobufTransactionService) dynamicProtobufTransactio
 
 	// send down the initial state of the database
 	initialState := messageFactory.NewDynamicMessage(s.genResult.MessageMap["TypedTransactionInitialState"])
+	RecordTrace(&ConfigstoreTraceEntry{
+		OperatorId: getTraceServiceName(),
+		Type:       ConfigstoreTraceEntry_INITIAL_STATE_SEND_BEGIN,
+	})
 	var transactionEntities []*dynamic.Message
 	for _, snapshot := range s.transactionWatcher.currentEntities {
 		key, err := convertDocumentRefToMetaKey(snapshot.Ref)
@@ -104,6 +108,11 @@ func (s *configstoreDynamicProtobufTransactionService) dynamicProtobufTransactio
 			int(kind.Id),
 			entityMessage,
 		)
+		RecordTrace(&ConfigstoreTraceEntry{
+			OperatorId: getTraceServiceName(),
+			Type:       ConfigstoreTraceEntry_INITIAL_STATE_SEND_ENTITY,
+			Entity:     metaEntity,
+		})
 		transactionEntities = append(
 			transactionEntities,
 			transactionEntity,
@@ -112,6 +121,10 @@ func (s *configstoreDynamicProtobufTransactionService) dynamicProtobufTransactio
 	initialState.SetFieldByName("entities", transactionEntities)
 	releaseLockIfHeld()
 
+	RecordTrace(&ConfigstoreTraceEntry{
+		OperatorId: getTraceServiceName(),
+		Type:       ConfigstoreTraceEntry_INITIAL_STATE_SEND_END,
+	})
 	watchTransactionResponse := messageFactory.NewDynamicMessage(s.genResult.MessageMap["TypedWatchTransactionsResponse"])
 	watchTransactionResponse.SetFieldByName("initialState", initialState)
 	stream.SendMsg(watchTransactionResponse)
@@ -121,6 +134,28 @@ func (s *configstoreDynamicProtobufTransactionService) dynamicProtobufTransactio
 	for connected {
 		select {
 		case msg := <-ch:
+			RecordTrace(&ConfigstoreTraceEntry{
+				OperatorId:    getTraceServiceName(),
+				Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_BEGIN,
+				TransactionId: msg.Id,
+			})
+			for _, mutatedEntity := range msg.MutatedEntities {
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:    getTraceServiceName(),
+					Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_MUTATED_ENTITY,
+					TransactionId: msg.Id,
+					Entity:        mutatedEntity,
+				})
+			}
+			for _, deletedEntityKey := range msg.DeletedKeys {
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:    getTraceServiceName(),
+					Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_DELETED_ENTITY_KEY,
+					TransactionId: msg.Id,
+					Key:           deletedEntityKey,
+				})
+			}
+
 			var mutatedEntities []*dynamic.Message
 			for _, mutatedEntity := range msg.MutatedEntities {
 				kindName := mutatedEntity.Key.Path[len(mutatedEntity.Key.Path)-1].Kind
@@ -158,6 +193,12 @@ func (s *configstoreDynamicProtobufTransactionService) dynamicProtobufTransactio
 
 			watchTransactionResponse := messageFactory.NewDynamicMessage(s.genResult.MessageMap["TypedWatchTransactionsResponse"])
 			watchTransactionResponse.SetFieldByName("batch", batch)
+
+			RecordTrace(&ConfigstoreTraceEntry{
+				OperatorId:    getTraceServiceName(),
+				Type:          ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_END,
+				TransactionId: msg.Id,
+			})
 			stream.SendMsg(watchTransactionResponse)
 		case <-time.After(1 * time.Second):
 			err := stream.Context().Err()

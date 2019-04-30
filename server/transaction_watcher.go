@@ -138,7 +138,12 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 				_, ok := pendingChanges[mks]
 				if !ok {
 					// we don't have this entity's snapshot yet
-					fmt.Printf("%s: can't process transaction, waiting on entity snapshot with key: %s\n", transaction.Id, mks)
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:    getTraceServiceName(),
+						Type:          ConfigstoreTraceEntry_TRANSACTION_STALLED,
+						TransactionId: transaction.Id,
+						Key:           mutatedKey,
+					})
 					watcher.waitTransactionCount++
 					if watcher.waitTransactionCount > 30 {
 						// we aren't making progress - we've stalled for some reason (race condition, etc.)
@@ -189,6 +194,13 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 				if err != nil {
 					log.Printf("error during batch construction: %v", err)
 				} else {
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:    getTraceServiceName(),
+						Type:          ConfigstoreTraceEntry_TRANSACTION_RECONSTRUCT_APPEND_MUTATED_ENTITY,
+						TransactionId: transaction.Id,
+						Key:           mutatedKey,
+						Entity:        convertedEntity,
+					})
 					batch.MutatedEntities = append(
 						batch.MutatedEntities,
 						convertedEntity,
@@ -212,7 +224,12 @@ func (watcher *transactionWatcher) processTransaction(i int, transaction *MetaTr
 	watcher.waitTransactionCount = 0
 
 	// the transaction has been applied and can be removed from the transaction list
-	fmt.Printf("%s: finished processing transaction (%d transactions left to process)\n", transaction.Id, len(watcher.transactions)-1)
+	RecordTrace(&ConfigstoreTraceEntry{
+		OperatorId:                     getTraceServiceName(),
+		Type:                           ConfigstoreTraceEntry_TRANSACTION_FINISHED_PROCESSING,
+		TransactionId:                  transaction.Id,
+		RemainingTransactionQueueCount: int32(len(watcher.transactions) - 1),
+	})
 	return true
 }
 
@@ -265,7 +282,10 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 						}
 					}
 					if isConsistent {
-						fmt.Printf("configstore is now consistent and ready to serve transactions\n")
+						RecordTrace(&ConfigstoreTraceEntry{
+							OperatorId: getTraceServiceName(),
+							Type:       ConfigstoreTraceEntry_CONFIGSTORE_CONSISTENT,
+						})
 						watcher.isConsistent = isConsistent
 					}
 				}
@@ -318,6 +338,8 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 				watcher.pendingChangesByTimestamp[ts] = make(map[string]*firestore.DocumentChange)
 			}
 			watcher.pendingChangesByTimestamp[ts][serializeRef(elem.Doc.Ref)] = &copy
+
+			RecordPendingChangesByTimestamp(watcher.pendingChangesByTimestamp)
 
 			watcher.pendingChangesByTimestampLock.Unlock()
 		}
@@ -431,6 +453,12 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 					if err != nil {
 						continue
 					}
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:    getTraceServiceName(),
+						Type:          ConfigstoreTraceEntry_TRANSACTION_MUTATED_ENTITY_KEY,
+						TransactionId: change.Doc.Ref.ID,
+						Key:           key,
+					})
 					mutatedKeys = append(mutatedKeys, key)
 				}
 				for _, ref := range deletedRefs {
@@ -438,6 +466,12 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 					if err != nil {
 						continue
 					}
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:    getTraceServiceName(),
+						Type:          ConfigstoreTraceEntry_TRANSACTION_DELETED_ENTITY_KEY,
+						TransactionId: change.Doc.Ref.ID,
+						Key:           key,
+					})
 					deletedKeys = append(deletedKeys, key)
 				}
 
@@ -447,7 +481,11 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 					panic("mutatedKeys and deletedKeys are both length 0!")
 				}
 
-				fmt.Printf("%s: transaction arrived\n", change.Doc.Ref.ID)
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:    getTraceServiceName(),
+					Type:          ConfigstoreTraceEntry_TRANSACTION_ARRIVED,
+					TransactionId: change.Doc.Ref.ID,
+				})
 				watcher.transactions = append(
 					watcher.transactions,
 					&MetaTransactionRecord{

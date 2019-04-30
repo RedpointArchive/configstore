@@ -271,7 +271,11 @@ func main() {
 
 		// Start gRPC server.
 		go func() {
-			fmt.Println(fmt.Sprintf("Running gRPC server on port %d...", config.GrpcPort))
+			RecordTrace(&ConfigstoreTraceEntry{
+				OperatorId: getTraceServiceName(),
+				Type:       ConfigstoreTraceEntry_SERVER_STARTUP_GRPC_PORT,
+				Port:       int32(config.GrpcPort),
+			})
 			grpcServer.Serve(lis)
 		}()
 
@@ -289,7 +293,11 @@ func main() {
 			http.ServeFile(w, r, "/server-ui/index.html")
 		})
 
-		fmt.Println(fmt.Sprintf("Running HTTP server on port %d...", config.HTTPPort))
+		RecordTrace(&ConfigstoreTraceEntry{
+			OperatorId: getTraceServiceName(),
+			Type:       ConfigstoreTraceEntry_SERVER_STARTUP_HTTP_PORT,
+			Port:       int32(config.HTTPPort),
+		})
 
 		GrpcServeWithWrapper(router, grpcServer, func(h http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -405,9 +413,10 @@ func HttpServe(handler http.Handler, addr string) {
 
 	<-signalChannel
 
-	if os.Getenv("DEV") != "1" {
-		fmt.Printf("gracefully shutting down...\n")
-	}
+	RecordTrace(&ConfigstoreTraceEntry{
+		OperatorId: getTraceServiceName(),
+		Type:       ConfigstoreTraceEntry_SERVER_GRACEFUL_SHUTDOWN,
+	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

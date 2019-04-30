@@ -301,3 +301,51 @@ message MetaTransactionBatch {
 message MetaTransactionInitialState {
     repeated MetaEntity entities = 1;
 }
+
+// =======
+
+message ConfigstoreTraceEntry {
+    enum ConfigstoreTraceEntryType {
+        INITIAL_STATE_SEND_BEGIN = 0;
+        INITIAL_STATE_SEND_ENTITY = 1;
+        INITIAL_STATE_SEND_END = 2;
+        INITIAL_STATE_RECEIVE_BEGIN = 3;
+        INITIAL_STATE_RECEIVE_ENTITY = 4;
+        INITIAL_STATE_RECEIVE_END = 5;
+        TRANSACTION_BATCH_SEND_BEGIN = 6;
+        TRANSACTION_BATCH_SEND_MUTATED_ENTITY = 7;
+        TRANSACTION_BATCH_SEND_DELETED_ENTITY_KEY = 8;
+        TRANSACTION_BATCH_SEND_END = 9;
+        TRANSACTION_BATCH_RECEIVE_BEGIN = 10;
+        TRANSACTION_BATCH_RECEIVE_MUTATED_ENTITY = 11;
+        TRANSACTION_BATCH_RECEIVE_DELETED_ENTITY_KEY = 12;
+        TRANSACTION_BATCH_RECEIVE_END = 13;
+        IN_MEMORY_STORE_ENTITY = 14;
+        IN_MEMORY_DELETE_ENTITY = 15;
+        TRANSACTION_ARRIVED = 16;
+        TRANSACTION_FINISHED_PROCESSING = 17;
+        TRANSACTION_STALLED = 18;
+        CONFIGSTORE_CONSISTENT = 19;
+        TRANSACTION_MUTATED_ENTITY_KEY = 20;
+        TRANSACTION_DELETED_ENTITY_KEY = 21;
+        TRANSACTION_RECONSTRUCT_APPEND_MUTATED_ENTITY = 22;
+        CLIENT_CURRENTLY_DISCONNECTED_ATTEMPTING_RECONNECT = 23;
+        CLIENT_GOT_EOF_ATTEMPTING_RECONNECTING = 24;
+        CLIENT_GOT_NIL_BUG_IGNORING = 25;
+        CLIENT_FAILED_RECONNECT = 26;
+        CLIENT_CONNECTION_REESTABLISHED = 27;
+        CLIENT_GOT_UNEXPECTED_CODE_ATTEMPTING_RECONNECT = 28;
+        SERVER_STARTUP_GRPC_PORT = 29;
+        SERVER_STARTUP_HTTP_PORT = 30;
+        SERVER_GRACEFUL_SHUTDOWN = 31;
+    }
+    ConfigstoreTraceEntryType type = 1;
+    MetaEntity entity = 2;
+    Key key = 3;
+    string operatorId = 6;
+    string transactionId = 7;
+    int32 remainingTransactionQueueCount = 8;
+    string reconnectionCodeString = 9;
+    string errorString = 10;
+    int32 port = 11;
+}

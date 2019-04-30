@@ -400,9 +400,9 @@ func TestNoopUpdateDoesNotStallConfigstore(t *testing.T) {
 		resp, err := metaClient.GetTransactionQueueCount(ctx, &GetTransactionQueueCountRequest{})
 		assert.NilError(t, err)
 
-		if (resp.TransactionQueueCount > 0 && !hasSeenAtLeastOneTransaction) {
+		if resp.TransactionQueueCount > 0 && !hasSeenAtLeastOneTransaction {
 			hasSeenAtLeastOneTransaction = true
-		} else if (resp.TransactionQueueCount == 0 && hasSeenAtLeastOneTransaction) {
+		} else if resp.TransactionQueueCount == 0 && hasSeenAtLeastOneTransaction {
 			break
 		} else {
 			time.Sleep(time.Second * 1)

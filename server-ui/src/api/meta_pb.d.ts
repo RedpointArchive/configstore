@@ -1264,6 +1264,95 @@ export namespace MetaTransactionInitialState {
   }
 }
 
+export class ConfigstoreTraceEntry extends jspb.Message {
+  getType(): ConfigstoreTraceEntry.ConfigstoreTraceEntryType;
+  setType(value: ConfigstoreTraceEntry.ConfigstoreTraceEntryType): void;
+
+  getEntity(): MetaEntity | undefined;
+  setEntity(value?: MetaEntity): void;
+  hasEntity(): boolean;
+  clearEntity(): void;
+
+  getKey(): Key | undefined;
+  setKey(value?: Key): void;
+  hasKey(): boolean;
+  clearKey(): void;
+
+  getOperatorid(): string;
+  setOperatorid(value: string): void;
+
+  getTransactionid(): string;
+  setTransactionid(value: string): void;
+
+  getRemainingtransactionqueuecount(): number;
+  setRemainingtransactionqueuecount(value: number): void;
+
+  getReconnectioncodestring(): string;
+  setReconnectioncodestring(value: string): void;
+
+  getErrorstring(): string;
+  setErrorstring(value: string): void;
+
+  getPort(): number;
+  setPort(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConfigstoreTraceEntry.AsObject;
+  static toObject(includeInstance: boolean, msg: ConfigstoreTraceEntry): ConfigstoreTraceEntry.AsObject;
+  static serializeBinaryToWriter(message: ConfigstoreTraceEntry, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConfigstoreTraceEntry;
+  static deserializeBinaryFromReader(message: ConfigstoreTraceEntry, reader: jspb.BinaryReader): ConfigstoreTraceEntry;
+}
+
+export namespace ConfigstoreTraceEntry {
+  export type AsObject = {
+    type: ConfigstoreTraceEntry.ConfigstoreTraceEntryType,
+    entity?: MetaEntity.AsObject,
+    key?: Key.AsObject,
+    operatorid: string,
+    transactionid: string,
+    remainingtransactionqueuecount: number,
+    reconnectioncodestring: string,
+    errorstring: string,
+    port: number,
+  }
+
+  export enum ConfigstoreTraceEntryType { 
+    INITIAL_STATE_SEND_BEGIN = 0,
+    INITIAL_STATE_SEND_ENTITY = 1,
+    INITIAL_STATE_SEND_END = 2,
+    INITIAL_STATE_RECEIVE_BEGIN = 3,
+    INITIAL_STATE_RECEIVE_ENTITY = 4,
+    INITIAL_STATE_RECEIVE_END = 5,
+    TRANSACTION_BATCH_SEND_BEGIN = 6,
+    TRANSACTION_BATCH_SEND_MUTATED_ENTITY = 7,
+    TRANSACTION_BATCH_SEND_DELETED_ENTITY_KEY = 8,
+    TRANSACTION_BATCH_SEND_END = 9,
+    TRANSACTION_BATCH_RECEIVE_BEGIN = 10,
+    TRANSACTION_BATCH_RECEIVE_MUTATED_ENTITY = 11,
+    TRANSACTION_BATCH_RECEIVE_DELETED_ENTITY_KEY = 12,
+    TRANSACTION_BATCH_RECEIVE_END = 13,
+    IN_MEMORY_STORE_ENTITY = 14,
+    IN_MEMORY_DELETE_ENTITY = 15,
+    TRANSACTION_ARRIVED = 16,
+    TRANSACTION_FINISHED_PROCESSING = 17,
+    TRANSACTION_STALLED = 18,
+    CONFIGSTORE_CONSISTENT = 19,
+    TRANSACTION_MUTATED_ENTITY_KEY = 20,
+    TRANSACTION_DELETED_ENTITY_KEY = 21,
+    TRANSACTION_RECONSTRUCT_APPEND_MUTATED_ENTITY = 22,
+    CLIENT_CURRENTLY_DISCONNECTED_ATTEMPTING_RECONNECT = 23,
+    CLIENT_GOT_EOF_ATTEMPTING_RECONNECTING = 24,
+    CLIENT_GOT_NIL_BUG_IGNORING = 25,
+    CLIENT_FAILED_RECONNECT = 26,
+    CLIENT_CONNECTION_REESTABLISHED = 27,
+    CLIENT_GOT_UNEXPECTED_CODE_ATTEMPTING_RECONNECT = 28,
+    SERVER_STARTUP_GRPC_PORT = 29,
+    SERVER_STARTUP_HTTP_PORT = 30,
+    SERVER_GRACEFUL_SHUTDOWN = 31,
+  }
+}
+
 export enum ValueType { 
   UNKNOWN = 0,
   DOUBLE = 1,

@@ -1,3 +1,167 @@
+const traceDefaultServiceName = "configstore client"
+
+// ==== tracing code begin ====
+// ==== tracing.go and generator_gosdk_template.gotxt should be identical here ====
+
+var hasInited bool
+var traceServiceName string
+var traceEnabled bool
+
+func doInit() {
+	traceServiceName = os.Getenv("CONFIGSTORE_SERVICE_NAME")
+	if traceServiceName == "" {
+		traceServiceName = traceDefaultServiceName
+	}
+	traceEnabled = os.Getenv("CONFIGSTORE_ENABLE_TRACE") == "1"
+	hasInited = true
+}
+
+func getTraceServiceName() string {
+	if !hasInited {
+		doInit()
+	}
+	return traceServiceName
+}
+
+func isTracingEnabled() bool {
+	if !hasInited {
+		doInit()
+	}
+	return traceEnabled
+}
+
+func serializeMetaEntityForTrace(entity *MetaEntity) string {
+	var lines []string
+	lines = append(lines, "")
+	lines = append(lines, fmt.Sprintf("  key = %s", SerializeKey(entity.Key)))
+	for _, value := range entity.Values {
+		serValue := "(unknown)"
+		switch value.Type {
+		case ValueType_double:
+			serValue = fmt.Sprintf("%f", value.DoubleValue)
+		case ValueType_int64:
+			serValue = fmt.Sprintf("%d", value.Int64Value)
+		case ValueType_string:
+			serValue = value.StringValue
+		case ValueType_timestamp:
+			serValue = fmt.Sprintf("%+v", value.TimestampValue)
+		case ValueType_boolean:
+			if value.BooleanValue {
+				serValue = "true"
+			} else {
+				serValue = "false"
+			}
+		case ValueType_bytes:
+			serValue = "(bytes)"
+		case ValueType_key:
+			if value.KeyValue == nil {
+				serValue = "(nil)"
+			} else {
+				serValue = SerializeKey(value.KeyValue)
+			}
+		case ValueType_uint64:
+			serValue = fmt.Sprintf("%d", value.Uint64Value)
+		}
+		lines = append(lines, fmt.Sprintf("  %d = %s", value.Id, serValue))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func RecordTrace(trace *ConfigstoreTraceEntry) {
+	if !isTracingEnabled() {
+		return
+	}
+
+	RecordTraceWithCustomEntity(trace, nil)
+}
+
+func RecordTraceWithCustomEntity(trace *ConfigstoreTraceEntry, entity interface{}) {
+	if !isTracingEnabled() {
+		return
+	}
+
+	var entityString string
+	if entity != nil {
+		metaEntity, ok := entity.(*MetaEntity)
+		if ok {
+			entityString = serializeMetaEntityForTrace(metaEntity)
+		} else {
+			entityString = fmt.Sprintf("%+v", entity)
+		}
+	} else {
+		if trace.Entity != nil {
+			entityString = serializeMetaEntityForTrace(trace.Entity)
+		}
+	}
+
+	switch trace.Type {
+	case ConfigstoreTraceEntry_INITIAL_STATE_SEND_BEGIN:
+		log.Printf("%s: initial state: send begin", trace.OperatorId)
+	case ConfigstoreTraceEntry_INITIAL_STATE_SEND_ENTITY:
+		log.Printf("%s: initial state: send entity: %s", trace.OperatorId, entityString)
+	case ConfigstoreTraceEntry_INITIAL_STATE_SEND_END:
+		log.Printf("%s: initial state: send end", trace.OperatorId)
+	case ConfigstoreTraceEntry_INITIAL_STATE_RECEIVE_BEGIN:
+		log.Printf("%s: initial state: receive begin", trace.OperatorId)
+	case ConfigstoreTraceEntry_INITIAL_STATE_RECEIVE_ENTITY:
+		log.Printf("%s: initial state: receive entity: %s", trace.OperatorId, entityString)
+	case ConfigstoreTraceEntry_INITIAL_STATE_RECEIVE_END:
+		log.Printf("%s: initial state: receive end", trace.OperatorId)
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_BEGIN:
+		log.Printf("%s: transaction batch: %s: send begin", trace.OperatorId, trace.TransactionId)
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_MUTATED_ENTITY:
+		log.Printf("%s: transaction batch: %s: send mutated entity: %s", trace.OperatorId, trace.TransactionId, entityString)
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_DELETED_ENTITY_KEY:
+		log.Printf("%s: transaction batch: %s: send deleted entity key: %s", trace.OperatorId, trace.TransactionId, SerializeKey(trace.Key))
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_SEND_END:
+		log.Printf("%s: transaction batch: %s: send end", trace.OperatorId, trace.TransactionId)
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_RECEIVE_BEGIN:
+		log.Printf("%s: transaction batch: %s: receive begin", trace.OperatorId, trace.TransactionId)
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_RECEIVE_MUTATED_ENTITY:
+		log.Printf("%s: transaction batch: %s: receive mutated entity: %s", trace.OperatorId, trace.TransactionId, entityString)
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_RECEIVE_DELETED_ENTITY_KEY:
+		log.Printf("%s: transaction batch: %s: receive deleted entity key: %s", trace.OperatorId, trace.TransactionId, SerializeKey(trace.Key))
+	case ConfigstoreTraceEntry_TRANSACTION_BATCH_RECEIVE_END:
+		log.Printf("%s: transaction batch: %s: receive end", trace.OperatorId, trace.TransactionId)
+	case ConfigstoreTraceEntry_IN_MEMORY_STORE_ENTITY:
+		log.Printf("%s: in memory: store %s", trace.OperatorId, entityString)
+	case ConfigstoreTraceEntry_IN_MEMORY_DELETE_ENTITY:
+		log.Printf("%s: in memory: delete %s", trace.OperatorId, SerializeKey(trace.Key))
+	case ConfigstoreTraceEntry_TRANSACTION_ARRIVED:
+		log.Printf("%s: transaction queue: %s: transaction arrived", trace.OperatorId, trace.TransactionId)
+	case ConfigstoreTraceEntry_TRANSACTION_FINISHED_PROCESSING:
+		log.Printf("%s: transaction queue: %s: finished processing transaction (%d transactions left to process)", trace.OperatorId, trace.TransactionId, trace.RemainingTransactionQueueCount)
+	case ConfigstoreTraceEntry_TRANSACTION_STALLED:
+		log.Printf("%s: transaction queue: %s: can't process transaction, waiting on entity snapshot with key: %s", trace.OperatorId, trace.TransactionId, SerializeKey(trace.Key))
+	case ConfigstoreTraceEntry_CONFIGSTORE_CONSISTENT:
+		log.Printf("%s: consistent and ready to serve transactions", trace.OperatorId)
+	case ConfigstoreTraceEntry_TRANSACTION_MUTATED_ENTITY_KEY:
+		log.Printf("%s: transaction queue: %s: transaction contained mutated entity key: %s", trace.OperatorId, trace.TransactionId, SerializeKey(trace.Key))
+	case ConfigstoreTraceEntry_TRANSACTION_DELETED_ENTITY_KEY:
+		log.Printf("%s: transaction queue: %s: transaction contained deleted entity key: %s", trace.OperatorId, trace.TransactionId, SerializeKey(trace.Key))
+	case ConfigstoreTraceEntry_TRANSACTION_RECONSTRUCT_APPEND_MUTATED_ENTITY:
+		log.Printf("%s: transaction reconstructor: %s: append mutated entity with key %s: %s", trace.OperatorId, trace.TransactionId, SerializeKey(trace.Key), entityString)
+	case ConfigstoreTraceEntry_CLIENT_CURRENTLY_DISCONNECTED_ATTEMPTING_RECONNECT:
+		log.Printf("%s: currently disconnected, attempting to reconnect...", trace.OperatorId)
+	case ConfigstoreTraceEntry_CLIENT_FAILED_RECONNECT:
+		log.Printf("%s: failed to reconnect: %s", trace.OperatorId, trace.ErrorString)
+	case ConfigstoreTraceEntry_CLIENT_CONNECTION_REESTABLISHED:
+		log.Printf("%s: connection re-established", trace.OperatorId)
+	case ConfigstoreTraceEntry_CLIENT_GOT_EOF_ATTEMPTING_RECONNECTING:
+		log.Printf("%s: got EOF from configstore endpoint, attempting to reconnect...", trace.OperatorId)
+	case ConfigstoreTraceEntry_CLIENT_GOT_NIL_BUG_IGNORING:
+		log.Printf("%s: got nil response from endpoint (this is a bug), ignoring...", trace.OperatorId)
+	case ConfigstoreTraceEntry_CLIENT_GOT_UNEXPECTED_CODE_ATTEMPTING_RECONNECT:
+		log.Printf("%s: got %s code from configstore endpoint, attempting to reconnect...", trace.OperatorId, trace.ReconnectionCodeString)
+	case ConfigstoreTraceEntry_SERVER_STARTUP_GRPC_PORT:
+		log.Printf("%s: running gRPC server on port %d...", trace.OperatorId, trace.Port)
+	case ConfigstoreTraceEntry_SERVER_STARTUP_HTTP_PORT:
+		log.Printf("%s: running HTTP server on port %d...", trace.OperatorId, trace.Port)
+	}
+}
+
+// ==== tracing code end ====
+
 func Fnv64a(val string) uint64 {
 	hash := fnv.New64a()
 	hash.Write(([]byte)(val))
@@ -426,45 +590,71 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 				// but the connection failed on the reconnection attempt and we don't actually have a valid connection
 				// yet. in this case, the connection is already closed, and we just need to attempt to reconnect until
 				// we're back.
-				fmt.Printf("configstore client: currently disconnected, attempting to reconnect...\n")
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:                     getTraceServiceName(),
+					Type:                           ConfigstoreTraceEntry_CLIENT_CURRENTLY_DISCONNECTED_ATTEMPTING_RECONNECT,
+				})
 				newWatcher, watcherReconnectErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
 				watcher = newWatcher
 				if watcherReconnectErr != nil {
-					fmt.Printf("configstore client: failed to reconnect: %v\n", watcherReconnectErr)
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_CLIENT_FAILED_RECONNECT,
+						ErrorString: 										fmt.Sprintf("%v", watcherReconnectErr),
+					})
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
 					// Connection re-established, keep going to receive updates.
-					fmt.Printf("configstore client: connection re-established\n")
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_CLIENT_CONNECTION_REESTABLISHED,
+					})
 				}
 			}
 
 			resp, respErr := watcher.Recv()
 			if respErr == io.EOF {
 				// Retry the Watch request itself
-				fmt.Printf("configstore client: got EOF from configstore endpoint, attempting to reconnect...\n")
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:                     getTraceServiceName(),
+					Type:                           ConfigstoreTraceEntry_CLIENT_GOT_EOF_ATTEMPTING_RECONNECTING,
+				})
 				watcher.CloseSend()
 				newWatcher, watcherReconnectErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
 				watcher = newWatcher
 				if watcherReconnectErr != nil {
-					fmt.Printf("configstore client: failed to reconnect: %v\n", watcherReconnectErr)
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_CLIENT_FAILED_RECONNECT,
+						ErrorString: 										fmt.Sprintf("%v", watcherReconnectErr),
+					})
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
 					// Connection re-established, loop back around again to receive updates.
-					fmt.Printf("configstore client: connection re-established\n")
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_CLIENT_CONNECTION_REESTABLISHED,
+					})
 				}
 			}
 			if respErr == nil || status.Code(respErr) == codes.OK {
 				if resp == nil {
-					fmt.Printf("configstore client: got nil response from endpoint (this is a bug), ignoring...\n")
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_CLIENT_GOT_NIL_BUG_IGNORING,
+					})
 					time.Sleep(1 * time.Second)
 					continue
 				}
 
 				switch b := resp.Response.(type) {
 				case *TypedWatchTransactionsResponse_InitialState:
-					fmt.Printf("configstore client: initial state: received\n")
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_INITIAL_STATE_RECEIVE_BEGIN,
+					})
 					// handle receiving initial state
 					configstore.mutex.Lock()
 					{{ range $kindName, $kind := .Kinds }}
@@ -479,13 +669,22 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 							if ok {
 								_ = oldEntity
 								{{ template "indexstoresremoveinternal" $kindName }}
+								RecordTrace(&ConfigstoreTraceEntry{
+									OperatorId:                     getTraceServiceName(),
+									Type:                           ConfigstoreTraceEntry_IN_MEMORY_DELETE_ENTITY,
+									Key: 														oldEntity.Key,
+								})
 							}
-							fmt.Printf("configstore client: initial state: removing entity with key %s\n", s)
 							delete(ref.store, s)
 						}
 					}
 					{{ end }}
 					for _, entity := range b.InitialState.Entities {
+						RecordTraceWithCustomEntity(&ConfigstoreTraceEntry{
+							OperatorId:                     getTraceServiceName(),
+							Type:                           ConfigstoreTraceEntry_INITIAL_STATE_RECEIVE_ENTITY,
+						}, entity.Entity)
+
 						switch e := entity.Entity.(type) {
 						{{ range $kindName, $kind := .Kinds }}
 						case *TypedTransactionEntity_{{ $kindName }}:
@@ -495,7 +694,11 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 								s := SerializeKey(newEntity.Key)
 								{{ template "indexstoresupdateinternal" $kindName }}
 								ref.store[s] = newEntity
-								fmt.Printf("configstore client: initial state: storing entity with key %s\n", s)
+								RecordTraceWithCustomEntity(&ConfigstoreTraceEntry{
+									OperatorId:     getTraceServiceName(),
+									Type:           ConfigstoreTraceEntry_IN_MEMORY_STORE_ENTITY,
+									Key: 						newEntity.Key,
+								}, newEntity)
 							}
 						{{ end }}
 						}
@@ -505,10 +708,17 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 						mut.Unlock()
 					}
 					configstore.mutex.Unlock()
-					fmt.Printf("configstore client: initial state: complete\n")
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_INITIAL_STATE_RECEIVE_END,
+					})
 				case *TypedWatchTransactionsResponse_Batch:
 					// handle receiving batch
-					fmt.Printf("configstore client: transaction batch: %s: received\n", b.Batch.Id)
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_TRANSACTION_BATCH_RECEIVE_BEGIN,
+						TransactionId: 									b.Batch.Id,
+					})
 					configstore.mutex.Lock()
 					for _, entity := range b.Batch.MutatedEntities {
 						switch e := entity.Entity.(type) {
@@ -522,41 +732,71 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 								if ok {
 									_ = oldEntity
 									{{ template "indexstoresremoveinternal" $kindName }}
-									fmt.Printf("configstore client: transaction batch: %s: removing old entity with key %s\n", b.Batch.Id, s)
+									RecordTrace(&ConfigstoreTraceEntry{
+										OperatorId:                     getTraceServiceName(),
+										Type:                           ConfigstoreTraceEntry_IN_MEMORY_DELETE_ENTITY,
+										TransactionId: 									b.Batch.Id,
+										Key: 														oldEntity.Key,
+									})
 								}
 								{{ template "indexstoresupdateinternal" $kindName }}
 								ref.store[s] = newEntity
-								fmt.Printf("configstore client: transaction batch: %s: storing new entity with key %s\n", b.Batch.Id, s)
+								RecordTraceWithCustomEntity(&ConfigstoreTraceEntry{
+									OperatorId:     getTraceServiceName(),
+									Type:           ConfigstoreTraceEntry_IN_MEMORY_STORE_ENTITY,
+									TransactionId: 	b.Batch.Id,
+									Key: 						newEntity.Key,
+								}, newEntity)
 							}
 						{{ end }}
 						}
 					}
 					for _, key := range b.Batch.DeletedKeys {
 						s := SerializeKey(key)
-						fmt.Printf("configstore client: transaction batch: %s: removing deleted entity with key %s\n", b.Batch.Id, s)
+						RecordTrace(&ConfigstoreTraceEntry{
+							OperatorId:                     getTraceServiceName(),
+							Type:                           ConfigstoreTraceEntry_IN_MEMORY_DELETE_ENTITY,
+							TransactionId: 									b.Batch.Id,
+							Key: 														key,
+						})
 						{{ range $kindName, $kind := .Kinds }}
 						delete(configstore.{{ $kindName }}s.(*{{ $kindName }}ImplStore).store, s)
 						{{ end }}
 					}
 					configstore.mutex.Unlock()
-					fmt.Printf("configstore client: transaction batch: %s: complete\n", b.Batch.Id)
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_TRANSACTION_BATCH_RECEIVE_END,
+						TransactionId: 									b.Batch.Id,
+					})
 				}
 			} else {
 				// We got some other kind of error e.g. configstore is unavailable, or the Watch endpoint
 				// returned an error and will no longer deliver new updates. In this case, we must always
 				// reconnect as we can't trust the state of the server side requests to be one in which 
 				// retrying Recv() will ever work.
-				fmt.Printf("configstore client: got %s code from configstore endpoint, attempting to reconnect...\n", status.Code(respErr).String())
+				RecordTrace(&ConfigstoreTraceEntry{
+					OperatorId:                     getTraceServiceName(),
+					Type:                           ConfigstoreTraceEntry_CLIENT_GOT_UNEXPECTED_CODE_ATTEMPTING_RECONNECT,
+					ReconnectionCodeString:         status.Code(respErr).String(),
+				})
 				watcher.CloseSend()
 				newWatcher, watcherReconnectErr := client.Watch(ctx, &TypedWatchTransactionsRequest{})
 				watcher = newWatcher
 				if watcherReconnectErr != nil {
-					fmt.Printf("configstore client: failed to reconnect: %v\n", watcherReconnectErr)
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_CLIENT_FAILED_RECONNECT,
+						ErrorString: 										fmt.Sprintf("%v", watcherReconnectErr),
+					})
 					time.Sleep(30 * time.Second)
 					continue
 				} else {
 					// Connection re-established, loop back around again to receive updates.
-					fmt.Printf("configstore client: connection re-established\n")
+					RecordTrace(&ConfigstoreTraceEntry{
+						OperatorId:                     getTraceServiceName(),
+						Type:                           ConfigstoreTraceEntry_CLIENT_CONNECTION_REESTABLISHED,
+					})
 				}
 			}
 		}
