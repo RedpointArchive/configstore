@@ -464,6 +464,7 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 
 				switch b := resp.Response.(type) {
 				case *TypedWatchTransactionsResponse_InitialState:
+					fmt.Printf("configstore client: initial state: received\n")
 					// handle receiving initial state
 					configstore.mutex.Lock()
 					{{ range $kindName, $kind := .Kinds }}
@@ -479,6 +480,7 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 								_ = oldEntity
 								{{ template "indexstoresremoveinternal" $kindName }}
 							}
+							fmt.Printf("configstore client: initial state: removing entity with key %s\n", s)
 							delete(ref.store, s)
 						}
 					}
@@ -493,6 +495,7 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 								s := SerializeKey(newEntity.Key)
 								{{ template "indexstoresupdateinternal" $kindName }}
 								ref.store[s] = newEntity
+								fmt.Printf("configstore client: initial state: storing entity with key %s\n", s)
 							}
 						{{ end }}
 						}
@@ -502,8 +505,10 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 						mut.Unlock()
 					}
 					configstore.mutex.Unlock()
+					fmt.Printf("configstore client: initial state: complete\n")
 				case *TypedWatchTransactionsResponse_Batch:
 					// handle receiving batch
+					fmt.Printf("configstore client: transaction batch: %s: received\n", b.Batch.Id)
 					configstore.mutex.Lock()
 					for _, entity := range b.Batch.MutatedEntities {
 						switch e := entity.Entity.(type) {
@@ -517,20 +522,24 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 								if ok {
 									_ = oldEntity
 									{{ template "indexstoresremoveinternal" $kindName }}
+									fmt.Printf("configstore client: transaction batch: %s: removing old entity with key %s\n", b.Batch.Id, s)
 								}
 								{{ template "indexstoresupdateinternal" $kindName }}
 								ref.store[s] = newEntity
+								fmt.Printf("configstore client: transaction batch: %s: storing new entity with key %s\n", b.Batch.Id, s)
 							}
 						{{ end }}
 						}
 					}
 					for _, key := range b.Batch.DeletedKeys {
 						s := SerializeKey(key)
+						fmt.Printf("configstore client: transaction batch: %s: removing deleted entity with key %s\n", b.Batch.Id, s)
 						{{ range $kindName, $kind := .Kinds }}
 						delete(configstore.{{ $kindName }}s.(*{{ $kindName }}ImplStore).store, s)
 						{{ end }}
 					}
 					configstore.mutex.Unlock()
+					fmt.Printf("configstore client: transaction batch: %s: complete\n", b.Batch.Id)
 				}
 			} else {
 				// We got some other kind of error e.g. configstore is unavailable, or the Watch endpoint
