@@ -46,7 +46,7 @@ export function serializeKey(key: Key): string {
         if (pe.getIdtypeCase() === PathElement.IdtypeCase.ID) {
           return `${pe.getKind()}:id=${pe.getId()}`;
         } else if (pe.getIdtypeCase() === PathElement.IdtypeCase.NAME) {
-          return `${pe.getKind()}:name=${pe.getName()}`;
+          return `${pe.getKind()}:name=${btoa(pe.getName())}`;
         } else {
           return `${pe.getKind()}:unset`;
         }
@@ -64,20 +64,22 @@ export function deserializeKey(keyString: string): Key {
   key.setPartitionid(partitionId);
   for (let i = 1; i < components.length; i++) {
     const subcomponent = components[i].split(":", 2);
-    if (subcomponent[1].startsWith("id=")) {
-      const pathElement = new PathElement();
-      pathElement.setKind(subcomponent[0]);
-      pathElement.setId(parseInt(subcomponent[1].substr(3)));
-      key.addPath(pathElement);
-    } else if (subcomponent[1].startsWith("name=")) {
-      const pathElement = new PathElement();
-      pathElement.setKind(subcomponent[0]);
-      pathElement.setName(subcomponent[1].substr(5));
-      key.addPath(pathElement);
-    } else if (subcomponent[1] == "unset") {
-      const pathElement = new PathElement();
-      pathElement.setKind(subcomponent[0]);
-      key.addPath(pathElement);
+    if (subcomponent.length >= 2) {
+      if (subcomponent[1].startsWith("id=")) {
+        const pathElement = new PathElement();
+        pathElement.setKind(subcomponent[0]);
+        pathElement.setId(parseInt(subcomponent[1].substr(3)));
+        key.addPath(pathElement);
+      } else if (subcomponent[1].startsWith("name=")) {
+        const pathElement = new PathElement();
+        pathElement.setKind(subcomponent[0]);
+        pathElement.setName(atob(subcomponent[1].substr(5)));
+        key.addPath(pathElement);
+      } else if (subcomponent[1] == "unset") {
+        const pathElement = new PathElement();
+        pathElement.setKind(subcomponent[0]);
+        key.addPath(pathElement);
+      }
     }
   }
   return key;

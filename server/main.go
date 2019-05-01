@@ -30,7 +30,6 @@ type emptyServerInterface interface {
 
 type runtimeConfig struct {
 	GoogleCloudProjectID          string `envconfig:"GOOGLE_CLOUD_PROJECT_ID" required:"true"`
-	GoogleCloudServiceAccountPath string `envconfig:"GOOGLE_CLOUD_SERVICE_ACCOUNT_PATH"`
 	GrpcPort                      uint16 `envconfig:"GRPC_PORT" required:"true"`
 	HTTPPort                      uint16 `envconfig:"HTTP_PORT" required:"true"`
 	SchemaPath                    string `envconfig:"SCHEMA_PATH" required:"true"`
