@@ -12,7 +12,11 @@ import {
   MetaCreateEntityRequest,
   SchemaFieldEditorInfo,
   MetaOperation,
-  Key
+  Key,
+  PathElement,
+  GetDefaultPartitionIdResponse,
+  GetDefaultPartitionIdRequest,
+  PartitionId
 } from "../api/meta_pb";
 import { g, deserializeKey, prettifyKey, c, serializeKey } from "../core";
 import { Link } from "react-router-dom";
@@ -45,6 +49,14 @@ const getKind = async (props: any): Promise<MetaGetEntityResponse> => {
   req.setKindname(props.kind);
   req.setKey(deserializeKey(props.key));
   return await client.svc.metaGet(req, client.meta);
+};
+
+const getDefaultPartitionId = async (
+  props: any
+): Promise<GetDefaultPartitionIdResponse> => {
+  const client = createGrpcPromiseClient(ConfigstoreMetaServicePromiseClient);
+  const req = new GetDefaultPartitionIdRequest();
+  return await client.svc.getDefaultPartitionId(req, client.meta);
 };
 
 function isPendingDelete(
@@ -200,6 +212,7 @@ const KindEditRealRoute = (
   let isValid = true;
 
   let header = `Create Entity: ${props.match.params.kind}`;
+  let defaultPartitionIdNamespace = "";
   if (isCreate) {
     const pendingCreate = getPendingCreate(
       props.pendingTransaction,
@@ -208,6 +221,35 @@ const KindEditRealRoute = (
     if (pendingCreate !== null) {
       if (editableValue === undefined) {
         setEditableValue({ value: pendingCreate.entity });
+      }
+    } else {
+      const response = useAsync<GetDefaultPartitionIdResponse>({
+        promiseFn: getDefaultPartitionId
+      } as any);
+      if (response.isLoading) {
+        return (
+          <>
+            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+              <h1 className="h2">{header}</h1>
+              <div className="btn-toolbar mb-2 mb-md-0" />
+            </div>
+            {errorDisplay}
+            <FontAwesomeIcon icon={faSpinner} spin /> Loading data...
+          </>
+        );
+      } else if (response.error !== undefined) {
+        return (
+          <>
+            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+              <h1 className="h2">{header}</h1>
+              <div className="btn-toolbar mb-2 mb-md-0" />
+            </div>
+            {errorDisplay}
+            {JSON.stringify(response.error)}
+          </>
+        );
+      } else if (response.data !== undefined) {
+        defaultPartitionIdNamespace = response.data.getNamespace();
       }
     }
   } else {
@@ -443,6 +485,45 @@ const KindEditRealRoute = (
     );
   }
 
+  let keyInput = null;
+  if (!isCreate) {
+    keyInput = (
+      <input
+        className="form-control"
+        value={prettifyKey(g(editableValue.value.getKey()))}
+        readOnly={true}
+      />
+    );
+  } else {
+    const key = editableValue.value.getKey();
+    let inputValue = "";
+    if (key !== undefined) {
+      const lastComponent = key.getPathList()[key.getPathList().length - 1];
+      inputValue = lastComponent.getName();
+    }
+
+    keyInput = (
+      <input
+        className="form-control"
+        value={inputValue}
+        placeholder="Auto-generated if left empty."
+        onChange={e => {
+          const newInputValue = e.target.value;
+          const key = new Key();
+          const partitionId = new PartitionId();
+          partitionId.setNamespace(defaultPartitionIdNamespace);
+          key.setPartitionid(partitionId);
+          const pathElement = new PathElement();
+          pathElement.setKind(props.match.params.kind);
+          pathElement.setName(newInputValue);
+          key.setPathList([pathElement]);
+          editableValue.value.setKey(key);
+          setEditableValue({ value: editableValue.value });
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
@@ -454,17 +535,12 @@ const KindEditRealRoute = (
       <form onSubmit={onSubmit}>
         <div className="form-group">
           <label>ID</label>
-          <input
-            className="form-control"
-            value={
-              !isCreate
-                ? prettifyKey(g(editableValue.value.getKey()))
-                : "(Automatically generated on save)"
-            }
-            readOnly={true}
-          />
+          {keyInput}
           <small className="form-text text-muted">
-            The ID of the {props.match.params.kind}
+            The ID of the {props.match.params.kind}.{" "}
+            {isCreate
+              ? "This value can not be changed after the entity is created."
+              : ""}
           </small>
         </div>
         {kindSchema.getFieldsList().map(field => {
