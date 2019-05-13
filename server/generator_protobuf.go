@@ -9,6 +9,7 @@ import (
 	_ "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/builder"
+	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 func convertToType(
@@ -121,6 +122,11 @@ func generate(path string) (*generatorResult, error) {
 
 	timestampMessage := getMessageDescriptorFromFile(timestampFileDescriptor, "Timestamp")
 
+	strTemp := dpb.FieldOptions_JS_STRING
+	jsNumberAsStringOptions := &dpb.FieldOptions{
+		Jstype: &strTemp,
+	}
+
 	var messages []*builder.MessageBuilder
 	var services []*builder.ServiceBuilder
 	var enums []*builder.EnumBuilder
@@ -195,14 +201,19 @@ func generate(path string) (*generatorResult, error) {
 			if field.Id == 1 {
 				log.Fatalln("unexpected ID 1 in kind field; IDs must start at 2")
 			}
-			message.AddField(
-				builder.NewField(
-					field.Name,
-					convertToType(field.Type, keyMessage, timestampMessage),
-				).
-					SetNumber(field.Id).
-					SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" %s", field.Comment)}),
-			)
+			mfb := builder.NewField(
+				field.Name,
+				convertToType(field.Type, keyMessage, timestampMessage),
+			).
+				SetNumber(field.Id).
+				SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" %s", field.Comment)})
+			switch field.Type {
+			case ValueType_int64:
+				mfb = mfb.SetOptions(jsNumberAsStringOptions)
+			case ValueType_uint64:
+				mfb = mfb.SetOptions(jsNumberAsStringOptions)
+			}
+			message.AddField(mfb)
 		}
 		messages = append(messages, message)
 		kindMessageMap[name] = message
@@ -227,8 +238,8 @@ func generate(path string) (*generatorResult, error) {
 		watchEventMessage := builder.NewMessage(fmt.Sprintf("Watch%sEvent", name)).
 			AddField(builder.NewField("type", builder.FieldTypeEnum(watchEventTypeEnum)).SetComments(builder.Comments{LeadingComment: " The type of modification"})).
 			AddField(builder.NewField("entity", builder.FieldTypeMessage(message)).SetComments(builder.Comments{LeadingComment: fmt.Sprintf(" The %s that was created, modified or deleted", name)})).
-			AddField(builder.NewField("oldIndex", builder.FieldTypeInt64()).SetComments(builder.Comments{LeadingComment: " The old index of the entity in the collection, or -1 if it wasn't present"})).
-			AddField(builder.NewField("newIndex", builder.FieldTypeInt64()).SetComments(builder.Comments{LeadingComment: " The new index of the entity in the collection, or -1 if it is no longer present"}))
+			AddField(builder.NewField("oldIndex", builder.FieldTypeInt64()).SetOptions(jsNumberAsStringOptions).SetComments(builder.Comments{LeadingComment: " The old index of the entity in the collection, or -1 if it wasn't present"})).
+			AddField(builder.NewField("newIndex", builder.FieldTypeInt64()).SetOptions(jsNumberAsStringOptions).SetComments(builder.Comments{LeadingComment: " The new index of the entity in the collection, or -1 if it is no longer present"}))
 
 		// Build the request-response message for the Update method
 		updateRequestMessage := builder.NewMessage(fmt.Sprintf("Update%sRequest", name)).

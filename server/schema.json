@@ -102,6 +102,18 @@
         "singular": "ProjectAccess",
         "plural": "ProjectAccesses"
       },
+      "indexes": [
+        {
+          "name": "KeyPairTest",
+          "type": "memory",
+          "computed": {
+            "fnv64a_pair": {
+              "field1": "user",
+              "field2": "project"
+            }
+          }
+        }
+      ],
       "fields": [
         {
           "id": 2,
