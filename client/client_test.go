@@ -135,6 +135,39 @@ func TestIndexFetch(t *testing.T) {
 	assert.Assert(t, resp == o2)
 }
 
+func TestIndexFetchFnv64a(t *testing.T) {
+	user, err := configstore.Users.Create(context.Background(), &User{
+		Key:            CreateTopLevel_User_IncompleteKey(&PartitionId{}),
+		EmailAddress:   "a",
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, user.Key.Path[0].GetName() != "")
+
+	project, err := configstore.Projects.Create(context.Background(), &Project{
+		Key:            CreateTopLevel_Project_IncompleteKey(&PartitionId{}),
+		Name:   				"b",
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, project.Key.Path[0].GetName() != "")
+
+	projectAccess, err := configstore.ProjectAccesss.Create(context.Background(), &ProjectAccess{
+		Key:            CreateTopLevel_Project_IncompleteKey(&PartitionId{}),
+		User: 					user.Key,
+		Project: 				project.Key,
+	})
+	assert.NilError(t, err)
+	assert.Assert(t, projectAccess.Key.Path[0].GetName() != "")
+
+	projectAccessFetched, ok := configstore.ProjectAccesss.GetAndCheckByKeyPairTest(
+		Fnv64aPair(
+			Fnv64a(user.Key.Path[len(user.Key.Path)-1].GetName()),
+			Fnv64a(project.Key.Path[len(project.Key.Path)-1].GetName()),
+		),
+	)
+	assert.Assert(t, ok)
+	assert.Assert(t, projectAccess.Key.Path[0].GetName() == projectAccessFetched.Key.Path[0].GetName())
+}
+
 func TestCreate(t *testing.T) {
 	resp, err := configstore.Users.Client().Create(ctx, &CreateUserRequest{
 		Entity: &User{
