@@ -33,6 +33,7 @@ import moment from "moment";
 import { KeySelect } from "../KeySelect";
 import { Address4, Address6 } from "ip-address";
 import BigInt from "big-integer";
+import { FinancialInput } from "../FinancialInput";
 
 export interface KindEditRouteMatch {
   kind: string;
@@ -652,7 +653,15 @@ const KindEditRealRoute = (
               );
               let fieldErrors = [];
               let placeholder = "";
-              if (value !== undefined) {
+              if (
+                value !== undefined &&
+                value.startsWith("ERROR:") &&
+                editor.getUsefinancialvaluetonibblinsconversion()
+              ) {
+                fieldErrors.push(
+                  "This is not a valid financial value (e.g. '-45.3597')"
+                );
+              } else if (value !== undefined) {
                 let isValidBigInt = false;
                 try {
                   const bi = BigInt(g(value));
@@ -703,6 +712,46 @@ const KindEditRealRoute = (
               }
               if (fieldErrors.length > 0) {
                 isValid = false;
+              }
+              if (editor.getUsefinancialvaluetonibblinsconversion()) {
+                return (
+                  <div className="form-group" key={field.getId()}>
+                    <label>{displayName}</label>
+                    <FinancialInput
+                      className={`form-control ${
+                        fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                      }`}
+                      value={value == undefined ? "" : value}
+                      placeholder={placeholder}
+                      readOnly={
+                        field.getReadonly() || isSaving || hasPendingDelete
+                      }
+                      onChange={(val, isValid) => {
+                        if (editableValue !== undefined) {
+                          const value = new Value();
+                          switch (field.getType()) {
+                            case ValueType.INT64:
+                              value.setInt64value(val);
+                              break;
+                            case ValueType.UINT64:
+                              value.setUint64value(val);
+                              break;
+                          }
+                          setConditionalField(editableValue, field, value);
+                          setEditableValue({ value: editableValue.value });
+                        }
+                      }}
+                    />
+                    {fieldErrors.map((err, idx) => (
+                      <div className="invalid-feedback" key={idx}>
+                        {err}
+                      </div>
+                    ))}
+                    <small className="form-text text-muted">
+                      {field.getComment()}
+                    </small>
+                  </div>
+                );
               }
               return (
                 <div className="form-group" key={field.getId()}>

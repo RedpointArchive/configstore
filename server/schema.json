@@ -56,6 +56,26 @@
           "editor": {
             "displayName": "Uint64"
           }
+        },
+        {
+          "id": 3,
+          "name": "unsignedFinancialValue",
+          "type": "uint64",
+          "comment": "Fin value",
+          "editor": {
+            "displayName": "U fin value",
+            "useFinancialValueToNibblinsConversion": true
+          }
+        },
+        {
+          "id": 4,
+          "name": "signedFinancialValue",
+          "type": "int64",
+          "comment": "Fin value",
+          "editor": {
+            "displayName": "Fin value",
+            "useFinancialValueToNibblinsConversion": true
+          }
         }
       ]
     },
