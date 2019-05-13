@@ -101,6 +101,7 @@ message SchemaKindEditor {
     string singular = 1;
     string plural = 2;
     string renderEditorDropdownWithField = 3;
+    string keyComment = 4;
 }
 
 message SchemaKind {

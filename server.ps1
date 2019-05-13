@@ -37,9 +37,10 @@ try {
       if (Test-Path $PSScriptRoot/runtime_ts/) {
         Remove-Item $PSScriptRoot/runtime_ts/ -Force -Recurse
       }
-      docker.exe cp ${DockerContainerId}:/workdir_ts/ $PSScriptRoot/workdir_ts/
-      docker.exe cp ${DockerContainerId}:/workdir_go/ $PSScriptRoot/workdir_go/
-      docker.exe cp ${DockerContainerId}:/grpc_runtime_out/ $PSScriptRoot/runtime_ts/
+      docker.exe cp ${DockerContainerId}:/workdir_ts/ $PSScriptRoot/
+      docker.exe cp ${DockerContainerId}:/workdir_go/ $PSScriptRoot/
+      docker.exe cp ${DockerContainerId}:/grpc_runtime_out/ $PSScriptRoot/
+      Move-Item $PSScriptRoot/grpc_runtime_out $PSScriptRoot/runtime_ts
       Start-Sleep -Seconds 1
       Copy-Item $PSScriptRoot/workdir_go/meta.pb.go $PSScriptRoot/server/meta.pb.go -Force
       if (Test-Path $PSScriptRoot/server-ui/src/api) {
@@ -78,6 +79,7 @@ try {
       $env:CONFIGSTORE_GRPC_PORT = "13389"
       $env:CONFIGSTORE_HTTP_PORT = "13390"
       $env:CONFIGSTORE_SCHEMA_PATH = "schema.json"
+      $env:CONFIGSTORE_ALLOWED_ORIGINS = "http://localhost:3000"
       .\server.exe $Args
       if ($LastExitCode -ne 0) {
         exit $LastExitCode

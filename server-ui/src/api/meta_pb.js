@@ -2792,7 +2792,8 @@ proto.meta.SchemaKindEditor.toObject = function(includeInstance, msg) {
   var f, obj = {
     singular: jspb.Message.getFieldWithDefault(msg, 1, ""),
     plural: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    rendereditordropdownwithfield: jspb.Message.getFieldWithDefault(msg, 3, "")
+    rendereditordropdownwithfield: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    keycomment: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -2840,6 +2841,10 @@ proto.meta.SchemaKindEditor.deserializeBinaryFromReader = function(msg, reader) 
     case 3:
       var value = /** @type {string} */ (reader.readString());
       msg.setRendereditordropdownwithfield(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setKeycomment(value);
       break;
     default:
       reader.skipField();
@@ -2891,6 +2896,13 @@ proto.meta.SchemaKindEditor.serializeBinaryToWriter = function(message, writer) 
       f
     );
   }
+  f = message.getKeycomment();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
 };
 
 
@@ -2936,6 +2948,21 @@ proto.meta.SchemaKindEditor.prototype.getRendereditordropdownwithfield = functio
 /** @param {string} value */
 proto.meta.SchemaKindEditor.prototype.setRendereditordropdownwithfield = function(value) {
   jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional string keyComment = 4;
+ * @return {string}
+ */
+proto.meta.SchemaKindEditor.prototype.getKeycomment = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.SchemaKindEditor.prototype.setKeycomment = function(value) {
+  jspb.Message.setProto3StringField(this, 4, value);
 };
 
 

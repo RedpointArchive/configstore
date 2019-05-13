@@ -47,6 +47,7 @@ function getTypeForOperation(operation: MetaOperation) {
 function getEntityLinkForOperation(idx: number, operation: MetaOperation) {
   let key: Key | null = null;
   if (operation.hasCreaterequest()) {
+    const entity = g(g(operation.getCreaterequest()).getEntity());
     return (
       <Link
         key={`pendingop_${idx}`}
@@ -57,7 +58,10 @@ function getEntityLinkForOperation(idx: number, operation: MetaOperation) {
           operation.getCreaterequest()
         ).getKindname()}/create/pending/${idx}`}
       >
-        Pending {g(operation.getCreaterequest()).getKindname()}
+        Pending{" "}
+        {entity.getKey() === undefined
+          ? g(operation.getCreaterequest()).getKindname()
+          : prettifyKey(g(entity.getKey()))}
       </Link>
     );
   }

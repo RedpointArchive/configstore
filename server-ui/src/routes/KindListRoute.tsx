@@ -231,7 +231,10 @@ const KindListRealRoute = (
                     entity.id
                   }`}
                 >
-                  Pending {props.match.params.kind}
+                  Pending{" "}
+                  {effectiveEntity.getKey() === undefined
+                    ? props.match.params.kind
+                    : prettifyKey(g(effectiveEntity.getKey()))}
                 </Link>
               ) : (
                 <Link
