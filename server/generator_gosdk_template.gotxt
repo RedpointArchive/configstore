@@ -405,6 +405,8 @@ GetInputForFnv64aFromKey(e.{{- camelcase .Name -}})
 {{ define "getfnv64apairvalueforfield" -}}
 {{- if eq .Type 2 -}}
 e.{{- camelcase .Name -}}
+{{- else if eq .Type 8 -}}
+e.{{- camelcase .Name -}}
 {{- else if eq .Type 3 -}}
 Fnv64a({{- template "getfnv64avalueforfield" . -}})
 {{- else if eq .Type 7 -}}
