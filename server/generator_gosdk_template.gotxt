@@ -182,6 +182,13 @@ func Fnv64aPair(a uint64, b uint64) uint64 {
 	return hash.Sum64()
 }
 
+func GetInputForFnv64aFromKey(k *Key) string {
+	if k == nil || len(k.Path) == 0 {
+		return ""
+	}
+	return k.Path[len(k.Path)-1].GetName()
+}
+
 func CreateTopLevelKey(partitionId *PartitionId, pathElement *PathElement) *Key {
 	return &Key{
 		PartitionId: partitionId,
@@ -385,6 +392,28 @@ key
 	{{ template "indexstoresupdateinternal" . }}
 {{ end }}
 
+{{ define "getfnv64avalueforfield" -}}
+{{- if eq .Type 3 -}}
+e.{{- camelcase .Name -}}
+{{- else if eq .Type 7 -}}
+GetInputForFnv64aFromKey(e.{{- camelcase .Name -}})
+{{- else -}}
+(ERROR, incorrect type for fnv64a computed field)
+{{- end -}}
+{{- end }}
+
+{{ define "getfnv64apairvalueforfield" -}}
+{{- if eq .Type 2 -}}
+e.{{- camelcase .Name -}}
+{{- else if eq .Type 3 -}}
+Fnv64a({{- template "getfnv64avalueforfield" . -}})
+{{- else if eq .Type 7 -}}
+Fnv64a({{- template "getfnv64avalueforfield" . -}})
+{{- else -}}
+(ERROR, incorrect type for fnv64a pair computed field)
+{{- end -}}
+{{- end }}
+
 {{ define "indexstoresupdateinternal" }}
 	{{ $kind := getschemakind . -}}
 	{{- $kindName := . }}
@@ -404,7 +433,8 @@ key
 					{{- $field := getcomputedfnv64afieldforindex $kindName $index -}}
 					{{- if $field }}
 {
-	key := newEntity.{{- camelcase $field.Name }}
+	e := newEntity
+	key := {{ template "getfnv64avalueforfield" $field }}
 	idx := Fnv64a(key)
 	ref.indexstore_{{- $index.Name -}}[idx] = newEntity
 }
@@ -414,8 +444,9 @@ key
 					{{- $field2 := getcomputedfnv64apairfield2forindex $kindName $index -}}
 					{{- if and $field1 $field2 }}
 {
-	field1 := newEntity.{{- camelcase $field1.Name }}
-	field2 := newEntity.{{- camelcase $field2.Name }}
+	e := newEntity
+	field1 := {{ template "getfnv64apairvalueforfield" $field1 }}
+	field2 := {{ template "getfnv64apairvalueforfield" $field2 }}
 	idx := Fnv64aPair(field1, field2)
 	ref.indexstore_{{- $index.Name -}}[idx] = newEntity
 }
@@ -453,7 +484,8 @@ key
 					{{- $field := getcomputedfnv64afieldforindex $kindName $index -}}
 					{{- if $field }}
 {
-	key := oldEntity.{{- camelcase $field.Name }}
+	e := oldEntity
+	key := {{ template "getfnv64avalueforfield" $field }}
 	idx := Fnv64a(key)
 	delete(ref.indexstore_{{- $index.Name -}}, idx)
 }
@@ -463,8 +495,9 @@ key
 					{{- $field2 := getcomputedfnv64apairfield2forindex $kindName $index -}}
 					{{- if and $field1 $field2 }}
 {
-	field1 := oldEntity.{{- camelcase $field1.Name }}
-	field2 := oldEntity.{{- camelcase $field2.Name }}
+	e := oldEntity
+	field1 := {{ template "getfnv64apairvalueforfield" $field1 }}
+	field2 := {{ template "getfnv64apairvalueforfield" $field2 }}
 	idx := Fnv64aPair(field1, field2)
 	delete(ref.indexstore_{{- $index.Name -}}, idx)
 }

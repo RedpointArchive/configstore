@@ -92,8 +92,8 @@ export class Value extends jspb.Message {
   getDoublevalue(): number;
   setDoublevalue(value: number): void;
 
-  getInt64value(): number;
-  setInt64value(value: number): void;
+  getInt64value(): string;
+  setInt64value(value: string): void;
 
   getStringvalue(): string;
   setStringvalue(value: string): void;
@@ -116,8 +116,8 @@ export class Value extends jspb.Message {
   hasKeyvalue(): boolean;
   clearKeyvalue(): void;
 
-  getUint64value(): number;
-  setUint64value(value: number): void;
+  getUint64value(): string;
+  setUint64value(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Value.AsObject;
@@ -132,13 +132,13 @@ export namespace Value {
     id: number,
     type: ValueType,
     doublevalue: number,
-    int64value: number,
+    int64value: string,
     stringvalue: string,
     timestampvalue?: google_protobuf_timestamp_pb.Timestamp.AsObject,
     booleanvalue: boolean,
     bytesvalue: Uint8Array | string,
     keyvalue?: Key.AsObject,
-    uint64value: number,
+    uint64value: string,
   }
 }
 

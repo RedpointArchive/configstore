@@ -32,6 +32,7 @@ import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import moment from "moment";
 import { KeySelect } from "../KeySelect";
 import { Address4, Address6 } from "ip-address";
+import BigInt from "big-integer";
 
 export interface KindEditRouteMatch {
   kind: string;
@@ -554,9 +555,7 @@ const KindEditRealRoute = (
           const editor = c(field.getEditor(), new SchemaFieldEditorInfo());
           const displayName = c(editor.getDisplayname(), field.getName());
           switch (field.getType()) {
-            case ValueType.DOUBLE:
-            case ValueType.INT64:
-            case ValueType.UINT64: {
+            case ValueType.DOUBLE: {
               const value = getConditionalField(
                 editableValue,
                 field,
@@ -565,10 +564,6 @@ const KindEditRealRoute = (
                   switch (field.getType()) {
                     case ValueType.DOUBLE:
                       return value.getDoublevalue();
-                    case ValueType.INT64:
-                      return value.getInt64value();
-                    case ValueType.UINT64:
-                      return value.getUint64value();
                     default:
                       return undefined;
                   }
@@ -590,12 +585,6 @@ const KindEditRealRoute = (
                   switch (defValue.getType()) {
                     case ValueType.DOUBLE:
                       placeholder = g(defValue.getDoublevalue()).toString();
-                      break;
-                    case ValueType.INT64:
-                      placeholder = g(defValue.getInt64value()).toString();
-                      break;
-                    case ValueType.UINT64:
-                      placeholder = g(defValue.getUint64value()).toString();
                       break;
                   }
                 } else if (validator.hasFormatipaddress()) {
@@ -627,11 +616,116 @@ const KindEditRealRoute = (
                           case ValueType.DOUBLE:
                             value.setDoublevalue(parseFloat(e.target.value));
                             break;
+                        }
+                        setConditionalField(editableValue, field, value);
+                        setEditableValue({ value: editableValue.value });
+                      }
+                    }}
+                  />
+                  {fieldErrors.map((err, idx) => (
+                    <div className="invalid-feedback" key={idx}>
+                      {err}
+                    </div>
+                  ))}
+                  <small className="form-text text-muted">
+                    {field.getComment()}
+                  </small>
+                </div>
+              );
+            }
+            case ValueType.INT64:
+            case ValueType.UINT64: {
+              const value = getConditionalField(
+                editableValue,
+                field,
+                undefined,
+                value => {
+                  switch (field.getType()) {
+                    case ValueType.INT64:
+                      return value.getInt64value();
+                    case ValueType.UINT64:
+                      return value.getUint64value();
+                    default:
+                      return undefined;
+                  }
+                }
+              );
+              let fieldErrors = [];
+              let placeholder = "";
+              if (value !== undefined) {
+                let isValidBigInt = false;
+                try {
+                  const bi = BigInt(g(value));
+
+                  switch (field.getType()) {
+                    case ValueType.INT64:
+                      isValidBigInt =
+                        bi.greaterOrEquals(BigInt("-9223372036854775808")) &&
+                        bi.lesserOrEquals(BigInt("9223372036854775807"));
+                      break;
+                    case ValueType.UINT64:
+                      isValidBigInt =
+                        bi.greaterOrEquals(BigInt("0")) &&
+                        bi.lesserOrEquals(BigInt("18446744073709551615"));
+                      break;
+                  }
+                } catch (err) {}
+                if (!isValidBigInt) {
+                  fieldErrors.push(
+                    "This is not a valid integer, or is not within the valid range."
+                  );
+                }
+              }
+              for (const validator of editor.getValidatorsList()) {
+                if (validator.hasRequired()) {
+                  if (value === "" || value === undefined) {
+                    fieldErrors.push("A non-zero value is required.");
+                  }
+                } else if (validator.hasFixedlength()) {
+                  // Not applied.
+                } else if (validator.hasDefault()) {
+                  // Applied at save.
+                  const def = g(validator.getDefault());
+                  const defValue = g(def.getValue());
+                  switch (defValue.getType()) {
+                    case ValueType.INT64:
+                      placeholder = defValue.getInt64value();
+                      break;
+                    case ValueType.UINT64:
+                      placeholder = defValue.getUint64value();
+                      break;
+                  }
+                } else if (validator.hasFormatipaddress()) {
+                  // Not applied.
+                } else if (validator.hasFormatipaddressport()) {
+                  // Not applied.
+                }
+              }
+              if (fieldErrors.length > 0) {
+                isValid = false;
+              }
+              return (
+                <div className="form-group" key={field.getId()}>
+                  <label>{displayName}</label>
+                  <input
+                    className={`form-control ${
+                      fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                    }`}
+                    type="number"
+                    value={value}
+                    placeholder={placeholder}
+                    readOnly={
+                      field.getReadonly() || isSaving || hasPendingDelete
+                    }
+                    onChange={e => {
+                      if (editableValue !== undefined) {
+                        const value = new Value();
+                        switch (field.getType()) {
                           case ValueType.INT64:
-                            value.setInt64value(parseInt(e.target.value));
+                            value.setInt64value(e.target.value);
                             break;
                           case ValueType.UINT64:
-                            value.setUint64value(parseInt(e.target.value));
+                            value.setUint64value(e.target.value);
                             break;
                         }
                         setConditionalField(editableValue, field, value);
