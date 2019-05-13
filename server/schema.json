@@ -6,7 +6,8 @@
       "editor": {
         "singular": "User",
         "plural": "Users",
-        "renderEditorDropdownWithField": "emailAddress"
+        "renderEditorDropdownWithField": "emailAddress",
+        "keyComment": "The username of the user."
       },
       "fields": [
         {

@@ -16,7 +16,8 @@ import {
   PathElement,
   GetDefaultPartitionIdResponse,
   GetDefaultPartitionIdRequest,
-  PartitionId
+  PartitionId,
+  SchemaKindEditor
 } from "../api/meta_pb";
 import { g, deserializeKey, prettifyKey, c, serializeKey } from "../core";
 import { Link } from "react-router-dom";
@@ -524,6 +525,8 @@ const KindEditRealRoute = (
     );
   }
 
+  const kindEditor = c(kindSchema.getEditor(), new SchemaKindEditor());
+
   return (
     <>
       <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
@@ -537,7 +540,11 @@ const KindEditRealRoute = (
           <label>ID</label>
           {keyInput}
           <small className="form-text text-muted">
-            The ID of the {props.match.params.kind}.{" "}
+            {kindEditor.getKeycomment() === "" ? (
+              <>The ID of the {props.match.params.kind}.</>
+            ) : (
+              kindEditor.getKeycomment()
+            )}{" "}
             {isCreate
               ? "This value can not be changed after the entity is created."
               : ""}
