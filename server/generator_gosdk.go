@@ -151,14 +151,35 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 		},
 		"getcomputedfnv64afieldforindex": func(kindName string, index *SchemaIndex) *SchemaField {
 			computed := index.GetComputed()
+			if computed.GetFnv64A().Field == "key" {
+				return &SchemaField{
+					Id: 1,
+					Name: "Key",
+					Type: ValueType_key,
+				}
+			}
 			return lookupFieldByName(schema.Kinds[kindName], computed.GetFnv64A().Field)
 		},
 		"getcomputedfnv64apairfield1forindex": func(kindName string, index *SchemaIndex) *SchemaField {
 			computed := index.GetComputed()
+			if computed.GetFnv64APair().Field1 == "key" {
+				return &SchemaField{
+					Id: 1,
+					Name: "Key",
+					Type: ValueType_key,
+				}
+			}
 			return lookupFieldByName(schema.Kinds[kindName], computed.GetFnv64APair().Field1)
 		},
 		"getcomputedfnv64apairfield2forindex": func(kindName string, index *SchemaIndex) *SchemaField {
 			computed := index.GetComputed()
+			if computed.GetFnv64APair().Field2 == "key" {
+				return &SchemaField{
+					Id: 1,
+					Name: "Key",
+					Type: ValueType_key,
+				}
+			}
 			return lookupFieldByName(schema.Kinds[kindName], computed.GetFnv64APair().Field2)
 		},
 	})
