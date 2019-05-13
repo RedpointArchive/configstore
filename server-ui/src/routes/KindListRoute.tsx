@@ -30,6 +30,8 @@ import { createGrpcPromiseClient } from "../svcHost";
 import { useAsync } from "react-async";
 import { PendingTransactionContext, PendingTransaction } from "../App";
 import moment from "moment";
+import { nibblinsToDollarString } from "../FinancialInput";
+import BigInt from "big-integer";
 
 export interface KindListRouteMatch {
   kind: string;
@@ -250,6 +252,7 @@ const KindListRealRoute = (
               const fieldData = effectiveEntity
                 .getValuesList()
                 .filter(fieldData => fieldData.getId() == field.getId())[0];
+              const editor = c(field.getEditor(), new SchemaFieldEditorInfo());
               if (fieldData == undefined) {
                 return (
                   <td key={field.getId()}>
@@ -268,11 +271,23 @@ const KindListRealRoute = (
                   );
                 case ValueType.INT64:
                   return (
-                    <td key={field.getId()}>{fieldData.getInt64value()}</td>
+                    <td key={field.getId()}>
+                      {editor.getUsefinancialvaluetonibblinsconversion()
+                        ? nibblinsToDollarString(
+                            BigInt(fieldData.getInt64value())
+                          )
+                        : fieldData.getInt64value()}
+                    </td>
                   );
                 case ValueType.UINT64:
                   return (
-                    <td key={field.getId()}>{fieldData.getUint64value()}</td>
+                    <td key={field.getId()}>
+                      {editor.getUsefinancialvaluetonibblinsconversion()
+                        ? nibblinsToDollarString(
+                            BigInt(fieldData.getUint64value())
+                          )
+                        : fieldData.getUint64value()}
+                    </td>
                   );
                 case ValueType.KEY:
                   const childKey = fieldData.getKeyvalue();

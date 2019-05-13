@@ -20,6 +20,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { createGrpcPromiseClient } from "../svcHost";
 import moment from "moment";
+import { nibblinsToDollarString } from "../FinancialInput";
+import BigInt from "big-integer";
 
 export interface SaveRouteProps extends RouteComponentProps<{}> {
   schema: GetSchemaResponse;
@@ -97,6 +99,7 @@ function renderTextValue(field: SchemaField, entity: MetaEntity) {
   const fieldData = entity
     .getValuesList()
     .filter(fieldData => fieldData.getId() == field.getId())[0];
+  const editor = c(field.getEditor(), new SchemaFieldEditorInfo());
   if (fieldData === undefined) {
     return <>-</>;
   }
@@ -106,9 +109,17 @@ function renderTextValue(field: SchemaField, entity: MetaEntity) {
     case ValueType.DOUBLE:
       return fieldData.getDoublevalue();
     case ValueType.INT64:
-      return fieldData.getInt64value();
+      if (editor.getUsefinancialvaluetonibblinsconversion()) {
+        return nibblinsToDollarString(BigInt(fieldData.getInt64value()));
+      } else {
+        return fieldData.getInt64value();
+      }
     case ValueType.UINT64:
-      return fieldData.getUint64value();
+      if (editor.getUsefinancialvaluetonibblinsconversion()) {
+        return nibblinsToDollarString(BigInt(fieldData.getUint64value()));
+      } else {
+        return fieldData.getUint64value();
+      }
     case ValueType.KEY:
       const childKey = fieldData.getKeyvalue();
       if (childKey === undefined) {
