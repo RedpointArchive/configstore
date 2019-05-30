@@ -604,7 +604,7 @@ const KindEditRealRoute = (
                     className={`form-control ${
                       fieldErrors.length > 0 ? "is-invalid" : "is-valid"
                     }`}
-                    type="number"
+                    type="text"
                     value={value}
                     placeholder={placeholder}
                     readOnly={
