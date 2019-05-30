@@ -364,8 +364,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 			for true {
 				snapshot, err := snapshots.Next()
 				if err != nil {
-					log.Printf("error during entity watch: %v", err)
-					return
+					panic(fmt.Sprintf("unrecoverable error during entity watch: %v", err))
 				}
 
 				for _, change := range snapshot.Changes {
@@ -413,8 +412,7 @@ func createTransactionWatcher(ctx context.Context, client *firestore.Client, sch
 		for true {
 			transactionSnapshot, err := transactions.Next()
 			if err != nil {
-				log.Printf("error during transaction watch: %v", err)
-				return
+				panic(fmt.Sprintf("unrecoverable error during transaction watch: %v", err))
 			}
 
 			watcher.transactionsLock.Lock()
