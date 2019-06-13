@@ -978,12 +978,14 @@ func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key uint64) (*{
 {{- end }}
 
 func (c *{{ $kindName }}ImplStore) GetKeys() []*Key {
+	c.configstore.mutex.RLock()
 	keys := make([]*Key, len(c.store))
 	i := 0
 	for _, entity := range c.store {
 		keys[i] = entity.Key
 		i += 1
 	}
+	defer c.configstore.mutex.RUnlock()
 	return keys
 }
 
