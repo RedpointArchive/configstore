@@ -1469,7 +1469,8 @@ proto.meta.SchemaFieldEditorInfo.toObject = function(includeInstance, msg) {
     allowedkindsList: jspb.Message.getRepeatedField(msg, 4),
     usefinancialvaluetonibblinsconversion: jspb.Message.getFieldWithDefault(msg, 5, false),
     validatorsList: jspb.Message.toObjectList(msg.getValidatorsList(),
-    proto.meta.SchemaFieldEditorValidator.toObject, includeInstance)
+    proto.meta.SchemaFieldEditorValidator.toObject, includeInstance),
+    textarea: jspb.Message.getFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -1530,6 +1531,10 @@ proto.meta.SchemaFieldEditorInfo.deserializeBinaryFromReader = function(msg, rea
       var value = new proto.meta.SchemaFieldEditorValidator;
       reader.readMessage(value,proto.meta.SchemaFieldEditorValidator.deserializeBinaryFromReader);
       msg.addValidators(value);
+      break;
+    case 7:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setTextarea(value);
       break;
     default:
       reader.skipField();
@@ -1601,6 +1606,13 @@ proto.meta.SchemaFieldEditorInfo.serializeBinaryToWriter = function(message, wri
       6,
       f,
       proto.meta.SchemaFieldEditorValidator.serializeBinaryToWriter
+    );
+  }
+  f = message.getTextarea();
+  if (f) {
+    writer.writeBool(
+      7,
+      f
     );
   }
 };
@@ -1727,6 +1739,23 @@ proto.meta.SchemaFieldEditorInfo.prototype.addValidators = function(opt_value, o
 
 proto.meta.SchemaFieldEditorInfo.prototype.clearValidatorsList = function() {
   this.setValidatorsList([]);
+};
+
+
+/**
+ * optional bool textArea = 7;
+ * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
+ * You should avoid comparisons like {@code val === true/false} in those cases.
+ * @return {boolean}
+ */
+proto.meta.SchemaFieldEditorInfo.prototype.getTextarea = function() {
+  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 7, false));
+};
+
+
+/** @param {boolean} value */
+proto.meta.SchemaFieldEditorInfo.prototype.setTextarea = function(value) {
+  jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 
