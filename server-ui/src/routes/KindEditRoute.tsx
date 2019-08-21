@@ -878,24 +878,46 @@ const KindEditRealRoute = (
               return (
                 <div className="form-group" key={field.getId()}>
                   <label>{displayName}</label>
-                  <input
-                    className={`form-control ${
-                      fieldErrors.length > 0 ? "is-invalid" : "is-valid"
-                    }`}
-                    value={value}
-                    placeholder={placeholder}
-                    readOnly={
-                      field.getReadonly() || isSaving || hasPendingDelete
-                    }
-                    onChange={e => {
-                      if (editableValue !== undefined) {
-                        const value = new Value();
-                        value.setStringvalue(e.target.value);
-                        setConditionalField(editableValue, field, value);
-                        setEditableValue({ value: editableValue.value });
+                  {editor.getTextarea() ? (
+                    <textarea
+                      rows={8}
+                      className={`form-control ${
+                        fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                      }`}
+                      value={value}
+                      placeholder={placeholder}
+                      readOnly={
+                        field.getReadonly() || isSaving || hasPendingDelete
                       }
-                    }}
-                  />
+                      onChange={e => {
+                        if (editableValue !== undefined) {
+                          const value = new Value();
+                          value.setStringvalue(e.target.value);
+                          setConditionalField(editableValue, field, value);
+                          setEditableValue({ value: editableValue.value });
+                        }
+                      }}
+                    />
+                  ) : (
+                    <input
+                      className={`form-control ${
+                        fieldErrors.length > 0 ? "is-invalid" : "is-valid"
+                      }`}
+                      value={value}
+                      placeholder={placeholder}
+                      readOnly={
+                        field.getReadonly() || isSaving || hasPendingDelete
+                      }
+                      onChange={e => {
+                        if (editableValue !== undefined) {
+                          const value = new Value();
+                          value.setStringvalue(e.target.value);
+                          setConditionalField(editableValue, field, value);
+                          setEditableValue({ value: editableValue.value });
+                        }
+                      }}
+                    />
+                  )}
                   {fieldErrors.map((err, idx) => (
                     <div className="invalid-feedback" key={idx}>
                       {err}

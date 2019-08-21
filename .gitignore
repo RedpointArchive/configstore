@@ -3,3 +3,4 @@
 /server/debug
 /client/debug.test
 server/debug.test
+server-ui/package-lock.json

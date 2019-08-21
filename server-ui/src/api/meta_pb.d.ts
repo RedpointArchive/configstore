@@ -205,6 +205,9 @@ export class SchemaFieldEditorInfo extends jspb.Message {
   clearValidatorsList(): void;
   addValidators(value?: SchemaFieldEditorValidator, index?: number): SchemaFieldEditorValidator;
 
+  getTextarea(): boolean;
+  setTextarea(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaFieldEditorInfo.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaFieldEditorInfo): SchemaFieldEditorInfo.AsObject;
@@ -221,6 +224,7 @@ export namespace SchemaFieldEditorInfo {
     allowedkindsList: Array<string>,
     usefinancialvaluetonibblinsconversion: boolean,
     validatorsList: Array<SchemaFieldEditorValidator.AsObject>,
+    textarea: boolean,
   }
 }
 

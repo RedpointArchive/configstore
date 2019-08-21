@@ -68,6 +68,7 @@ message SchemaFieldEditorInfo {
     repeated string allowedKinds = 4;
     bool useFinancialValueToNibblinsConversion = 5;
     repeated SchemaFieldEditorValidator validators = 6;
+    bool textArea = 7;
 }
 
 message SchemaFieldEditorValidator {
