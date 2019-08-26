@@ -46,14 +46,19 @@ type runMode string
 const (
 	runModeServe    runMode = "serve"
 	runModeGenerate runMode = "generate"
+	runModeGenerateProto runMode = "generate-proto"
 )
 
 func main() {
 	mode := runModeServe
 	generateFlag := flag.Bool("generate", false, "emit Go client code instead of serving traffic")
+	generateProtoFlag := flag.Bool("generate-proto", false, "emit Protobuf instead of serving traffic")
 	flag.Parse()
 	if *generateFlag {
 		mode = runModeGenerate
+	}
+	if *generateProtoFlag {
+		mode = runModeGenerateProto
 	}
 
 	config := &runtimeConfig{}
@@ -329,6 +334,8 @@ func main() {
 		})
 	} else if mode == runModeGenerate {
 		fmt.Println(clientProtoGoCode)
+	} else if mode == runModeGenerateProto {
+		fmt.Println(clientProtoFile)
 	}
 }
 
