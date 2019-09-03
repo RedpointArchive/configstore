@@ -149,11 +149,39 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 				return false
 			}
 		},
+		"iscomputedfnv32aindex": func(index *SchemaIndex) bool {
+			switch index.Value.(type) {
+			case *SchemaIndex_Computed:
+				computed := index.GetComputed()
+				switch computed.Algorithm.(type) {
+				case *SchemaComputedIndex_Fnv32A:
+					return true
+				default:
+					return false
+				}
+			default:
+				return false
+			}
+		},
+		"iscomputedfnv32apairindex": func(index *SchemaIndex) bool {
+			switch index.Value.(type) {
+			case *SchemaIndex_Computed:
+				computed := index.GetComputed()
+				switch computed.Algorithm.(type) {
+				case *SchemaComputedIndex_Fnv32APair:
+					return true
+				default:
+					return false
+				}
+			default:
+				return false
+			}
+		},
 		"getcomputedfnv64afieldforindex": func(kindName string, index *SchemaIndex) *SchemaField {
 			computed := index.GetComputed()
 			if computed.GetFnv64A().Field == "key" {
 				return &SchemaField{
-					Id: 1,
+					Id:   1,
 					Name: "Key",
 					Type: ValueType_key,
 				}
@@ -164,7 +192,7 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 			computed := index.GetComputed()
 			if computed.GetFnv64APair().Field1 == "key" {
 				return &SchemaField{
-					Id: 1,
+					Id:   1,
 					Name: "Key",
 					Type: ValueType_key,
 				}
@@ -175,12 +203,45 @@ func generateGoCode(fileDesc *desc.FileDescriptor, schema *Schema) (string, erro
 			computed := index.GetComputed()
 			if computed.GetFnv64APair().Field2 == "key" {
 				return &SchemaField{
-					Id: 1,
+					Id:   1,
 					Name: "Key",
 					Type: ValueType_key,
 				}
 			}
 			return lookupFieldByName(schema.Kinds[kindName], computed.GetFnv64APair().Field2)
+		},
+		"getcomputedfnv32afieldforindex": func(kindName string, index *SchemaIndex) *SchemaField {
+			computed := index.GetComputed()
+			if computed.GetFnv32A().Field == "key" {
+				return &SchemaField{
+					Id:   1,
+					Name: "Key",
+					Type: ValueType_key,
+				}
+			}
+			return lookupFieldByName(schema.Kinds[kindName], computed.GetFnv32A().Field)
+		},
+		"getcomputedfnv32apairfield1forindex": func(kindName string, index *SchemaIndex) *SchemaField {
+			computed := index.GetComputed()
+			if computed.GetFnv32APair().Field1 == "key" {
+				return &SchemaField{
+					Id:   1,
+					Name: "Key",
+					Type: ValueType_key,
+				}
+			}
+			return lookupFieldByName(schema.Kinds[kindName], computed.GetFnv32APair().Field1)
+		},
+		"getcomputedfnv32apairfield2forindex": func(kindName string, index *SchemaIndex) *SchemaField {
+			computed := index.GetComputed()
+			if computed.GetFnv32APair().Field2 == "key" {
+				return &SchemaField{
+					Id:   1,
+					Name: "Key",
+					Type: ValueType_key,
+				}
+			}
+			return lookupFieldByName(schema.Kinds[kindName], computed.GetFnv32APair().Field2)
 		},
 	})
 	_, err = tmpl.Parse(string(tmplCode))

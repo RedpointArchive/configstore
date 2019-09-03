@@ -182,11 +182,24 @@ func Fnv64aPair(a uint64, b uint64) uint64 {
 	return hash.Sum64()
 }
 
-func GetInputForFnv64aFromKey(k *Key) string {
-	if k == nil || len(k.Path) == 0 {
-		return ""
+func Fnv32a(val string) uint32 {
+	hash := fnv.New32a()
+	hash.Write(([]byte)(val))
+	return hash.Sum32()
+}
+
+func Fnv32aPair(a uint32, b uint32) uint32 {
+	hash := fnv.New32a()
+	if a > b {
+		tmp := a
+		a = b
+		b = tmp
 	}
-	return k.Path[len(k.Path)-1].GetName()
+	key := make([]byte, 16)
+	binary.LittleEndian.PutUint32(key, a)
+	binary.LittleEndian.PutUint32(key[8:], b)
+	hash.Write(key)
+	return hash.Sum32()
 }
 
 func CreateTopLevelKey(partitionId *PartitionId, pathElement *PathElement) *Key {
@@ -194,6 +207,13 @@ func CreateTopLevelKey(partitionId *PartitionId, pathElement *PathElement) *Key 
 		PartitionId: partitionId,
 		Path: []*PathElement{pathElement},
 	}
+}
+
+func GetInputForHashingKey(k *Key) string {
+	if k == nil || len(k.Path) == 0 {
+		return ""
+	}
+	return k.Path[len(k.Path)-1].GetName()
 }
 
 func CreateIncompleteTopLevelKey(partitionId *PartitionId, kind string) *Key {
@@ -396,7 +416,7 @@ key
 {{- if eq .Type 3 -}}
 e.{{- camelcase .Name -}}
 {{- else if eq .Type 7 -}}
-GetInputForFnv64aFromKey(e.{{- camelcase .Name -}})
+GetInputForHashingKey(e.{{- camelcase .Name -}})
 {{- else -}}
 (ERROR, incorrect type for fnv64a computed field)
 {{- end -}}
@@ -413,6 +433,30 @@ Fnv64a({{- template "getfnv64avalueforfield" . -}})
 Fnv64a({{- template "getfnv64avalueforfield" . -}})
 {{- else -}}
 (ERROR, incorrect type for fnv64a pair computed field)
+{{- end -}}
+{{- end }}
+
+{{ define "getfnv32avalueforfield" -}}
+{{- if eq .Type 3 -}}
+e.{{- camelcase .Name -}}
+{{- else if eq .Type 7 -}}
+GetInputForHashingKey(e.{{- camelcase .Name -}})
+{{- else -}}
+(ERROR, incorrect type for fnv32a computed field)
+{{- end -}}
+{{- end }}
+
+{{ define "getfnv32apairvalueforfield" -}}
+{{- if eq .Type 2 -}}
+e.{{- camelcase .Name -}}
+{{- else if eq .Type 8 -}}
+e.{{- camelcase .Name -}}
+{{- else if eq .Type 3 -}}
+Fnv32a({{- template "getfnv32avalueforfield" . -}})
+{{- else if eq .Type 7 -}}
+Fnv32a({{- template "getfnv32avalueforfield" . -}})
+{{- else -}}
+(ERROR, incorrect type for fnv32a pair computed field)
 {{- end -}}
 {{- end }}
 
@@ -450,6 +494,28 @@ Fnv64a({{- template "getfnv64avalueforfield" . -}})
 	field1 := {{ template "getfnv64apairvalueforfield" $field1 }}
 	field2 := {{ template "getfnv64apairvalueforfield" $field2 }}
 	idx := Fnv64aPair(field1, field2)
+	ref.indexstore_{{- $index.Name -}}[idx] = newEntity
+}
+					{{ end -}}
+				{{- else if iscomputedfnv32aindex $index -}}
+					{{- $field := getcomputedfnv32afieldforindex $kindName $index -}}
+					{{- if $field }}
+{
+	e := newEntity
+	key := {{ template "getfnv32avalueforfield" $field }}
+	idx := Fnv32a(key)
+	ref.indexstore_{{- $index.Name -}}[idx] = newEntity
+}
+					{{ end -}}
+				{{- else if iscomputedfnv32apairindex $index -}}
+					{{- $field1 := getcomputedfnv32apairfield1forindex $kindName $index -}}
+					{{- $field2 := getcomputedfnv32apairfield2forindex $kindName $index -}}
+					{{- if and $field1 $field2 }}
+{
+	e := newEntity
+	field1 := {{ template "getfnv32apairvalueforfield" $field1 }}
+	field2 := {{ template "getfnv32apairvalueforfield" $field2 }}
+	idx := Fnv32aPair(field1, field2)
 	ref.indexstore_{{- $index.Name -}}[idx] = newEntity
 }
 					{{ end -}}
@@ -504,6 +570,28 @@ Fnv64a({{- template "getfnv64avalueforfield" . -}})
 	delete(ref.indexstore_{{- $index.Name -}}, idx)
 }
 					{{ end -}}
+				{{- else if iscomputedfnv32aindex $index -}}
+					{{- $field := getcomputedfnv32afieldforindex $kindName $index -}}
+					{{- if $field }}
+{
+	e := oldEntity
+	key := {{ template "getfnv32avalueforfield" $field }}
+	idx := Fnv32a(key)
+	delete(ref.indexstore_{{- $index.Name -}}, idx)
+}
+					{{ end -}}
+				{{- else if iscomputedfnv32apairindex $index -}}
+					{{- $field1 := getcomputedfnv32apairfield1forindex $kindName $index -}}
+					{{- $field2 := getcomputedfnv32apairfield2forindex $kindName $index -}}
+					{{- if and $field1 $field2 }}
+{
+	e := oldEntity
+	field1 := {{ template "getfnv32apairvalueforfield" $field1 }}
+	field2 := {{ template "getfnv32apairvalueforfield" $field2 }}
+	idx := Fnv32aPair(field1, field2)
+	delete(ref.indexstore_{{- $index.Name -}}, idx)
+}
+					{{ end -}}
 				{{- end -}}
 			{{- end -}}
 		{{- end -}}
@@ -534,6 +622,10 @@ type {{ $kindName }}Snapshot struct {
 	{{ $kindName }}s_By{{ $index.Name }} map[uint64]*{{ $kindName }}
 				{{ else if iscomputedfnv64apairindex $index }}
 	{{ $kindName }}s_By{{ $index.Name }} map[uint64]*{{ $kindName }}
+				{{ else if iscomputedfnv32aindex $index }}
+	{{ $kindName }}s_By{{ $index.Name }} map[uint32]*{{ $kindName }}
+				{{ else if iscomputedfnv32apairindex $index }}
+	{{ $kindName }}s_By{{ $index.Name }} map[uint32]*{{ $kindName }}
 				{{ end -}}
 			{{- end -}}
 		{{- end -}}
@@ -573,6 +665,16 @@ func (configstore *Configstore) TakeSnapshots(snapshots ...interface{}) {
 			for k, v := range src.indexstore_{{ $index.Name }} {
 				s.{{ $kindName }}s_By{{ $index.Name }}[k] = v.Copy()
 			}
+				{{ else if iscomputedfnv32aindex $index }}
+			s.{{ $kindName }}s_By{{ $index.Name }} = make(map[uint32]*{{ $kindName }})
+			for k, v := range src.indexstore_{{ $index.Name }} {
+				s.{{ $kindName }}s_By{{ $index.Name }}[k] = v.Copy()
+			}
+				{{ else if iscomputedfnv32apairindex $index }}
+			s.{{ $kindName }}s_By{{ $index.Name }} = make(map[uint32]*{{ $kindName }})
+			for k, v := range src.indexstore_{{ $index.Name }} {
+				s.{{ $kindName }}s_By{{ $index.Name }}[k] = v.Copy()
+			}
 				{{ end -}}
 			{{- end -}}
 		{{- end -}}
@@ -604,6 +706,10 @@ func ConnectToConfigstore(ctx context.Context, conn *grpc.ClientConn) (*Configst
 		indexstore_{{ $index.Name }}: make(map[uint64]*{{ $kindName }}),
 					{{ else if iscomputedfnv64apairindex $index }}
 		indexstore_{{ $index.Name }}: make(map[uint64]*{{ $kindName }}),
+					{{ else if iscomputedfnv32aindex $index }}
+		indexstore_{{ $index.Name }}: make(map[uint32]*{{ $kindName }}),
+					{{ else if iscomputedfnv32apairindex $index }}
+		indexstore_{{ $index.Name }}: make(map[uint32]*{{ $kindName }}),
 					{{ end }}
 				{{ end }}
 			{{ end }}
@@ -860,6 +966,10 @@ type {{ $kindName }}ImplStore struct {
 	indexstore_{{ $index.Name }} map[uint64]*{{ $kindName }}
 				{{ else if iscomputedfnv64apairindex $index }}
 	indexstore_{{ $index.Name }} map[uint64]*{{ $kindName }}
+				{{ else if iscomputedfnv32aindex $index }}
+	indexstore_{{ $index.Name }} map[uint32]*{{ $kindName }}
+				{{ else if iscomputedfnv32apairindex $index }}
+	indexstore_{{ $index.Name }} map[uint32]*{{ $kindName }}
 				{{ end }}
 			{{ end }}
 		{{ end }}
@@ -890,6 +1000,12 @@ type {{ $kindName }}Store interface {
 				{{ else if iscomputedfnv64apairindex $index }}
 	GetBy{{ $index.Name }}(key uint64) *{{ $kindName }}
 	GetAndCheckBy{{ $index.Name }}(key uint64) (*{{ $kindName }}, bool)
+				{{ else if iscomputedfnv32aindex $index }}
+	GetBy{{ $index.Name }}(key uint32) *{{ $kindName }}
+	GetAndCheckBy{{ $index.Name }}(key uint32) (*{{ $kindName }}, bool)
+				{{ else if iscomputedfnv32apairindex $index }}
+	GetBy{{ $index.Name }}(key uint32) *{{ $kindName }}
+	GetAndCheckBy{{ $index.Name }}(key uint32) (*{{ $kindName }}, bool)
 				{{- end -}}
 			{{- end -}}
 		{{- end -}}
@@ -969,6 +1085,50 @@ func (c *{{ $kindName }}Snapshot) GetBy{{ $index.Name }}(key uint64) *{{ $kindNa
 }
 
 func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key uint64) (*{{ $kindName }}, bool) {
+	val, ok := c.{{ $kindName }}s_By{{ $index.Name }}[key]
+	return val, ok
+}
+			{{ else if iscomputedfnv32aindex $index }}
+func (c *{{ $kindName }}ImplStore) GetBy{{ $index.Name }}(key uint32) *{{ $kindName }} {
+	c.configstore.mutex.RLock()
+	defer c.configstore.mutex.RUnlock()
+	return c.indexstore_{{ $index.Name }}[key]
+}
+
+func (c *{{ $kindName }}ImplStore) GetAndCheckBy{{ $index.Name }}(key uint32) (*{{ $kindName }}, bool) {
+	c.configstore.mutex.RLock()
+	defer c.configstore.mutex.RUnlock()
+	val, ok := c.indexstore_{{ $index.Name }}[key]
+	return val, ok
+}
+
+func (c *{{ $kindName }}Snapshot) GetBy{{ $index.Name }}(key uint32) *{{ $kindName }} {
+	return c.{{ $kindName }}s_By{{ $index.Name }}[key]
+}
+
+func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key uint32) (*{{ $kindName }}, bool) {
+	val, ok := c.{{ $kindName }}s_By{{ $index.Name }}[key]
+	return val, ok
+}
+			{{ else if iscomputedfnv32apairindex $index }}
+func (c *{{ $kindName }}ImplStore) GetBy{{ $index.Name }}(key uint32) *{{ $kindName }} {
+	c.configstore.mutex.RLock()
+	defer c.configstore.mutex.RUnlock()
+	return c.indexstore_{{ $index.Name }}[key]
+}
+
+func (c *{{ $kindName }}ImplStore) GetAndCheckBy{{ $index.Name }}(key uint32) (*{{ $kindName }}, bool) {
+	c.configstore.mutex.RLock()
+	defer c.configstore.mutex.RUnlock()
+	val, ok := c.indexstore_{{ $index.Name }}[key]
+	return val, ok
+}
+
+func (c *{{ $kindName }}Snapshot) GetBy{{ $index.Name }}(key uint32) *{{ $kindName }} {
+	return c.{{ $kindName }}s_By{{ $index.Name }}[key]
+}
+
+func (c *{{ $kindName }}Snapshot) GetAndCheckBy{{ $index.Name }}(key uint32) (*{{ $kindName }}, bool) {
 	val, ok := c.{{ $kindName }}s_By{{ $index.Name }}[key]
 	return val, ok
 }
