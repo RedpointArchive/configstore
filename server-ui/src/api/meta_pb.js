@@ -45,6 +45,8 @@ goog.exportSymbol('proto.meta.PartitionId', null, global);
 goog.exportSymbol('proto.meta.PathElement', null, global);
 goog.exportSymbol('proto.meta.Schema', null, global);
 goog.exportSymbol('proto.meta.SchemaComputedIndex', null, global);
+goog.exportSymbol('proto.meta.SchemaComputedIndexFnv32a', null, global);
+goog.exportSymbol('proto.meta.SchemaComputedIndexFnv32aPair', null, global);
 goog.exportSymbol('proto.meta.SchemaComputedIndexFnv64a', null, global);
 goog.exportSymbol('proto.meta.SchemaComputedIndexFnv64aPair', null, global);
 goog.exportSymbol('proto.meta.SchemaField', null, global);
@@ -3627,7 +3629,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.meta.SchemaComputedIndex.oneofGroups_ = [[1,2]];
+proto.meta.SchemaComputedIndex.oneofGroups_ = [[1,2,3,4]];
 
 /**
  * @enum {number}
@@ -3635,7 +3637,9 @@ proto.meta.SchemaComputedIndex.oneofGroups_ = [[1,2]];
 proto.meta.SchemaComputedIndex.AlgorithmCase = {
   ALGORITHM_NOT_SET: 0,
   FNV64A: 1,
-  FNV64A_PAIR: 2
+  FNV64A_PAIR: 2,
+  FNV32A: 3,
+  FNV32A_PAIR: 4
 };
 
 /**
@@ -3675,7 +3679,9 @@ proto.meta.SchemaComputedIndex.prototype.toObject = function(opt_includeInstance
 proto.meta.SchemaComputedIndex.toObject = function(includeInstance, msg) {
   var f, obj = {
     fnv64a: (f = msg.getFnv64a()) && proto.meta.SchemaComputedIndexFnv64a.toObject(includeInstance, f),
-    fnv64aPair: (f = msg.getFnv64aPair()) && proto.meta.SchemaComputedIndexFnv64aPair.toObject(includeInstance, f)
+    fnv64aPair: (f = msg.getFnv64aPair()) && proto.meta.SchemaComputedIndexFnv64aPair.toObject(includeInstance, f),
+    fnv32a: (f = msg.getFnv32a()) && proto.meta.SchemaComputedIndexFnv32a.toObject(includeInstance, f),
+    fnv32aPair: (f = msg.getFnv32aPair()) && proto.meta.SchemaComputedIndexFnv32aPair.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -3722,6 +3728,16 @@ proto.meta.SchemaComputedIndex.deserializeBinaryFromReader = function(msg, reade
       reader.readMessage(value,proto.meta.SchemaComputedIndexFnv64aPair.deserializeBinaryFromReader);
       msg.setFnv64aPair(value);
       break;
+    case 3:
+      var value = new proto.meta.SchemaComputedIndexFnv32a;
+      reader.readMessage(value,proto.meta.SchemaComputedIndexFnv32a.deserializeBinaryFromReader);
+      msg.setFnv32a(value);
+      break;
+    case 4:
+      var value = new proto.meta.SchemaComputedIndexFnv32aPair;
+      reader.readMessage(value,proto.meta.SchemaComputedIndexFnv32aPair.deserializeBinaryFromReader);
+      msg.setFnv32aPair(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -3765,6 +3781,22 @@ proto.meta.SchemaComputedIndex.serializeBinaryToWriter = function(message, write
       2,
       f,
       proto.meta.SchemaComputedIndexFnv64aPair.serializeBinaryToWriter
+    );
+  }
+  f = message.getFnv32a();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto.meta.SchemaComputedIndexFnv32a.serializeBinaryToWriter
+    );
+  }
+  f = message.getFnv32aPair();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto.meta.SchemaComputedIndexFnv32aPair.serializeBinaryToWriter
     );
   }
 };
@@ -3827,6 +3859,66 @@ proto.meta.SchemaComputedIndex.prototype.clearFnv64aPair = function() {
  */
 proto.meta.SchemaComputedIndex.prototype.hasFnv64aPair = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional SchemaComputedIndexFnv32a fnv32a = 3;
+ * @return {?proto.meta.SchemaComputedIndexFnv32a}
+ */
+proto.meta.SchemaComputedIndex.prototype.getFnv32a = function() {
+  return /** @type{?proto.meta.SchemaComputedIndexFnv32a} */ (
+    jspb.Message.getWrapperField(this, proto.meta.SchemaComputedIndexFnv32a, 3));
+};
+
+
+/** @param {?proto.meta.SchemaComputedIndexFnv32a|undefined} value */
+proto.meta.SchemaComputedIndex.prototype.setFnv32a = function(value) {
+  jspb.Message.setOneofWrapperField(this, 3, proto.meta.SchemaComputedIndex.oneofGroups_[0], value);
+};
+
+
+proto.meta.SchemaComputedIndex.prototype.clearFnv32a = function() {
+  this.setFnv32a(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaComputedIndex.prototype.hasFnv32a = function() {
+  return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional SchemaComputedIndexFnv32aPair fnv32a_pair = 4;
+ * @return {?proto.meta.SchemaComputedIndexFnv32aPair}
+ */
+proto.meta.SchemaComputedIndex.prototype.getFnv32aPair = function() {
+  return /** @type{?proto.meta.SchemaComputedIndexFnv32aPair} */ (
+    jspb.Message.getWrapperField(this, proto.meta.SchemaComputedIndexFnv32aPair, 4));
+};
+
+
+/** @param {?proto.meta.SchemaComputedIndexFnv32aPair|undefined} value */
+proto.meta.SchemaComputedIndex.prototype.setFnv32aPair = function(value) {
+  jspb.Message.setOneofWrapperField(this, 4, proto.meta.SchemaComputedIndex.oneofGroups_[0], value);
+};
+
+
+proto.meta.SchemaComputedIndex.prototype.clearFnv32aPair = function() {
+  this.setFnv32aPair(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.meta.SchemaComputedIndex.prototype.hasFnv32aPair = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
@@ -4137,6 +4229,317 @@ proto.meta.SchemaComputedIndexFnv64aPair.prototype.getField2 = function() {
 
 /** @param {string} value */
 proto.meta.SchemaComputedIndexFnv64aPair.prototype.setField2 = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaComputedIndexFnv32a = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.SchemaComputedIndexFnv32a, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaComputedIndexFnv32a.displayName = 'proto.meta.SchemaComputedIndexFnv32a';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaComputedIndexFnv32a.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaComputedIndexFnv32a.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaComputedIndexFnv32a} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaComputedIndexFnv32a.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    field: jspb.Message.getFieldWithDefault(msg, 1, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaComputedIndexFnv32a}
+ */
+proto.meta.SchemaComputedIndexFnv32a.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaComputedIndexFnv32a;
+  return proto.meta.SchemaComputedIndexFnv32a.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaComputedIndexFnv32a} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaComputedIndexFnv32a}
+ */
+proto.meta.SchemaComputedIndexFnv32a.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setField(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaComputedIndexFnv32a.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaComputedIndexFnv32a.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaComputedIndexFnv32a} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaComputedIndexFnv32a.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getField();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string field = 1;
+ * @return {string}
+ */
+proto.meta.SchemaComputedIndexFnv32a.prototype.getField = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.SchemaComputedIndexFnv32a.prototype.setField = function(value) {
+  jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.meta.SchemaComputedIndexFnv32aPair = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.meta.SchemaComputedIndexFnv32aPair, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.meta.SchemaComputedIndexFnv32aPair.displayName = 'proto.meta.SchemaComputedIndexFnv32aPair';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.prototype.toObject = function(opt_includeInstance) {
+  return proto.meta.SchemaComputedIndexFnv32aPair.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.meta.SchemaComputedIndexFnv32aPair} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    field1: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    field2: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.meta.SchemaComputedIndexFnv32aPair}
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.meta.SchemaComputedIndexFnv32aPair;
+  return proto.meta.SchemaComputedIndexFnv32aPair.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.meta.SchemaComputedIndexFnv32aPair} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.meta.SchemaComputedIndexFnv32aPair}
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setField1(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setField2(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.meta.SchemaComputedIndexFnv32aPair.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.meta.SchemaComputedIndexFnv32aPair} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getField1();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getField2();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string field1 = 1;
+ * @return {string}
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.prototype.getField1 = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.SchemaComputedIndexFnv32aPair.prototype.setField1 = function(value) {
+  jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string field2 = 2;
+ * @return {string}
+ */
+proto.meta.SchemaComputedIndexFnv32aPair.prototype.getField2 = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.SchemaComputedIndexFnv32aPair.prototype.setField2 = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
 };
 

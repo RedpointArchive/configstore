@@ -131,6 +131,8 @@ message SchemaComputedIndex {
     oneof algorithm {
         SchemaComputedIndexFnv64a fnv64a = 1;
         SchemaComputedIndexFnv64aPair fnv64a_pair = 2;
+        SchemaComputedIndexFnv32a fnv32a = 3;
+        SchemaComputedIndexFnv32aPair fnv32a_pair = 4;
     }
 }
 
@@ -139,6 +141,15 @@ message SchemaComputedIndexFnv64a {
 }
 
 message SchemaComputedIndexFnv64aPair {
+    string field1 = 1;
+    string field2 = 2;
+}
+
+message SchemaComputedIndexFnv32a {
+    string field = 1;
+}
+
+message SchemaComputedIndexFnv32aPair {
     string field1 = 1;
     string field2 = 2;
 }

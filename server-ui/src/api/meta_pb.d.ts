@@ -495,6 +495,18 @@ export class SchemaComputedIndex extends jspb.Message {
   clearFnv64aPair(): void;
   hasFnv64aPair(): boolean;
 
+  getFnv32a(): SchemaComputedIndexFnv32a | undefined;
+  setFnv32a(value?: SchemaComputedIndexFnv32a): void;
+  hasFnv32a(): boolean;
+  clearFnv32a(): void;
+  hasFnv32a(): boolean;
+
+  getFnv32aPair(): SchemaComputedIndexFnv32aPair | undefined;
+  setFnv32aPair(value?: SchemaComputedIndexFnv32aPair): void;
+  hasFnv32aPair(): boolean;
+  clearFnv32aPair(): void;
+  hasFnv32aPair(): boolean;
+
   getAlgorithmCase(): SchemaComputedIndex.AlgorithmCase;
 
   serializeBinary(): Uint8Array;
@@ -509,12 +521,16 @@ export namespace SchemaComputedIndex {
   export type AsObject = {
     fnv64a?: SchemaComputedIndexFnv64a.AsObject,
     fnv64aPair?: SchemaComputedIndexFnv64aPair.AsObject,
+    fnv32a?: SchemaComputedIndexFnv32a.AsObject,
+    fnv32aPair?: SchemaComputedIndexFnv32aPair.AsObject,
   }
 
   export enum AlgorithmCase { 
     ALGORITHM_NOT_SET = 0,
     FNV64A = 1,
     FNV64A_PAIR = 2,
+    FNV32A = 3,
+    FNV32A_PAIR = 4,
   }
 }
 
@@ -552,6 +568,46 @@ export class SchemaComputedIndexFnv64aPair extends jspb.Message {
 }
 
 export namespace SchemaComputedIndexFnv64aPair {
+  export type AsObject = {
+    field1: string,
+    field2: string,
+  }
+}
+
+export class SchemaComputedIndexFnv32a extends jspb.Message {
+  getField(): string;
+  setField(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaComputedIndexFnv32a.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaComputedIndexFnv32a): SchemaComputedIndexFnv32a.AsObject;
+  static serializeBinaryToWriter(message: SchemaComputedIndexFnv32a, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaComputedIndexFnv32a;
+  static deserializeBinaryFromReader(message: SchemaComputedIndexFnv32a, reader: jspb.BinaryReader): SchemaComputedIndexFnv32a;
+}
+
+export namespace SchemaComputedIndexFnv32a {
+  export type AsObject = {
+    field: string,
+  }
+}
+
+export class SchemaComputedIndexFnv32aPair extends jspb.Message {
+  getField1(): string;
+  setField1(value: string): void;
+
+  getField2(): string;
+  setField2(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SchemaComputedIndexFnv32aPair.AsObject;
+  static toObject(includeInstance: boolean, msg: SchemaComputedIndexFnv32aPair): SchemaComputedIndexFnv32aPair.AsObject;
+  static serializeBinaryToWriter(message: SchemaComputedIndexFnv32aPair, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SchemaComputedIndexFnv32aPair;
+  static deserializeBinaryFromReader(message: SchemaComputedIndexFnv32aPair, reader: jspb.BinaryReader): SchemaComputedIndexFnv32aPair;
+}
+
+export namespace SchemaComputedIndexFnv32aPair {
   export type AsObject = {
     field1: string,
     field2: string,
