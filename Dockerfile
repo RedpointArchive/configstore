@@ -141,6 +141,12 @@ RUN gcloud beta emulators firestore start --host-port=127.0.0.1:8432 & \
   sleep 5 && /server & \
   sleep 5 && cd /client-src && go test
 
+# environment resources
+FROM alpine AS resources
+
+RUN apk update && apk add --no-cache ca-certificates && update-ca-certificates
+RUN adduser -D -g '' configstore
+
 # final image
 FROM scratch AS final
 
@@ -148,4 +154,9 @@ COPY --from=test /server /server
 COPY --from=test /generator_gosdk_template.gotxt /generator_gosdk_template.gotxt
 COPY --from=build_server_ui /src/build /server-ui
 COPY --from=busybox /bin/sh /bin/sh
+COPY --from=resources /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=resources /etc/passwd /etc/passwd
+
+USER configstore
+
 ENTRYPOINT [ "/server" ]
