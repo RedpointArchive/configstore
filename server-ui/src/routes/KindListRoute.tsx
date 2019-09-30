@@ -32,6 +32,7 @@ import { PendingTransactionContext, PendingTransaction } from "../App";
 import moment from "moment";
 import { nibblinsToDollarString } from "../FinancialInput";
 import BigInt from "big-integer";
+import { KeyView } from "../KeyView";
 
 export interface KindListRouteMatch {
   kind: string;
@@ -291,21 +292,15 @@ const KindListRealRoute = (
                   );
                 case ValueType.KEY:
                   const childKey = fieldData.getKeyvalue();
-                  if (childKey === undefined) {
-                    return <td key={field.getId()}>-</td>;
-                  } else {
-                    return (
-                      <td key={field.getId()}>
-                        <Link
-                          to={`/kind/${getLastKindOfKey(
-                            childKey
-                          )}/edit/${serializeKey(g(childKey))}`}
-                        >
-                          {prettifyKey(childKey)}
-                        </Link>
-                      </td>
-                    );
-                  }
+                  return (
+                    <td key={field.getId()}>
+                      <KeyView
+                        pendingTransaction={props.pendingTransaction}
+                        schema={g(props.schema.getSchema())}
+                        value={childKey}
+                      />
+                    </td>
+                  );
                 case ValueType.BOOLEAN:
                   return (
                     <td key={field.getId()}>
