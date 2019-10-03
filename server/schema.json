@@ -152,9 +152,7 @@
           "comment": "The user that has access to the project",
           "editor": {
             "displayName": "User",
-            "allowedKinds": [
-              "User"
-            ]
+            "allowedKinds": ["User"]
           }
         },
         {
@@ -164,9 +162,7 @@
           "comment": "The project the user has access to",
           "editor": {
             "displayName": "Project",
-            "allowedKinds": [
-              "Project"
-            ]
+            "allowedKinds": ["Project"]
           }
         }
       ]
@@ -175,7 +171,8 @@
       "id": 6,
       "editor": {
         "singular": "IndexTest",
-        "plural": "IndexTests"
+        "plural": "IndexTests",
+        "sortByField": "stringField"
       },
       "indexes": [
         {

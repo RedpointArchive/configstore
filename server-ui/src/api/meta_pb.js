@@ -2824,7 +2824,8 @@ proto.meta.SchemaKindEditor.toObject = function(includeInstance, msg) {
     singular: jspb.Message.getFieldWithDefault(msg, 1, ""),
     plural: jspb.Message.getFieldWithDefault(msg, 2, ""),
     rendereditordropdownwithfield: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    keycomment: jspb.Message.getFieldWithDefault(msg, 4, "")
+    keycomment: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    sortbyfield: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -2876,6 +2877,10 @@ proto.meta.SchemaKindEditor.deserializeBinaryFromReader = function(msg, reader) 
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setKeycomment(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setSortbyfield(value);
       break;
     default:
       reader.skipField();
@@ -2931,6 +2936,13 @@ proto.meta.SchemaKindEditor.serializeBinaryToWriter = function(message, writer) 
   if (f.length > 0) {
     writer.writeString(
       4,
+      f
+    );
+  }
+  f = message.getSortbyfield();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
       f
     );
   }
@@ -2994,6 +3006,21 @@ proto.meta.SchemaKindEditor.prototype.getKeycomment = function() {
 /** @param {string} value */
 proto.meta.SchemaKindEditor.prototype.setKeycomment = function(value) {
   jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional string sortByField = 5;
+ * @return {string}
+ */
+proto.meta.SchemaKindEditor.prototype.getSortbyfield = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/** @param {string} value */
+proto.meta.SchemaKindEditor.prototype.setSortbyfield = function(value) {
+  jspb.Message.setProto3StringField(this, 5, value);
 };
 
 
