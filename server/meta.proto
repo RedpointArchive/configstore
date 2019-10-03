@@ -103,6 +103,7 @@ message SchemaKindEditor {
     string plural = 2;
     string renderEditorDropdownWithField = 3;
     string keyComment = 4;
+    string sortByField = 5;
 }
 
 message SchemaKind {

@@ -381,6 +381,9 @@ export class SchemaKindEditor extends jspb.Message {
   getKeycomment(): string;
   setKeycomment(value: string): void;
 
+  getSortbyfield(): string;
+  setSortbyfield(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SchemaKindEditor.AsObject;
   static toObject(includeInstance: boolean, msg: SchemaKindEditor): SchemaKindEditor.AsObject;
@@ -395,6 +398,7 @@ export namespace SchemaKindEditor {
     plural: string,
     rendereditordropdownwithfield: string,
     keycomment: string,
+    sortbyfield: string,
   }
 }
 

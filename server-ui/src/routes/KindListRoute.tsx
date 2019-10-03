@@ -177,8 +177,42 @@ const KindListRealRoute = (
       }
       transactionIdx++;
     }
+    let sortedData = data.getEntitiesList();
+    const kindEditor = kindSchema.getEditor();
+    if (kindEditor !== undefined && kindEditor.getSortbyfield() !== "") {
+      const sortFieldName = kindEditor.getSortbyfield();
+      const sortFields = kindSchema
+        .getFieldsList()
+        .filter(x => x.getName() === sortFieldName);
+      if (
+        sortFields.length > 0 &&
+        sortFields[0].getType() === ValueType.STRING
+      ) {
+        const sortField = sortFields[0];
+        sortedData = sortedData.sort((a, b) => {
+          const aValue = a
+            .getValuesList()
+            .filter(x => x.getId() === sortField.getId())
+            .map(x => x.getStringvalue())[0];
+          const bValue = b
+            .getValuesList()
+            .filter(x => x.getId() === sortField.getId())
+            .map(x => x.getStringvalue())[0];
+          if (aValue === undefined || bValue === undefined) {
+            if (aValue < bValue) {
+              return -1;
+            } else if (aValue === bValue) {
+              return 0;
+            } else {
+              return 1;
+            }
+          }
+          return aValue.localeCompare(bValue);
+        });
+      }
+    }
     entities.push(
-      ...data.getEntitiesList().map(x => ({
+      ...sortedData.map(x => ({
         id: serializeKey(g(x.getKey())),
         selectId: serializeKey(g(x.getKey())),
         entity: g(x),
