@@ -140,11 +140,6 @@ export const KeyView = (props: {
     return defaultStyle;
   }
 
-  if (kindEditor.getRendereditordropdownwithfield() === "") {
-    console.log("using default rendering for that type");
-    return defaultStyle;
-  }
-
   // Otherwise, use the dropdown field to render the link.
   let content: React.ReactNode;
   const pendingUpdate = getPendingUpdate(props.pendingTransaction, props.value);
