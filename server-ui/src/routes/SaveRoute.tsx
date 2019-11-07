@@ -22,6 +22,7 @@ import { createGrpcPromiseClient } from "../svcHost";
 import moment from "moment";
 import { nibblinsToDollarString } from "../FinancialInput";
 import BigInt from "big-integer";
+import { KeyView } from "../KeyView";
 
 export interface SaveRouteProps extends RouteComponentProps<{}> {
   schema: GetSchemaResponse;
@@ -46,7 +47,12 @@ function getTypeForOperation(operation: MetaOperation) {
   return "(Unknown)";
 }
 
-function getEntityLinkForOperation(idx: number, operation: MetaOperation) {
+function getEntityLinkForOperation(
+  idx: number,
+  operation: MetaOperation,
+  pendingTransaction: PendingTransaction,
+  schema: Schema
+) {
   let key: Key | null = null;
   if (operation.hasCreaterequest()) {
     const entity = g(g(operation.getCreaterequest()).getEntity());
@@ -81,15 +87,11 @@ function getEntityLinkForOperation(idx: number, operation: MetaOperation) {
   }
   if (key !== null) {
     return (
-      <Link
-        key={serializeKey(key)}
-        style={{
-          display: "block"
-        }}
-        to={`/kind/${getLastKindOfKey(key)}/edit/${serializeKey(key)}`}
-      >
-        {prettifyKey(key)}
-      </Link>
+      <KeyView
+        pendingTransaction={pendingTransaction}
+        schema={schema}
+        value={key}
+      />
     );
   }
   return null;
@@ -299,7 +301,14 @@ const SaveRealRoute = (
               <tr key={idx}>
                 <td>{idx}</td>
                 <td>{getTypeForOperation(value)}</td>
-                <td>{getEntityLinkForOperation(idx, value)}</td>
+                <td>
+                  {getEntityLinkForOperation(
+                    idx,
+                    value,
+                    props.pendingTransaction,
+                    g(props.schema.getSchema())
+                  )}
+                </td>
                 <td>
                   {getDetailsOfOperation(
                     idx,

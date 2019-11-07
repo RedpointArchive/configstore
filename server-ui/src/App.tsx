@@ -131,7 +131,11 @@ const App = () => {
             <SaveRoute {...props} schema={data} />
           )}
         </Route>
-        <Route path="/review" exact component={ReviewRoute} />
+        <Route path="/review" exact>
+          {(props: RouteComponentProps<KindRouteMatch>) => (
+            <ReviewRoute {...props} schema={data} />
+          )}
+        </Route>
         <Route path="/kind/:kind">
           {(props: RouteComponentProps<KindRouteMatch>) => (
             <KindRoute {...props} schema={data} />

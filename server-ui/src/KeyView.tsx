@@ -82,24 +82,23 @@ const KeyAsyncView = (props: { value: Key; kind: SchemaKind }) => {
     promiseFn: loadEntity,
     value: props.value
   } as any);
-  if (isLoading || data === undefined) {
+
+  if (isLoading) {
     return <FontAwesomeIcon icon={faSpinner} spin fixedWidth />;
   }
 
-  let content: React.ReactNode = prettifyKey(g(props.value));
-
-  const r = data.getEntity();
-  if (r !== undefined) {
-    content = <EntityValueRenderer entity={r} kind={props.kind} />;
+  if (data === undefined || data.getEntity() === undefined) {
+    return <>{prettifyKey(g(props.value))}</>;
   }
 
+  const r = data.getEntity();
   return (
     <Link
       to={`/kind/${getLastKindOfKey(props.value)}/edit/${serializeKey(
         g(props.value)
       )}`}
     >
-      {content}
+      <EntityValueRenderer entity={g(r)} kind={props.kind} />
     </Link>
   );
 };
@@ -145,19 +144,17 @@ export const KeyView = (props: {
   let content: React.ReactNode;
   const pendingUpdate = getPendingUpdate(props.pendingTransaction, props.value);
   if (pendingUpdate !== null) {
-    content = <EntityValueRenderer entity={pendingUpdate.entity} kind={kind} />;
+    return (
+      <Link
+        to={`/kind/${getLastKindOfKey(props.value)}/edit/${serializeKey(
+          g(props.value)
+        )}`}
+      >
+        <EntityValueRenderer entity={pendingUpdate.entity} kind={kind} />
+      </Link>
+    );
   } else {
     // We need to look it up.
-    content = <KeyAsyncView value={props.value} kind={kind} />;
+    return <KeyAsyncView value={props.value} kind={kind} />;
   }
-
-  return (
-    <Link
-      to={`/kind/${getLastKindOfKey(props.value)}/edit/${serializeKey(
-        g(props.value)
-      )}`}
-    >
-      {content}
-    </Link>
-  );
 };
