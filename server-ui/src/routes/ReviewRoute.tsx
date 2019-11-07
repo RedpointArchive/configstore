@@ -1,11 +1,12 @@
 import React from "react";
 import { RouteComponentProps, Redirect } from "react-router";
-import { GetSchemaResponse, MetaOperation, Key } from "../api/meta_pb";
+import { GetSchemaResponse, MetaOperation, Key, Schema } from "../api/meta_pb";
 import { PendingTransactionContext, PendingTransaction } from "../App";
 import { g, serializeKey, getLastKindOfKey, prettifyKey } from "../core";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { KeyView } from "../KeyView";
 
 export interface ReviewRouteProps extends RouteComponentProps<{}> {
   schema: GetSchemaResponse;
@@ -30,7 +31,11 @@ function getTypeForOperation(operation: MetaOperation) {
   return "(Unknown)";
 }
 
-function getEntityLinkForOperation(operation: MetaOperation) {
+function getEntityLinkForOperation(
+  operation: MetaOperation,
+  pendingTransaction: PendingTransaction,
+  schema: Schema
+) {
   let key: Key | null = null;
   if (operation.hasCreaterequest()) {
     return g(operation.getCreaterequest()).getKindname();
@@ -49,21 +54,21 @@ function getEntityLinkForOperation(operation: MetaOperation) {
   }
   if (key !== null) {
     return (
-      <Link
-        key={serializeKey(key)}
-        style={{
-          display: "block"
-        }}
-        to={`/kind/${getLastKindOfKey(key)}/edit/${serializeKey(key)}`}
-      >
-        {prettifyKey(key)}
-      </Link>
+      <KeyView
+        pendingTransaction={pendingTransaction}
+        schema={schema}
+        value={key}
+      />
     );
   }
   return null;
 }
 
-function displayResult(pendingTransaction: PendingTransaction, idx: number) {
+function displayResult(
+  pendingTransaction: PendingTransaction,
+  idx: number,
+  schema: Schema
+) {
   if (pendingTransaction.response === null) {
     return null;
   }
@@ -84,12 +89,11 @@ function displayResult(pendingTransaction: PendingTransaction, idx: number) {
       return (
         <span>
           <FontAwesomeIcon icon={faCheck} fixedWidth />{" "}
-          <Link
-            key={serializeKey(key)}
-            to={`/kind/${getLastKindOfKey(key)}/edit/${serializeKey(key)}`}
-          >
-            {prettifyKey(key)}
-          </Link>
+          <KeyView
+            pendingTransaction={pendingTransaction}
+            schema={schema}
+            value={key}
+          />
         </span>
       );
     } else {
@@ -151,8 +155,20 @@ const ReviewRealRoute = (
                 <tr key={idx}>
                   <td>{idx}</td>
                   <td>{getTypeForOperation(value)}</td>
-                  <td>{getEntityLinkForOperation(value)}</td>
-                  <td>{displayResult(props.pendingTransaction, idx)}</td>
+                  <td>
+                    {getEntityLinkForOperation(
+                      value,
+                      props.pendingTransaction,
+                      g(props.schema.getSchema())
+                    )}
+                  </td>
+                  <td>
+                    {displayResult(
+                      props.pendingTransaction,
+                      idx,
+                      g(props.schema.getSchema())
+                    )}
+                  </td>
                 </tr>
               )
             )}
