@@ -1,4 +1,5 @@
 import { Key, PathElement, PartitionId } from "./api/meta_pb";
+import { Base64 } from "js-base64";
 
 export function g<T>(v: T | undefined | null): T {
   return v as T;
@@ -46,7 +47,7 @@ export function serializeKey(key: Key): string {
         if (pe.getIdtypeCase() === PathElement.IdtypeCase.ID) {
           return `${pe.getKind()}:id=${pe.getId()}`;
         } else if (pe.getIdtypeCase() === PathElement.IdtypeCase.NAME) {
-          return `${pe.getKind()}:name=${btoa(pe.getName())}`;
+          return `${pe.getKind()}:name=${Base64.encode(pe.getName())}`;
         } else {
           return `${pe.getKind()}:unset`;
         }
@@ -73,7 +74,7 @@ export function deserializeKey(keyString: string): Key {
       } else if (subcomponent[1].startsWith("name=")) {
         const pathElement = new PathElement();
         pathElement.setKind(subcomponent[0]);
-        pathElement.setName(atob(subcomponent[1].substr(5)));
+        pathElement.setName(Base64.decode(subcomponent[1].substr(5)));
         key.addPath(pathElement);
       } else if (subcomponent[1] == "unset") {
         const pathElement = new PathElement();
